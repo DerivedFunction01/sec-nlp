@@ -1220,7 +1220,7 @@ COVER_PAGE_KEYWORDS = [
     "emerging growth company",
     "shell company",
     "interactive data file",
-    "rule 405 of regulation s-t",
+    "rule 405 of regulation",
     "united states securities and exchange commission",
     "washington, d.c. 20549",
     "commission file number",
