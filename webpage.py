@@ -136,7 +136,9 @@ CLEANUP_PATTERNS = [
     (re.compile(r"(?<!\d)-\s*\d{1,3}\s*-(?!\d)", re.IGNORECASE), r""),
 ]
 
-PAGE_MARKER_RE = re.compile(r"^\s*-\s*\d{1,3}\s*-\s*$")
+PAGE_MARKER_RE = re.compile(
+    r"^(?:-\s*\d{1,3}\s*-|pp?\s*\.?\s*\d{1,3}|page\s+\d{1,3})$", re.IGNORECASE
+)
 LONE_NUMBER_RE = re.compile(r"^\s*\d{1,3}\s*$")
 FORM_LABEL_RE = re.compile(r"^[A-Za-z]-\d+$")
 
