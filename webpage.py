@@ -1682,6 +1682,8 @@ def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> Li
     def is_discardable(chunk: str) -> bool:
         if not ALPHANUM_RE.search(chunk):
             return True
+        if len(chunk) > 200:
+            return False
         if chunk.isdigit():
             return True
         if _FORM_LABEL_FULL_RE.match(chunk):
