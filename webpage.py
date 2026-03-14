@@ -1407,7 +1407,7 @@ _RE = {
     "part": r"PART\s+(?:[IVX]+|\d+)",
     "part_body": r"PART\s+(?:I|1)\b",
     "item": r"ITEM\s+\d+[\.\s]?",
-    "item_body": r"ITEM\s+1(?:[\.\s]|[\.\s]*BUSINESS\b)",
+    "item_body": r"ITEM\s+1[\w\s.]{0,40}?BUSINESS\b|ITEM\s+1[\.\s]",
 }
 
 BODY_ANCHOR_RE = re.compile(
