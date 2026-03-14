@@ -158,6 +158,7 @@ class SimpleTableProcessor:
         """
         table_text = CAPTION_REGEX.sub("", self.raw_text)
         table_text = TABLE_TAG_REGEX.sub("", table_text)
+        table_text = table_text.expandtabs(8)
         lines = table_text.split("\n")
 
         # Find current marker
@@ -222,6 +223,7 @@ class SimpleTableProcessor:
         4. Clean and repair rows
         """
         table_text = TABLE_TAG_REGEX.sub("", table_text)
+        table_text = table_text.expandtabs(8)
         lines = table_text.split("\n")
 
         # Find marker line
