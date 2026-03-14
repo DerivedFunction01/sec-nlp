@@ -133,8 +133,12 @@ FILING_TYPES = {
 
 CLEANUP_PATTERNS = [
     (re.compile(r"(?:\b\d{1,3}\s*)?<PAGE>(?:\s*\d{1,3}\b)?", re.IGNORECASE), r""),
-    (re.compile(r"(?<!\w)-\d{1,3}-(?!\w)", re.IGNORECASE), r""),
+    (re.compile(r"(?<!\d)-\s*\d{1,3}\s*-(?!\d)", re.IGNORECASE), r""),
 ]
+
+PAGE_MARKER_RE = re.compile(r"^\s*-\s*\d{1,3}\s*-\s*$")
+LONE_NUMBER_RE = re.compile(r"^\s*\d{1,3}\s*$")
+FORM_LABEL_RE = re.compile(r"^[A-Za-z]-\d+$")
 
 
 TABLE_SPLIT_PATTERN = re.compile(r"(<TABLE>.*?</TABLE>)", re.DOTALL | re.IGNORECASE)
@@ -1244,9 +1248,50 @@ COVER_PAGE_KEYWORDS = [
 
 NORMALIZED_TOC_KEYWORDS = [normalize_for_matching(term) for term in TOC_KEYWORDS]
 NORMALIZED_COVER_PAGE_KEYWORDS = [normalize_for_matching(term) for term in COVER_PAGE_KEYWORDS]
+BODY_ANCHOR_RE = re.compile(r"^\s*(?:PART\s+I\b|ITEM\s+1[\.\s])", re.IGNORECASE)
 
 
 MAX_TOC_SCAN_CHARS = 25000
+
+
+def prefilter_blocks(blocks: List[str]) -> List[str]:
+    filtered = []
+    for block in blocks:
+        stripped = block.strip()
+        if not stripped:
+            continue
+        if PAGE_MARKER_RE.match(stripped):
+            continue
+        if LONE_NUMBER_RE.match(stripped):
+            continue
+        if FORM_LABEL_RE.match(stripped):
+            continue
+        if not re.search(r"[A-Za-z0-9]", stripped):
+            continue
+        filtered.append(block)
+    return filtered
+
+
+def drop_cover_page(
+    blocks: List[str],
+    scan: int = 30,
+    anchor_limit: int = 80,
+) -> Tuple[List[str], int]:
+    cover_end = 0
+    for idx, block in enumerate(blocks[:scan]):
+        normalized = normalize_for_matching(block)
+        hits = sum(1 for term in NORMALIZED_COVER_PAGE_KEYWORDS if term in normalized)
+        if hits >= 2:
+            cover_end = idx + 1
+            break
+
+    if cover_end == 0:
+        return blocks, 0
+
+    for idx in range(cover_end, min(len(blocks), cover_end + anchor_limit)):
+        if BODY_ANCHOR_RE.match(blocks[idx].strip()):
+            return blocks[idx:], idx
+    return blocks[cover_end:], cover_end
 
 
 def drop_table_of_contents(
@@ -1254,58 +1299,40 @@ def drop_table_of_contents(
     max_scan: int = 20,
     char_limit: int = MAX_TOC_SCAN_CHARS,
 ) -> Tuple[List[str], int]:
-    """Remove leading blocks that appear to be part of the cover/TOC and return the index where the body starts."""
-
-    def find_cover_start(blocks: List[str], scan: int) -> int:
-        for idx, block in enumerate(blocks[:scan]):
-            normalized = normalize_for_matching(block)
-            match_count = sum(1 for term in NORMALIZED_COVER_PAGE_KEYWORDS if term in normalized)
-            if match_count >= 2:
-                return idx + 1
-        return 0
-
-    cover_idx = find_cover_start(blocks, 20)
-    start_idx = cover_idx
+    start_idx = 0
     char_count = 0
-
-    def block_looks_like_toc(block: str, normalized: str) -> bool:
-        if "table of contents" in normalized:
-            return True
-        match_count = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
-        if match_count >= 2:
-            return True
-        return False
-
     toc_detected = False
-    for idx, block in enumerate(blocks[start_idx : start_idx + max_scan], start=start_idx):
+
+    for idx, block in enumerate(blocks[:max_scan]):
         normalized = normalize_for_matching(block)
         char_count += len(block)
         if char_count > char_limit:
             break
+
         if "table of contents" in normalized:
             start_idx = idx + 1
             toc_detected = True
             break
 
-        match_count = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
-        if match_count >= 3:
+        hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
+        if hits >= 3:
             start_idx = idx + 1
             toc_detected = True
             break
 
-    if toc_detected:
-        additional_idx = start_idx
-        while additional_idx < len(blocks):
-            block = blocks[additional_idx]
-            normalized = normalize_for_matching(block)
-            if block_looks_like_toc(block, normalized):
-                additional_idx += 1
-                continue
-            if block.strip().upper().startswith("<TABLE"):
-                additional_idx += 1
-                continue
-            break
-        start_idx = additional_idx
+    if not toc_detected:
+        return blocks, 0
+
+    while start_idx < len(blocks):
+        normalized = normalize_for_matching(blocks[start_idx])
+        hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
+        if "table of contents" in normalized or hits >= 2:
+            start_idx += 1
+            continue
+        if blocks[start_idx].strip().upper().startswith("<TABLE"):
+            start_idx += 1
+            continue
+        break
 
     return blocks[start_idx:], start_idx
 
@@ -2228,11 +2255,13 @@ def parse_content(data):
                 print(f"  ⚠️  Error extracting blocks from document {doc_idx + 1} of {url}: {e}")
                 continue
 
+        document_blocks = prefilter_blocks(document_blocks)
+        document_blocks, cover_dropped = drop_cover_page(document_blocks)
         document_blocks, toc_start_idx = drop_table_of_contents(document_blocks)
         document_blocks, header_markers = remove_repeating_markers(document_blocks)
-        debug_print(f"Skipped {toc_start_idx} cover/TOC blocks")
-        if header_markers:
-            debug_print(f"Removed {len(header_markers)} repeating markers")
+        debug_print(
+            f"Dropped {cover_dropped} cover blocks, {toc_start_idx} TOC blocks, {len(header_markers)} repeating markers"
+        )
 
         # Determine home country from the first document (usually the main filing)
         # Only if not already determined by URL
