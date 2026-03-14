@@ -59,7 +59,7 @@ DRIVE_SAVE_INTERVAL_RESULTS = 4000
 # =============================================================================
 # QUEUE FILLING CONFIGURATION
 # =============================================================================
-QUEUE_BATCH_SIZE = 20 # URLs to add per fill
+QUEUE_BATCH_SIZE = 20  # URLs to add per fill
 QUEUE_FILL_INTERVAL_SECONDS = 2  # Seconds between fills
 
 
@@ -68,6 +68,7 @@ class FetchStatus(Enum):
     FAILED = "FAILED"
     RATE_LIMITED = "RATE_LIMITED"
     PERMANENT_FAILURE = "PERMANENT_FAILURE"
+
 
 # =============================================================================
 # COLAB CONFIGURATION
@@ -118,7 +119,7 @@ def get_system_config():
 # =============================================================================
 from defs.table_definitions import HTMLTableConverter
 from defs.region_regex import RegionMatcher, TAX_HAVEN_CODES, REGION_CODES
-from defs.regex_lib import build_regex
+from defs.regex_lib import build_alternation, build_regex
 
 FILING_TYPES = {
     "10-K",
@@ -144,11 +145,18 @@ FORM_LABEL_RE = re.compile(r"^[A-Za-z]-\d+$")
 
 
 TABLE_SPLIT_PATTERN = re.compile(r"(<TABLE>.*?</TABLE>)", re.DOTALL | re.IGNORECASE)
+
 TABLE_HINT_PATTERN = re.compile(
-    r"\b(table|summary|following|below|presented|summarized|\:)\b", re.IGNORECASE
+    rf"\b(?:{build_alternation([
+        "table",
+        "summary",
+        "following",
+        "below",
+        "presented",
+        "summarized",
+    ])})\b|:",
+    re.IGNORECASE,
 )
-
-
 # Initialize RegionMatcher to access location regexes for home-country detection
 REGION_MATCHER = RegionMatcher()
 # Pattern to find single newlines that are not preceded or followed by another newline (i.e., wrapped lines)
@@ -164,16 +172,21 @@ XML_REGEX = re.compile(r"xml", re.IGNORECASE)
 # ============================================================================
 
 ANNUAL_REPORT_PATTERN = re.compile(
-    r"ANNUAL\s+REPORT\s+PURSUANT\s+TO\s+SECTION\s+13\s+OR\s+15\s*\(d\)", 
-    re.IGNORECASE | re.MULTILINE
+    r"ANNUAL\s+REPORT\s+PURSUANT\s+TO\s+SECTION\s+13\s+OR\s+15\s*\(d\)",
+    re.IGNORECASE | re.MULTILINE,
 )
 FISCAL_YEAR_PATTERN = re.compile(
-    r"(?:For\s+the\s+fiscal\s+)?year\s+ended(?:\:)?\s+([A-Za-z]+\s+\d{1,2},?\s+\d{4})", 
-    re.IGNORECASE | re.MULTILINE
+    r"(?:For\s+the\s+fiscal\s+)?year\s+ended(?:\:)?\s+([A-Za-z]+\s+\d{1,2},?\s+\d{4})",
+    re.IGNORECASE | re.MULTILINE,
 )
 
-JURISDICTION_PATTERN = re.compile(r"\bJurisdiction\s+of\s+incorporation\s+or\s+organization\b", re.IGNORECASE | re.MULTILINE)
-OFFICE_PATTERN = re.compile(r"\bAddress\s+of\s+principal\s+executive\s+offices\b", re.IGNORECASE | re.MULTILINE)
+JURISDICTION_PATTERN = re.compile(
+    r"\bJurisdiction\s+of\s+incorporation\s+or\s+organization\b",
+    re.IGNORECASE | re.MULTILINE,
+)
+OFFICE_PATTERN = re.compile(
+    r"\bAddress\s+of\s+principal\s+executive\s+offices\b", re.IGNORECASE | re.MULTILINE
+)
 FILING_20F = re.compile(r"\b20-F\b", re.IGNORECASE | re.MULTILINE)
 FILING_40F = re.compile(r"\b40-F\b", re.IGNORECASE | re.MULTILINE)
 
@@ -271,23 +284,27 @@ def create_db():
         """
         )
         c.execute("CREATE INDEX IF NOT EXISTS url_idx ON report_data (url)")
-        c.execute("CREATE INDEX IF NOT EXISTS report_acc_idx ON report_data (accession)")
+        c.execute(
+            "CREATE INDEX IF NOT EXISTS report_acc_idx ON report_data (accession)"
+        )
         c.execute("CREATE INDEX IF NOT EXISTS acc_idx ON webpage_result (accession)")
         c.execute("CREATE INDEX IF NOT EXISTS name_idx ON names (name)")
-        
+
         # Cleanup: Remove duplicates from report_data based on accession
         # Keeps the row with the minimum rowid (oldest)
-        try: 
-            c.execute("""
+        try:
+            c.execute(
+                """
                 DELETE FROM report_data 
                 WHERE accession IS NOT NULL 
                 AND rowid NOT IN (
                     SELECT MIN(rowid) FROM report_data WHERE accession IS NOT NULL GROUP BY accession
                 )
-            """)
+            """
+            )
         except sqlite3.OperationalError:
             pass
-            
+
         conn.commit()
         c.execute("PRAGMA journal_mode=WAL")
     except sqlite3.IntegrityError:
@@ -311,23 +328,27 @@ def save_batch_report_urls(df):
             cols = ["cik", "year", "url"]
             if "accession" in df.columns:
                 cols.append("accession")
-            
+
             report = df[cols].copy()
             report["original_url"] = report["url"]
-            
+
             if "accession" not in report.columns:
+
                 def get_acc(u):
                     info = extract_accession_info(u)
                     return info["accession"] if info else None
+
                 report["accession"] = report["url"].apply(get_acc)
-            
+
             # Deduplicate by accession to ensure integrity before insertion
             # IMPORTANT: Only deduplicate rows that actually HAVE an accession.
             # Rows with None accession (placeholders for missing years) should be kept.
-            valid_acc = report[report["accession"].notna()].drop_duplicates(subset=["accession"])
+            valid_acc = report[report["accession"].notna()].drop_duplicates(
+                subset=["accession"]
+            )
             null_acc = report[report["accession"].isna()]
             report = pd.concat([valid_acc, null_acc])
-            
+
             report.to_sql("report_data", conn, if_exists="append", index=False)
             return True
         except sqlite3.IntegrityError:
@@ -341,57 +362,65 @@ def save_batch_report_urls(df):
 def fetch_report_data(valid: Optional[bool] = True):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    
+
     # Check if DB is empty
     try:
         c.execute("SELECT count(*) FROM report_data")
         count = c.fetchone()[0]
     except sqlite3.OperationalError:
         count = 0
-        
+
     # If empty, try to load from CSV
     if count == 0 and Path(REPORT_PATH).exists():
         print(f"📥 Importing {REPORT_PATH} into database...")
         try:
             df = pd.read_parquet(REPORT_PATH)
-            if {'cik', 'year', 'url'}.issubset(df.columns):
+            if {"cik", "year", "url"}.issubset(df.columns):
                 # Use a dictionary to deduplicate by accession
                 unique_records = {}
                 for _, row in df.iterrows():
-                    u = row['url']
+                    u = row["url"]
                     info = extract_accession_info(u)
-                    acc = info['accession'] if info else None
-                    
+                    acc = info["accession"] if info else None
+
                     # Case 1: Valid URL with Accession
                     if acc and acc not in unique_records:
-                        unique_records[acc] = (row['cik'], row['year'], u, acc, u)
+                        unique_records[acc] = (row["cik"], row["year"], u, acc, u)
                     # Case 2: Placeholder (Empty URL) - Key by "placeholder_CIK_YEAR"
                     elif pd.isna(u) or u == "":
                         key = f"placeholder_{row['cik']}_{row['year']}"
                         if key not in unique_records:
-                            unique_records[key] = (row['cik'], row['year'], "", None, "")
-                
+                            unique_records[key] = (
+                                row["cik"],
+                                row["year"],
+                                "",
+                                None,
+                                "",
+                            )
+
                 c.executemany(
-                    "INSERT INTO report_data (cik, year, url, accession, original_url) VALUES (?, ?, ?, ?, ?)", 
-                    list(unique_records.values())
+                    "INSERT INTO report_data (cik, year, url, accession, original_url) VALUES (?, ?, ?, ?, ?)",
+                    list(unique_records.values()),
                 )
                 conn.commit()
                 print(f"✅ Imported {len(unique_records)} unique rows.")
         except Exception as e:
             print(f"❌ Error importing CSV: {e}")
-            
+
     query = "SELECT * FROM report_data"
     if valid is True:
         query += " WHERE url IS NOT NULL AND url != ''"
     elif valid is False:
         query += " WHERE url IS NULL OR url = ''"
     # If valid is None, fetch ALL rows (both valid and placeholders)
-        
+
     try:
         pre_data = pd.read_sql_query(query, conn)
     except Exception:
-        pre_data = pd.DataFrame(columns=["cik", "year", "url", "accession", "original_url"])
-        
+        pre_data = pd.DataFrame(
+            columns=["cik", "year", "url", "accession", "original_url"]
+        )
+
     conn.close()
     return pre_data
 
@@ -466,19 +495,21 @@ def save_process_result_batch(batch_df):
 # %%
 class TransientError(Exception):
     """Raised when a fetch fails transiently (e.g. rate limit, timeout) and should be retried."""
+
     pass
 
+
 def fetch_json(
-    url: str, 
+    url: str,
     rate_limiter: Optional["ThreadSafeRateLimiter"] = None,
     fetch_metrics: Optional[dict] = None,
-    metrics_lock: Optional[threading.Lock] = None
+    metrics_lock: Optional[threading.Lock] = None,
 ) -> dict | None:
     global SEC_RATE_LIMIT
     headers = {
         "User-Agent": f"{random.randint(1000,9999)}-{random.randint(1000,9999)}@{''.join(random.choice(string.ascii_lowercase) for _ in range(random.randint(8,15)))}.com"
     }
-    
+
     if rate_limiter:
         time.sleep(rate_limiter.value)
     else:
@@ -492,18 +523,18 @@ def fetch_json(
     try:
         resp = requests.get(url, headers=headers, timeout=10)
         debug_print("Fetching", url)
-        
+
         if resp.status_code == 404:
             # Permanent failure - return None so caller knows it's empty/missing
             return None
-            
+
         if resp.status_code == 429:
             print(f"Rate Limited {resp.status_code} fetching {url}")
             if rate_limiter:
                 rate_limiter.signal_429()
             # Raise exception to prevent recording as "empty" in DB
             raise TransientError(f"Rate Limited: {url}")
-            
+
         if resp.status_code != 200:
             print(f"Error {resp.status_code} fetching {url}")
             # Treat 5xx as transient
@@ -515,7 +546,7 @@ def fetch_json(
         print(f"Transient error fetching {url}: {e}")
         if rate_limiter and not isinstance(e, TransientError):
             rate_limiter.signal_timeout()
-        raise # Re-raise to abort processing this CIK
+        raise  # Re-raise to abort processing this CIK
     except Exception as e:
         print(f"Unexpected error fetching {url}: {e}")
         return None
@@ -551,10 +582,10 @@ def extract_filings(data: dict, cik: str, name: str, ticker: str) -> List[dict]:
 
 
 def get_cik_filings(
-    cik: str, 
+    cik: str,
     rate_limiter: Optional["ThreadSafeRateLimiter"] = None,
     fetch_metrics: Optional[dict] = None,
-    metrics_lock: Optional[threading.Lock] = None
+    metrics_lock: Optional[threading.Lock] = None,
 ) -> Optional[List[dict]]:
     cik = str(cik).zfill(10)
     url_main = f"https://data.sec.gov/submissions/CIK{cik}.json"
@@ -572,10 +603,10 @@ def get_cik_filings(
     older_files = data.get("filings", {}).get("files", [])
     for f in older_files:
         older_data = fetch_json(
-            f"https://data.sec.gov/submissions/{f.get('name')}", 
-            rate_limiter, 
-            fetch_metrics, 
-            metrics_lock
+            f"https://data.sec.gov/submissions/{f.get('name')}",
+            rate_limiter,
+            fetch_metrics,
+            metrics_lock,
         )
         if isinstance(older_data, dict):
             links.extend(extract_filings(older_data, cik, name, ticker))
@@ -676,11 +707,13 @@ def _detect_header_rows(rows: List[List[str]], table_soup) -> int:
     if not filtered_trs:
         return 0
 
-    def validate_header_count(count: int, allow_all_headers: bool = False) -> Optional[int]:
+    def validate_header_count(
+        count: int, allow_all_headers: bool = False
+    ) -> Optional[int]:
         """Validates that the detected header count leaves a valid data row."""
         if count <= 0:
             return None
-        
+
         # If header covers all rows
         if count >= len(filtered_trs):
             return count if allow_all_headers else None
@@ -718,13 +751,13 @@ def _detect_header_rows(rows: List[List[str]], table_soup) -> int:
         cells = tr.find_all(["td", "th"])
         non_empty_cells = 0
         bold_cells = 0
-        
+
         for cell in cells:
             if cell.get_text(strip=True):
                 non_empty_cells += 1
                 if cell.find(["b", "strong"]) or _is_bold_style(cell):
                     bold_cells += 1
-        
+
         # Require > 50% of content cells to be bold (e.g., 2/3 cells)
         # This filters out data rows where only one column (current year) is bold
         if non_empty_cells > 0 and (bold_cells / non_empty_cells) > 0.5:
@@ -806,7 +839,9 @@ def _detect_by_border(filtered_trs: List, rows: List[List[str]]) -> int:
     # Fallback
     return 0
 
+
 underline_regex = re.compile(r"(?:^\s*-{3,}\s*$\n?)+", re.MULTILINE)
+
 
 def extract_content(data: str, asHTML=True) -> str:
     """
@@ -907,7 +942,6 @@ def extract_content(data: str, asHTML=True) -> str:
                             td.replace_with(p_tag)
                 table.unwrap()
 
-
         # Use html2text to convert remaining HTML to text
         h = html2text.HTML2Text()
         h.ignore_links = True
@@ -996,29 +1030,31 @@ def fetch_url(
         return None
 
 
-def _collect_candidates_near_match(text: str, match: re.Match, matcher: RegionMatcher, ignore_us: bool = False) -> List[Tuple[str, int]]:
+def _collect_candidates_near_match(
+    text: str, match: re.Match, matcher: RegionMatcher, ignore_us: bool = False
+) -> List[Tuple[str, int]]:
     """Helper to find country codes near a regex match with distances."""
     # Look at the text surrounding the match (before and after)
     start_search = max(0, match.start() - 200)
     end_search = min(len(text), match.end() + 200)
     snippet = text[start_search:end_search]
-    
+
     candidates = []
-    
+
     if matcher.location_regexes:
         # Find all location matches in the snippet
         loc_matches = []
         for regex in matcher.location_regexes:
             loc_matches.extend(list(regex.finditer(snippet)))
-        
+
         if loc_matches:
             # Find the match closest to the label
             label_start = match.start() - start_search
             label_end = match.end() - start_search
-            
+
             for m in loc_matches:
                 m_start, m_end = m.span()
-                
+
                 # Calculate distance to the label
                 if m_end <= label_start:
                     dist = label_start - m_end
@@ -1026,7 +1062,7 @@ def _collect_candidates_near_match(text: str, match: re.Match, matcher: RegionMa
                     dist = m_start - label_end
                 else:
                     dist = 0
-                
+
                 term = m.group(0)
                 info = matcher.get_location(term)
                 if info:
@@ -1034,7 +1070,7 @@ def _collect_candidates_near_match(text: str, match: re.Match, matcher: RegionMa
                     if ignore_us and code == "US":
                         continue
                     candidates.append((code, dist))
-            
+
     return candidates
 
 
@@ -1045,36 +1081,40 @@ def extract_home_country(text: str) -> str:
     """
     # Look at the first 500k characters which usually contains everything needed
     header = text[:500000]
-        
+
     matcher = RegionMatcher()
     candidate_scores = {}
 
     for pattern, weight in HOME_COUNTRY_PATTERNS:
         for m in pattern.finditer(header):
-            candidates = _collect_candidates_near_match(header, m, matcher, ignore_us=True)
+            candidates = _collect_candidates_near_match(
+                header, m, matcher, ignore_us=True
+            )
             for code, dist in candidates:
                 # Score formula: Weight * (100 / (100 + dist))
                 # Closer matches get higher score.
                 score = weight * (100 / (100 + dist))
-                
+
                 # Penalize regions (we prefer specific countries)
                 if code in REGION_CODES:
                     score *= 0.5
-                
+
                 candidate_scores[code] = candidate_scores.get(code, 0.0) + score
 
     if not candidate_scores:
         return "INT"
 
     # Sort by score
-    sorted_candidates = sorted(candidate_scores.items(), key=lambda x: x[1], reverse=True)
-    
+    sorted_candidates = sorted(
+        candidate_scores.items(), key=lambda x: x[1], reverse=True
+    )
+
     best_code, best_score = sorted_candidates[0]
-    
+
     # Special Rule: Resolve HK to CN if both are present
-    if  "HK" in candidate_scores and "CN" in candidate_scores:
+    if "HK" in candidate_scores and "CN" in candidate_scores:
         return "CN"
-    
+
     # If best is a tax haven, see if we have a strong operational alternative
     if best_code in TAX_HAVEN_CODES:
         for code, score in sorted_candidates[1:]:
@@ -1082,7 +1122,7 @@ def extract_home_country(text: str) -> str:
                 # If alternative is at least as strong as the tax haven match
                 if score > best_score * 0.2:
                     return code
-                    
+
     return best_code
 
 
@@ -1095,7 +1135,7 @@ def extract_fiscal_year(text: str, accession: Optional[str] = None) -> Optional[
     try:
         # Limit search to first N chars to avoid false positives later in text
         CHAR_LIMIT = 7500
-        header_text = text[:CHAR_LIMIT] 
+        header_text = text[:CHAR_LIMIT]
 
         # Check for 10-K header first
         ar_match = ANNUAL_REPORT_PATTERN.search(header_text)
@@ -1116,11 +1156,20 @@ def extract_fiscal_year(text: str, accession: Optional[str] = None) -> Optional[
                 extracted_year = int(year_match.group(0))
 
                 # Safety Check 2: Year vs Accession
-                if accession and isinstance(accession, str) and len(accession) == 18 and accession.isdigit():
+                if (
+                    accession
+                    and isinstance(accession, str)
+                    and len(accession) == 18
+                    and accession.isdigit()
+                ):
                     try:
                         filing_yy = int(accession[10:12])
                         # Estimate filing year (EDGAR started ~1993)
-                        filing_year = (1900 + filing_yy) if filing_yy >= 90 else (2000 + filing_yy)
+                        filing_year = (
+                            (1900 + filing_yy)
+                            if filing_yy >= 90
+                            else (2000 + filing_yy)
+                        )
 
                         # Allow extracted year to be within [filing_year - 2, filing_year + 1]
                         if not (filing_year - 2 <= extracted_year <= filing_year + 1):
@@ -1132,6 +1181,7 @@ def extract_fiscal_year(text: str, accession: Optional[str] = None) -> Optional[
         pass
 
     return None
+
 
 def normalize_for_matching(text: str) -> str:
     if not text:
@@ -1253,16 +1303,25 @@ COVER_PAGE_KEYWORDS = [
 ]
 
 NORMALIZED_TOC_KEYWORDS = [normalize_for_matching(term) for term in TOC_KEYWORDS]
-NORMALIZED_COVER_PAGE_KEYWORDS = [normalize_for_matching(term) for term in COVER_PAGE_KEYWORDS]
+NORMALIZED_COVER_PAGE_KEYWORDS = [
+    normalize_for_matching(term) for term in COVER_PAGE_KEYWORDS
+]
+_RE = {
+    "fwd": r"FORWARD[- ]?LOOKING\s+STATEMENTS",
+    "part": r"PART\s+(?:[IVX]+|\d+)",
+    "part_body": r"PART\s+(?:I|1)\b",
+    "item": r"ITEM\s+\d+[\.\s]?",
+    "item_body": r"ITEM\s+1(?:[\.\s]|[\.\s]*BUSINESS\b)",
+}
+
 BODY_ANCHOR_RE = re.compile(
-    r"^\s*(?:PART\s+(?:I|1)\b|ITEM\s+1[\.\s]|FORWARD[- ]?LOOKING\s+STATEMENTS)", 
-    re.IGNORECASE)
-SECTION_LABEL_RE = re.compile(
-    r"^(?:PART\s+(?:[IVX1]+|\d+)|ITEM\s+\d+\.?|FORWARD[- ]?LOOKING\s+STATEMENTS)$",
+    rf"^\s*(?:{build_alternation([_RE['part_body'], _RE['item_body'], _RE['fwd']], sort_longest_first=False)})",
     re.IGNORECASE,
 )
-
-
+SECTION_LABEL_RE = re.compile(
+    rf"^(?:{build_alternation([_RE['part'], _RE['item'], _RE['fwd']], sort_longest_first=False)})$",
+    re.IGNORECASE,
+)
 MAX_TOC_SCAN_CHARS = 25000
 
 
@@ -1470,14 +1529,14 @@ def filter_by_fyear(filings: list[dict], fyear: int) -> list[dict]:
 
 
 def cik_fetch_worker(
-    cik_queue, 
-    result_queue, 
-    rate_limiter, 
-    stop_event, 
-    fetch_metrics, 
-    metrics_lock, 
+    cik_queue,
+    result_queue,
+    rate_limiter,
+    stop_event,
+    fetch_metrics,
+    metrics_lock,
     already_done_set,
-    progress_counter
+    progress_counter,
 ):
     """
     Worker thread for fetching CIK filings.
@@ -1522,7 +1581,9 @@ def cik_fetch_worker(
                             fyear = int(rdate.split("-")[0])
                             found_years.add(fyear)
                             if (cik_int, fyear) not in already_done_set:
-                                cik_records.append({"cik": cik_int, "year": fyear, **filing})
+                                cik_records.append(
+                                    {"cik": cik_int, "year": fyear, **filing}
+                                )
                         except (ValueError, IndexError):
                             pass
 
@@ -1531,8 +1592,13 @@ def cik_fetch_worker(
                 for year in years:
                     try:
                         y_int = int(year)
-                        if y_int not in found_years and (cik_int, y_int) not in already_done_set:
-                            cik_records.append({"cik": cik_int, "year": y_int, "url": ""})
+                        if (
+                            y_int not in found_years
+                            and (cik_int, y_int) not in already_done_set
+                        ):
+                            cik_records.append(
+                                {"cik": cik_int, "year": y_int, "url": ""}
+                            )
                     except (ValueError, TypeError):
                         pass
 
@@ -1556,17 +1622,17 @@ def report_saver_worker(result_queue, stop_event):
         try:
             records = result_queue.get(timeout=1)
             buffer.extend(records)
-            
+
             if len(buffer) >= 100:
                 save_batch_report_urls(pd.DataFrame(buffer))
                 debug_print(f"Saved {len(buffer)} urls to database")
                 buffer = []
-                
+
         except queue.Empty:
             continue
         except Exception as e:
             print(f"Error saving batch: {e}")
-            
+
     # Flush remaining
     if buffer:
         save_batch_report_urls(pd.DataFrame(buffer))
@@ -1582,7 +1648,7 @@ def fetch_all_grouped(saveIteration: int = 100):
     if existing_report_df is None or existing_report_df.empty:
         # Load ALL data (valid=None) to ensure we don't retry failed/empty years
         existing_report_df = fetch_report_data(valid=None)
-    
+
     # Ensure types match DB (int) for robust comparison
     already_done = set()
     processed_ciks = set()
@@ -1605,17 +1671,17 @@ def fetch_all_grouped(saveIteration: int = 100):
 
     # Prepare list of tasks (only schedule CIKs we have not processed yet)
     unprocessed_tasks = [(cik, []) for cik in unique_ciks if cik not in processed_ciks]
-            
+
     total_tasks = len(unprocessed_tasks)
     print(f"Found {total_tasks} CIKs to process.")
-    
+
     if total_tasks == 0:
         return fetch_report_data(valid=None)
 
     # Setup Queues
-    cik_queue = queue.Queue() # Thread-safe queue
+    cik_queue = queue.Queue()  # Thread-safe queue
     result_queue = queue.Queue()
-    
+
     # Setup Adaptive Rate Limiter
     rate_limiter = ThreadSafeRateLimiter(SEC_RATE_LIMIT)
     metrics_lock = threading.Lock()
@@ -1625,27 +1691,27 @@ def fetch_all_grouped(saveIteration: int = 100):
         "last_adjustment_time": time.time(),
     }
     stop_event = threading.Event()
-    
+
     # Start Rate Adjuster
     rate_adjuster = threading.Thread(
         target=rate_adjuster_worker,
         args=(rate_limiter, fetch_metrics, metrics_lock, stop_event, SEC_RATE),
-        daemon=False
+        daemon=False,
     )
     rate_adjuster.start()
 
     # 2. Start Queue Filler
     queue_filler_stop_event = threading.Event()
     queue_filler = threading.Thread(
-        target=url_queue_filler_worker, # Reusing the generic filler
+        target=url_queue_filler_worker,  # Reusing the generic filler
         args=(
             cik_queue,
             unprocessed_tasks,
             queue_filler_stop_event,
             QUEUE_BATCH_SIZE,
-            QUEUE_FILL_INTERVAL_SECONDS
+            QUEUE_FILL_INTERVAL_SECONDS,
         ),
-        daemon=False
+        daemon=False,
     )
     queue_filler.start()
 
@@ -1655,17 +1721,24 @@ def fetch_all_grouped(saveIteration: int = 100):
     for _ in range(NUM_FETCHERS):
         t = threading.Thread(
             target=cik_fetch_worker,
-            args=(cik_queue, result_queue, rate_limiter, stop_event, fetch_metrics, metrics_lock, already_done, progress_counter),
-            daemon=False
+            args=(
+                cik_queue,
+                result_queue,
+                rate_limiter,
+                stop_event,
+                fetch_metrics,
+                metrics_lock,
+                already_done,
+                progress_counter,
+            ),
+            daemon=False,
         )
         t.start()
         workers.append(t)
-        
+
     # 4. Start Saver Worker
     saver = threading.Thread(
-        target=report_saver_worker,
-        args=(result_queue, stop_event),
-        daemon=False
+        target=report_saver_worker, args=(result_queue, stop_event), daemon=False
     )
     saver.start()
 
@@ -1673,23 +1746,23 @@ def fetch_all_grouped(saveIteration: int = 100):
         with tqdm(total=total_tasks, unit="ciks") as pbar:
             while True:
                 time.sleep(1)
-                
+
                 with progress_counter["lock"]:
                     current_val = progress_counter["val"]
-                
+
                 pbar.n = current_val
                 pbar.refresh()
                 pbar.set_postfix(sleep=f"{rate_limiter.value*1000:.1f}ms")
-                
+
                 if current_val >= total_tasks:
                     break
-                    
+
     except KeyboardInterrupt:
         print("Stopping...")
     finally:
         stop_event.set()
         queue_filler_stop_event.set()
-        
+
         queue_filler.join(timeout=5)
         for t in workers:
             t.join(timeout=5)
@@ -1779,7 +1852,11 @@ class ThreadSafeRateLimiter:
 
             elif current_rate < target_rate_adjusted * 0.95:  # Under target - TOO SLOW
                 # Fetching too slow - decrease sleep to speed up
-                if not self._recovery_mode and not inventory_full and self._rate_limit > SEC_RATE / 2:
+                if (
+                    not self._recovery_mode
+                    and not inventory_full
+                    and self._rate_limit > SEC_RATE / 2
+                ):
                     decrease_factor = 0.98
                     self._rate_limit *= decrease_factor
 
@@ -1869,7 +1946,7 @@ def extract_accession_info(url: str) -> Optional[dict]:
         year = int(year_str)
     except ValueError:
         return None
-        
+
     # Determine if pre-2011 (approximate logic based on 2-digit year)
     # 90-99 -> 1990-1999
     # 00-10 -> 2000-2010
@@ -1880,7 +1957,7 @@ def extract_accession_info(url: str) -> Optional[dict]:
         "cik": cik_part,
         "year_short": year,
         "is_pre_2011": is_pre_2011,
-        "filename": parts[-1] if parts else ""
+        "filename": parts[-1] if parts else "",
     }
 
 
@@ -1904,13 +1981,14 @@ def sync_fiscal_years():
     """
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    
+
     try:
         print("🔄 Syncing fiscal years from extracted content...")
-        
+
         # SQLite 3.33+ supports UPDATE FROM
         try:
-            c.execute("""
+            c.execute(
+                """
                 UPDATE report_data
                 SET year = CAST(webpage_result.period_of_report AS INTEGER)
                 FROM webpage_result
@@ -1918,22 +1996,27 @@ def sync_fiscal_years():
                 AND webpage_result.period_of_report IS NOT NULL
                 AND webpage_result.period_of_report != ''
                 AND report_data.year != CAST(webpage_result.period_of_report AS INTEGER)
-            """)
+            """
+            )
             count = c.rowcount
         except sqlite3.OperationalError:
             # Fallback for older SQLite versions
-            c.execute("""
+            c.execute(
+                """
                 SELECT accession, period_of_report 
                 FROM webpage_result 
                 WHERE period_of_report IS NOT NULL AND period_of_report != ''
-            """)
+            """
+            )
             updates = []
             for acc, year_str in c.fetchall():
                 if year_str and year_str.isdigit():
                     updates.append((int(year_str), acc))
-            
+
             if updates:
-                c.executemany("UPDATE report_data SET year = ? WHERE accession = ?", updates)
+                c.executemany(
+                    "UPDATE report_data SET year = ? WHERE accession = ?", updates
+                )
                 count = len(updates)
             else:
                 count = 0
@@ -1942,12 +2025,13 @@ def sync_fiscal_years():
             print(f"✅ Updated {count} rows in report_data with verified fiscal years.")
         else:
             print("✓ Fiscal years are already in sync.")
-            
+
         conn.commit()
     except Exception as e:
         print(f"⚠️ Error syncing fiscal years: {e}")
     finally:
         conn.close()
+
 
 def sync_home_country():
     """
@@ -1959,32 +2043,38 @@ def sync_home_country():
     """
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
-    
+
     try:
         print("🔄 Syncing home country from URL patterns and Company Names...")
-        
+
         # Fetch data joined
         # User requested to check those whose home country is not US or Canada
-        c.execute("""
+        c.execute(
+            """
             SELECT w.accession, r.url, w.home_country, n.name
             FROM webpage_result w
             JOIN report_data r ON w.accession = r.accession
             LEFT JOIN names n ON r.cik = n.cik
             WHERE r.url IS NOT NULL AND r.url != ''
             AND (w.home_country IS NULL OR w.home_country NOT IN ('US', 'CA'))
-        """)
-        
+        """
+        )
+
         rows = c.fetchall()
         updates = []
-           
+
         for accession, url, current_country, company_name in rows:
             new_country = None
-            
+
             # 2. Tax Haven / Name Check
             # If not resolved to US/CA, and current is Tax Haven/INT/None, try name
             check_country = new_country if new_country else current_country
-            
-            if (not check_country) or (check_country in TAX_HAVEN_CODES) or (check_country == "INT"):
+
+            if (
+                (not check_country)
+                or (check_country in TAX_HAVEN_CODES)
+                or (check_country == "INT")
+            ):
                 if company_name and REGION_MATCHER.location_regexes:
                     # Find all location matches
                     matches = []
@@ -1996,9 +2086,13 @@ def sync_home_country():
                                 # (Region, Country, City, Code)
                                 _, _, _, code = info
                                 # We want a specific country code that is NOT a tax haven and NOT a region code
-                                if code and code not in TAX_HAVEN_CODES and code not in REGION_CODES:
+                                if (
+                                    code
+                                    and code not in TAX_HAVEN_CODES
+                                    and code not in REGION_CODES
+                                ):
                                     matches.append(code)
-                    
+
                     if matches:
                         # Use the first valid non-tax-haven country found
                         new_country = matches[0]
@@ -2008,13 +2102,18 @@ def sync_home_country():
 
             if new_country and new_country != current_country:
                 updates.append((new_country, accession))
-        
+
         if updates:
-            c.executemany("UPDATE webpage_result SET home_country = ? WHERE accession = ?", updates)
-            print(f"✅ Updated {len(updates)} rows in webpage_result with inferred home country.")
+            c.executemany(
+                "UPDATE webpage_result SET home_country = ? WHERE accession = ?",
+                updates,
+            )
+            print(
+                f"✅ Updated {len(updates)} rows in webpage_result with inferred home country."
+            )
         else:
             print("✓ Home countries are already in sync.")
-            
+
         conn.commit()
     except Exception as e:
         print(f"⚠️ Error syncing home countries: {e}")
@@ -2028,14 +2127,14 @@ def is_url_from_accession(url: str) -> bool:
     """
     if not url.endswith(".txt"):
         return False
-        
+
     info = extract_accession_info(url)
     if not info:
         return False
-        
+
     accession = info["accession"]
     filename = info["filename"]
-    
+
     expected_filename = f"{accession[:10]}-{accession[10:12]}-{accession[12:]}.txt"
     return filename == expected_filename
 
@@ -2068,7 +2167,7 @@ def detect_filing_type(url: str, raw_text: str) -> Tuple[bool, bool, str, bool]:
         header_text = raw_text[:10000]
         is_20f = bool(FILING_20F.search(header_text))
         is_40f = bool(FILING_40F.search(header_text))
-        
+
         if is_20f:
             home_country = "INT"
             url_determined = True
@@ -2113,12 +2212,12 @@ def should_retry_with_plaintext(
         # Parse content to check Item 1/1A length
         docs = parse_multi_document_content(raw_text)
         has_valid_content = False
-        
+
         for doc in docs:
             if doc and len(doc.strip()) > 1000:
                 has_valid_content = True
                 break
-        
+
             if not has_valid_content:
                 txt_url = f"https://www.sec.gov/Archives/edgar/data/{cik_part}/{accession}/{txt_filename}"
                 if txt_url != url:
@@ -2131,7 +2230,9 @@ def should_retry_with_plaintext(
     return None
 
 
-def fetch_raw_content(url: str, accession: str, rate_limiter: Optional[ThreadSafeRateLimiter] = None):
+def fetch_raw_content(
+    url: str, accession: str, rate_limiter: Optional[ThreadSafeRateLimiter] = None
+):
     """
     Fetches raw text content from a URL. This is purely I/O-bound.
     Properly distinguishes between different failure modes.
@@ -2247,7 +2348,7 @@ def parse_content(data):
         # 1. Parse multi-document content
         # This splits by <document> tags and extracts/parses each document
         parsed_documents = parse_multi_document_content(raw_text)
-        
+
         # Free memory for the large raw text string immediately
         raw_text = None
 
@@ -2285,7 +2386,9 @@ def parse_content(data):
                 else:
                     debug_print(f"  Document {doc_idx + 1}: No blocks extracted")
             except Exception as e:
-                print(f"  ⚠️  Error extracting blocks from document {doc_idx + 1} of {url}: {e}")
+                print(
+                    f"  ⚠️  Error extracting blocks from document {doc_idx + 1} of {url}: {e}"
+                )
                 continue
 
         document_blocks = prefilter_blocks(document_blocks)
@@ -2298,7 +2401,9 @@ def parse_content(data):
 
         # Determine home country from the first document (usually the main filing)
         # Only if not already determined by URL
-        if (not url_determined and parsed_documents) or (home_country == "INT" and parsed_documents):
+        if (not url_determined and parsed_documents) or (
+            home_country == "INT" and parsed_documents
+        ):
             home_country = extract_home_country(parsed_documents[0])
 
         # 3. If we found any matches across all documents, save the result
@@ -2340,6 +2445,7 @@ def format_time(seconds):
 # QUEUE FILLER WORKER
 # =============================================================================
 
+
 def url_queue_filler_worker(
     url_queue,
     unprocessed_urls_list,
@@ -2349,12 +2455,12 @@ def url_queue_filler_worker(
 ):
     """
     BACKGROUND THREAD: Periodically refills url_queue with new URLs.
-    
+
     Maintains the queue size up to `batch_size`.
     Checks every `fill_interval_seconds`.
     """
     index = 0
-    
+
     while not queue_filler_stop_event.is_set():
         try:
             # Check current queue size
@@ -2362,31 +2468,32 @@ def url_queue_filler_worker(
                 q_size = url_queue.qsize()
             except Exception:
                 q_size = 0
-            
+
             # Calculate how many to add to reach batch_size (target capacity)
             if q_size < batch_size:
                 needed = batch_size - q_size
-                
+
                 # Determine range to add
                 batch_end = min(index + needed, len(unprocessed_urls_list))
-                
+
                 if index < batch_end:
                     for i in range(index, batch_end):
                         url_queue.put(unprocessed_urls_list[i])
-                    
+
                     index = batch_end
-                
+
                 # Done?
                 if index >= len(unprocessed_urls_list):
                     debug_print("✅ All items queued. Queue filler stopping.")
                     break
-                    
+
         except Exception as e:
             print(f"Queue filler error: {e}")
-            
+
         # Wait for interval or stop event
         if queue_filler_stop_event.wait(fill_interval_seconds):
             break
+
 
 # =============================================================================
 # INITIALIZATION
@@ -2423,13 +2530,12 @@ def process_producer_consumer_adaptive():
 
     # 5. Populate Queue
     processed_set = get_processed_accessions()
-    
+
     # Filter to only valid URLs (ignore placeholders) to ensure accurate stats
     valid_reports_df = existing_report_df[
-        (existing_report_df["url"].notna()) & 
-        (existing_report_df["url"] != "")
+        (existing_report_df["url"].notna()) & (existing_report_df["url"] != "")
     ]
-    
+
     total_files_in_manifest = len(valid_reports_df)
     already_in_warehouse = len(processed_set)
 
@@ -2449,18 +2555,20 @@ def process_producer_consumer_adaptive():
 
     total_to_process = len(unprocessed_urls)
     initial_count = total_to_process
-    
+
     if total_to_process == 0:
         print("Nothing to process.")
         return
 
     print(f"Total unprocessed URLs: {total_to_process}")
-    print(f"Initializing time-based queue refilling (batch_size={QUEUE_BATCH_SIZE}, interval={QUEUE_FILL_INTERVAL_SECONDS}s)...")
-    
+    print(
+        f"Initializing time-based queue refilling (batch_size={QUEUE_BATCH_SIZE}, interval={QUEUE_FILL_INTERVAL_SECONDS}s)..."
+    )
+
     # Pre-populate initial batch (10 URLs)
     for i in range(min(QUEUE_BATCH_SIZE, len(unprocessed_urls))):
         url_queue.put(unprocessed_urls[i])
-    
+
     initial_batch_count = min(QUEUE_BATCH_SIZE, len(unprocessed_urls))
     print(f"Initial batch queued: {initial_batch_count} URLs")
 
@@ -2522,7 +2630,7 @@ def process_producer_consumer_adaptive():
             unprocessed_urls,  # List from step 5
             queue_filler_stop_event,
             QUEUE_BATCH_SIZE,
-            QUEUE_FILL_INTERVAL_SECONDS
+            QUEUE_FILL_INTERVAL_SECONDS,
         ),
         daemon=False,
     )
@@ -2603,7 +2711,7 @@ def process_producer_consumer_adaptive():
             pbar.write("Initiating shutdown...")
             stop_event.set()
             queue_filler_stop_event.set()  # Stop queue refiller
-            
+
             # Wait for queue filler first
             queue_filler.join(timeout=5)
             if queue_filler.is_alive():
@@ -2643,7 +2751,12 @@ def process_producer_consumer_adaptive():
 
 
 def rate_adjuster_worker(
-    rate_limiter: ThreadSafeRateLimiter, fetch_metrics, metrics_lock, stop_event, target_rate, raw_queue=None
+    rate_limiter: ThreadSafeRateLimiter,
+    fetch_metrics,
+    metrics_lock,
+    stop_event,
+    target_rate,
+    raw_queue=None,
 ):
     """
     BACKGROUND THREAD: Continuously monitors fetch rate and adjusts sleep dynamically.
@@ -2701,7 +2814,12 @@ def rate_adjuster_worker(
 
 
 def fetch_worker_adaptive(
-    url_queue, raw_queue, rate_limiter: ThreadSafeRateLimiter, stop_event, fetch_metrics, metrics_lock
+    url_queue,
+    raw_queue,
+    rate_limiter: ThreadSafeRateLimiter,
+    stop_event,
+    fetch_metrics,
+    metrics_lock,
 ):
     """
     PRODUCER: Downloads content and puts into raw_queue.
@@ -2760,7 +2878,7 @@ def fetch_worker_adaptive(
                     rate_limiter.signal_timeout()
                     url_queue.put((url, accession))
                     time.sleep(0.5)
-                
+
                 elif result[0] == FetchStatus.PERMANENT_FAILURE:
                     print(f"🛑 Permanent failure (404) for {url}. Dropping.")
 
@@ -2868,6 +2986,7 @@ def parse_worker(raw_queue, result_queue):
         except Exception as e:
             print(f"Parse worker error: {e}")
 
+
 existing_report_df = pd.DataFrame()
 # =============================================================================
 # MAIN EXECUTION
@@ -2896,13 +3015,13 @@ if __name__ == "__main__":
     print(f"STEP 2: Perform keyword extraction in parallel")
     print("=" * 70)
     process_producer_consumer_adaptive()
-    
+
     # Sync extracted years back to report_data
     sync_fiscal_years()
-    
+
     # Sync home country from URL patterns
     sync_home_country()
-    
+
     print("\n" + "=" * 70)
     print("All done!")
     print("=" * 70)
