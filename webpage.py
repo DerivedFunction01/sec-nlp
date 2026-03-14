@@ -1235,6 +1235,11 @@ COVER_PAGE_KEYWORDS = [
     "number of shares outstanding",
     "documents incorporated by reference",
     "proxy statement",
+    "shares of common stock outstanding",
+    "shares outstanding",
+    "definitive proxy statement",
+    "incorporated herein by reference",
+    "context indicates otherwise",
 ]
 
 NORMALIZED_TOC_KEYWORDS = [normalize_for_matching(term) for term in TOC_KEYWORDS]
