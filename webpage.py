@@ -1338,18 +1338,33 @@ def drop_table_of_contents(
 
     if toc_detected:
         idx = start_idx
-        while idx < len(blocks):
-            normalized = normalize_for_matching(blocks[idx])
+        char_count = 0
+        body_anchor_found = False
+        while idx < len(blocks) and char_count <= char_limit:
+            block = blocks[idx]
+            normalized = normalize_for_matching(block)
+            char_count += len(block)
+            is_table = block.strip().upper().startswith("<TABLE")
             hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
-            is_table = blocks[idx].strip().upper().startswith("<TABLE")
+
+            if BODY_ANCHOR_RE.match(block.strip()):
+                body_anchor_found = True
+
             if is_table and hits >= 2:
                 idx += 1
                 continue
             if "table of contents" in normalized or hits >= 2:
                 idx += 1
                 continue
-            if BODY_ANCHOR_RE.match(blocks[idx].strip()):
+            if body_anchor_found:
                 return blocks[idx:], idx
+            if re.match(
+                r"^(?:PART\s+(?:[IVX1]+|\d+)|Item\s+\d+\.?|FORWARD[- ]?LOOKING\s+STATEMENTS)$",
+                block.strip(),
+                re.IGNORECASE,
+            ):
+                idx += 1
+                continue
             break
         start_idx = idx
 
