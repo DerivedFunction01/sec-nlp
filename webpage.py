@@ -21,7 +21,7 @@ import json
 import sqlite3
 import unicodedata
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Literal
 from dataclasses import dataclass
 import random
 import re
@@ -1338,50 +1338,109 @@ FORM_10K_ITEMS: List[ItemDef] = [
     ItemDef("item 15", 4, ["exhibits", "financial statement schedules"]),
 ]
 
-# Items that should never appear before the body anchor — Part I item 2+ and all Part II+
-LATE_ITEMS: List[str] = [item.item for item in FORM_10K_ITEMS if not item.early]
-LATE_ITEM_NAMES: List[str] = [
-    name for item in FORM_10K_ITEMS if not item.early for name in item.names
+FORM_20F_ITEMS: List[ItemDef] = [
+    # PART I
+    ItemDef("item 1",  1, ["identity of directors", "senior management", "advisers"], early=True),
+    ItemDef("item 2",  1, ["offer statistics", "expected timetable"], early=True),
+    ItemDef("item 3",  1, ["key information", "risk factors", "capitalization", "selected financial data"], early=True),
+    ItemDef("item 4",  1, ["information on the company", "description of business", "business overview", "organizational structure", "property"], early=True),
+    ItemDef("item 4a", 1, ["unresolved staff comments"], optional=True, early=True),
+    ItemDef("item 5",  1, ["operating and financial review", "management's discussion", "results of operations", "liquidity and capital resources"], early=True),
+    ItemDef("item 6",  1, ["directors, senior management", "executive compensation", "board practices", "employees", "share ownership"]),
+    ItemDef("item 7",  1, ["major shareholders", "related party transactions"]),
+    ItemDef("item 8",  1, ["financial information", "financial statements", "legal proceedings"]),
+    ItemDef("item 9",  1, ["listing details", "markets", "plan of distribution"]),
+    ItemDef("item 10", 1, ["additional information", "memorandum", "articles of association",
+                            "material contracts", "exchange controls", "taxation", "dividends"]),
+    ItemDef("item 11", 1, ["quantitative and qualitative", "about market risk"]),
+    ItemDef("item 12", 1, ["description of securities", "american depositary shares"], optional=True),
+
+    # PART II
+    ItemDef("item 13", 2, ["defaults", "dividends", "arrears"]),
+    ItemDef("item 14", 2, ["material modifications"]),
+    ItemDef("item 15", 2, ["controls and procedures"]),
+    ItemDef("item 16",  2, ["reserved"], optional=True),
+    ItemDef("item 16a", 2, ["audit committee financial expert"]),
+    ItemDef("item 16b", 2, ["code of ethics"]),
+    ItemDef("item 16c", 2, ["principal accountant fees"]),
+    ItemDef("item 16d", 2, ["exemptions from listing standards"]),
+    ItemDef("item 16e", 2, ["purchases of equity securities"]),
+    ItemDef("item 16f", 2, ["change in registrant's certifying accountant"], optional=True),
+    ItemDef("item 16g", 2, ["corporate governance"]),
+    ItemDef("item 16h", 2, ["mine safety disclosure"], optional=True),
+    ItemDef("item 16i", 2, ["disclosure regarding foreign jurisdictions"], optional=True),
+
+    # PART III
+    ItemDef("item 17", 3, ["financial statements"]),
+    ItemDef("item 18", 3, ["financial statements"]),
+    ItemDef("item 19", 3, ["exhibits"]),
 ]
 
-# True body anchors — seeing the label OR name means we've hit real content
-EARLY_ITEMS: List[str] = [item.item for item in FORM_10K_ITEMS if item.early]
-EARLY_ITEM_NAMES: List[str] = [
-    name for item in FORM_10K_ITEMS if item.early for name in item.names
+FORM_40F_ITEMS: List[ItemDef] = [
+    # PART I — incorporated by reference from Canadian AIF/MD&A
+    ItemDef("item 1",  1, ["annual information form", "business", "description of business"], early=True),
+    ItemDef("item 2",  1, ["audited annual financial statements", "financial statements"], early=True),
+    ItemDef("item 3",  1, ["management's discussion", "results of operations", "md&a"], early=True),
+
+    # PART II
+    ItemDef("item 4",  2, ["unresolved staff comments"], optional=True),
+
+    # PART III — boilerplate certifications/governance
+    ItemDef("item 5",  3, ["undertakings"]),
+    ItemDef("item 6",  3, ["consent of independent registered accounting firm", "consent"]),
+    ItemDef("item 7",  3, ["exhibits"]),
 ]
 
-_LATE_ITEM_RE = re.compile(
-    rf"^\s*(?:{build_alternation(LATE_ITEMS + ['part ii', 'part 2', 'part iii', 'part 3', 'part iv', 'part 4'])})\b",
-    re.IGNORECASE,
-)
+FilingFormType = Literal["10-K", "20-F", "40-F"]
 
-NORMALIZED_LATE_ITEM_NAMES: List[str] = [
-    normalize_for_matching(t) for t in LATE_ITEM_NAMES
-]
-NORMALIZED_EARLY_ITEM_NAMES: List[str] = [
-    normalize_for_matching(t) for t in EARLY_ITEM_NAMES
-]
+_FORM_ITEMS_MAP: dict[FilingFormType, List[ItemDef]] = {
+    "10-K": FORM_10K_ITEMS,
+    "20-F": FORM_20F_ITEMS,
+    "40-F": FORM_40F_ITEMS,
+}
 
-TOC_KEYWORDS = [
-    # Early items only: safer anchors for TOC detection
-    *EARLY_ITEMS,
-    *EARLY_ITEM_NAMES,
-    # Parts (very common section headers)
-    "part i",
-    "part 1",
-    "part ii",
-    "part 2",
-    "part iii",
-    "part 3",
-    "part iv",
-    "part 4",
-    "part v",
-    "part 5",
-    # Reserved / omitted indicators (common noise)
-    "[reserved]",
-    "(reserved)",
-    "reserved",
-]
+def get_form_items(form_type: FilingFormType) -> List[ItemDef]:
+    return _FORM_ITEMS_MAP.get(form_type, FORM_10K_ITEMS)
+
+def build_form_derived(form_type: FilingFormType):
+    """Returns all derived lists and regexes for a given form type."""
+    items = get_form_items(form_type)
+
+    late_items      = [i.item for i in items if not i.early]
+    late_names      = [n for i in items if not i.early for n in i.names]
+    early_items     = [i.item for i in items if i.early]
+    early_names     = [n for i in items if i.early for n in i.names]
+
+    late_parts = {
+        "10-K": ["part ii", "part 2", "part iii", "part 3", "part iv", "part 4"],
+        "20-F": ["part ii", "part 2", "part iii", "part 3"],
+        "40-F": ["part ii", "part 2", "part iii", "part 3"],
+    }[form_type]
+
+    late_item_re = re.compile(
+        rf"^\s*(?:{build_alternation(late_items + late_parts)})\b",
+        re.IGNORECASE,
+    )
+
+    toc_keywords = (
+        early_items + early_names
+        + ["part i", "part 1"] + late_parts
+        + ["[reserved]", "(reserved)", "reserved"]
+    )
+
+    return {
+        "late_items":               late_items,
+        "late_names":               late_names,
+        "early_items":              early_items,
+        "early_names":              early_names,
+        "late_item_re":             late_item_re,
+        "toc_keywords":             toc_keywords,
+        "normalized_toc_keywords":  [normalize_for_matching(t) for t in toc_keywords],
+        "normalized_late_names":    [normalize_for_matching(t) for t in late_names],
+        "normalized_early_names":   [normalize_for_matching(t) for t in early_names],
+    }
+
+FORM_DERIVED_CACHE = {ft: build_form_derived(ft) for ft in _FORM_ITEMS_MAP}
 
 
 COVER_PAGE_KEYWORDS = [
@@ -1431,7 +1490,6 @@ COVER_PAGE_KEYWORDS = [
     "context indicates otherwise",
 ]
 
-NORMALIZED_TOC_KEYWORDS = [normalize_for_matching(term) for term in TOC_KEYWORDS]
 NORMALIZED_COVER_PAGE_KEYWORDS = [
     normalize_for_matching(term) for term in COVER_PAGE_KEYWORDS
 ]
@@ -1509,6 +1567,7 @@ def drop_cover_page(
 
 def drop_table_of_contents(
     blocks: List[str],
+    form_type: FilingFormType = "10-K",
     max_scan: int = 50,
     char_limit: int = MAX_TOC_SCAN_CHARS,
 ) -> Tuple[List[str], int]:
@@ -1516,6 +1575,12 @@ def drop_table_of_contents(
     char_count = 0
     toc_detected = False
     _TOC_RESIDUE_MAX_LEN = 120  # chars — TOC lines are short; real prose is longer
+
+    derived = FORM_DERIVED_CACHE.get(form_type, FORM_DERIVED_CACHE["10-K"])
+    norm_toc_kw = derived["normalized_toc_keywords"]
+    late_item_re = derived["late_item_re"]
+    norm_late_names = derived["normalized_late_names"]
+    norm_early_names = derived["normalized_early_names"]
 
     # ── Fast path: forward-looking statement is an unambiguous body start ───
     for idx, block in enumerate(blocks[:max_scan]):
@@ -1531,10 +1596,10 @@ def drop_table_of_contents(
             break
 
         is_table = block.strip().upper().startswith("<TABLE")
-        hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
+        hits = sum(1 for term in norm_toc_kw if term in normalized)
         has_toc_dots = bool(TOC_DOTS_RE.search(block))
-        late_label_hit = bool(_LATE_ITEM_RE.match(block.strip()))
-        late_name_hit = any(term in normalized for term in NORMALIZED_LATE_ITEM_NAMES)
+        late_label_hit = bool(late_item_re.match(block.strip()))
+        late_name_hit = any(term in normalized for term in norm_late_names)
 
         # Body anchor only valid AFTER we've seen TOC content
         if toc_detected and BODY_ANCHOR_RE.match(block.strip()):
@@ -1571,10 +1636,10 @@ def drop_table_of_contents(
         normalized = normalize_for_matching(block)
         char_count += len(block)
         is_table = block.strip().upper().startswith("<TABLE")
-        hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
+        hits = sum(1 for term in norm_toc_kw if term in normalized)
         has_toc_dots = bool(TOC_DOTS_RE.search(block))
-        late_label_hit = bool(_LATE_ITEM_RE.match(block.strip()))
-        late_name_hit = any(term in normalized for term in NORMALIZED_LATE_ITEM_NAMES)
+        late_label_hit = bool(late_item_re.match(block.strip()))
+        late_name_hit = any(term in normalized for term in norm_late_names)
 
         if BODY_ANCHOR_RE.match(block.strip()):
             start_idx = idx
@@ -1608,7 +1673,7 @@ def drop_table_of_contents(
 
         # Early item name = real body start, stop and keep this block
         # Check BEFORE any stripping logic so e.g. "Business" is never consumed
-        if any(name in normalized for name in NORMALIZED_EARLY_ITEM_NAMES):
+        if any(name in normalized for name in norm_early_names):
             clean_start = i
             break
 
@@ -1619,9 +1684,9 @@ def drop_table_of_contents(
 
         # Only strip if it's purely a late-item signal with no early-item content
         if (
-            _LATE_ITEM_RE.match(stripped)
+            late_item_re.match(stripped)
             or SECTION_LABEL_RE.match(stripped)
-            or any(name in normalized for name in NORMALIZED_LATE_ITEM_NAMES)
+            or any(name in normalized for name in norm_late_names)
         ):
             clean_start = i + 1
             continue
@@ -2556,6 +2621,7 @@ def parse_content(data):
         return None
 
     is_20f, is_40f, home_country, url_determined = detect_filing_type(url, raw_text)
+    form_type: FilingFormType = "20-F" if is_20f else "40-F" if is_40f else "10-K"
 
     try:
         # 1. Parse multi-document content
@@ -2606,7 +2672,7 @@ def parse_content(data):
 
         document_blocks = prefilter_blocks(document_blocks)
         document_blocks, cover_dropped = drop_cover_page(document_blocks)
-        document_blocks, toc_start_idx = drop_table_of_contents(document_blocks)
+        document_blocks, toc_start_idx = drop_table_of_contents(document_blocks, form_type=form_type)
         document_blocks, header_markers = remove_repeating_markers(document_blocks)
         debug_print(
             f"Dropped {cover_dropped} cover blocks, {toc_start_idx} TOC blocks, {len(header_markers)} repeating markers"
