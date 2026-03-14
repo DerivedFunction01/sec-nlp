@@ -1126,22 +1126,55 @@ def extract_fiscal_year(text: str, accession: Optional[str] = None) -> Optional[
         
     return None
 
-def filter_paragraphs_loose(text: str) -> List[str]:
-    """Placeholder paragraph splitter; keeps whatever text appears with minimal cleanup."""
+def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> List[str]:
+    """Placeholder paragraph splitter with simple heuristics for pruning boilerplate."""
     if not text:
         return []
 
-    blocks: List[str] = []
+    def is_discardable(chunk: str) -> bool:
+        lower_chunk = chunk.lower()
+        if not re.search(r"[A-Za-z0-9]", chunk):
+            return True
+        if lower_chunk == "table of contents":
+            return True
+        if company_name and lower_chunk == company_name.strip().lower():
+            return True
+        if chunk.isdigit():
+            return True
+        return False
+
+    def ends_sentence(chunk: str) -> bool:
+        stripped = chunk.rstrip()
+        return bool(stripped) and stripped[-1] in {".", "!", "?", ";", ":"}
+
+    merged_blocks: List[str] = []
+
     for part in TABLE_SPLIT_PATTERN.split(text):
         if not part.strip():
             continue
-        # Treat each chunk as a paragraph block
+        stripped_part = part.strip()
+
+        if stripped_part.upper().startswith("<TABLE"):
+            if not is_discardable(stripped_part):
+                merged_blocks.append(stripped_part)
+            continue
+
+        # Treat non-table chunks as paragraph blocks
         for para in PARAGRAPH_SPLIT_PATTERN.split(part):
             cleaned = para.strip()
-            if cleaned:
-                blocks.append(cleaned)
+            if not cleaned or is_discardable(cleaned):
+                continue
 
-    return blocks
+            if (
+                merged_blocks
+                and cleaned[0].islower()
+                and not ends_sentence(merged_blocks[-1])
+            ):
+                merged_blocks[-1] = merged_blocks[-1].rstrip() + " " + cleaned
+            else:
+                merged_blocks.append(cleaned)
+
+    return merged_blocks
 
 
 def filter_by_fyear(filings: list[dict], fyear: int) -> list[dict]:
