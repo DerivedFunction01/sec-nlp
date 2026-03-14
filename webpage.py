@@ -1518,13 +1518,10 @@ def drop_table_of_contents(
     # ── Fast path: forward-looking statement is an unambiguous body start ───
     for idx, block in enumerate(blocks[:max_scan]):
         if re.match(_RE["fwd"], block.strip(), re.IGNORECASE):
-            # Confirm it's the real section, not a TOC entry:
-            # the next non-empty block should be prose, not another label
             next_blocks = [b for b in blocks[idx + 1 : idx + 4] if b.strip()]
             if next_blocks and len(next_blocks[0].strip()) > _TOC_RESIDUE_MAX_LEN:
                 return blocks[idx:], idx
 
-    # ── First pass: find the TOC and its end ────────────────────────────────
     for idx, block in enumerate(blocks[:max_scan]):
         normalized = normalize_for_matching(block)
         char_count += len(block)
@@ -1597,26 +1594,28 @@ def drop_table_of_contents(
         break
 
     # ── Cleanup pass: strip late-item residue before the real body ───────────
-
     result = blocks[start_idx:]
     clean_start = 0
     for i, block in enumerate(result):
         normalized = normalize_for_matching(block)
         stripped = block.strip()
 
-        # Long block = real content, stop immediately regardless of keyword hits
+        # Long block = real content, stop immediately
         if len(stripped) > _TOC_RESIDUE_MAX_LEN:
             break
 
-        # Positive stop: real body anchor by label or early section name
-        if BODY_ANCHOR_RE.match(stripped):
-            clean_start = i
-            break
+        # Early item name = real body start, stop and keep this block
+        # Check BEFORE any stripping logic so e.g. "Business" is never consumed
         if any(name in normalized for name in NORMALIZED_EARLY_ITEM_NAMES):
             clean_start = i
             break
 
-        # Keep stripping only short blocks that look like TOC residue
+        # Body anchor label (PART I, ITEM 1, FORWARD-LOOKING)
+        if BODY_ANCHOR_RE.match(stripped):
+            clean_start = i
+            break
+
+        # Only strip if it's purely a late-item signal with no early-item content
         if (
             _LATE_ITEM_RE.match(stripped)
             or SECTION_LABEL_RE.match(stripped)
@@ -1625,7 +1624,7 @@ def drop_table_of_contents(
             clean_start = i + 1
             continue
 
-        # Short block but no TOC signal — stop, don't risk dropping real content
+        # Short block, no signal either way — stop, don't risk over-stripping
         break
 
     return result[clean_start:], start_idx
