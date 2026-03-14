@@ -110,7 +110,7 @@ def get_system_config():
 # REGEX PATTERNS AND KEYWORDS
 # =============================================================================
 from defs.table_definitions import HTMLTableConverter
-from defs.region_regex_lite import RegionMatcher, TAX_HAVEN_CODES, REGION_CODES
+from defs.region_regex import RegionMatcher, TAX_HAVEN_CODES, REGION_CODES
 from defs.regex_lib import build_regex
 
 FILING_TYPES = {
@@ -126,10 +126,8 @@ FILING_TYPES = {
 
 CLEANUP_PATTERNS = [
     (re.compile(r"([a-z])([A-Z])"), r"\1 \2"),
-    (re.compile(r"([a-zA-Z])(\d+)"), r"\1 \2"),
-    (re.compile(r"(\d+)([a-zA-Z])"), r"\1 \2"),
-    (re.compile(r"([a-zA-Z0-9])(\$)"), r"\1 \2"),
     (re.compile(r"(?:\b\d{1,3}\s*)?<PAGE>(?:\s*\d{1,3}\b)?", re.IGNORECASE), r""),
+    (re.compile(r"\b-\d{1,3}-\b", re.IGNORECASE), r""),
 ]
 
 
