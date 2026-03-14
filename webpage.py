@@ -1507,6 +1507,7 @@ def drop_table_of_contents(
     char_count = 0
     toc_detected = False
 
+    # ── First pass: find the TOC and its end ────────────────────────────────
     for idx, block in enumerate(blocks[:max_scan]):
         normalized = normalize_for_matching(block)
         char_count += len(block)
@@ -1519,10 +1520,11 @@ def drop_table_of_contents(
         late_label_hit = bool(_LATE_ITEM_RE.match(block.strip()))
         late_name_hit = any(term in normalized for term in NORMALIZED_LATE_ITEM_NAMES)
 
-        # ✅ Only use BODY_ANCHOR_RE as an exit signal AFTER we've seen TOC content
+        # Body anchor only valid AFTER we've seen TOC content
         if toc_detected and BODY_ANCHOR_RE.match(block.strip()):
             return blocks[idx:], idx
-        # Late items this early are usually TOC noise; keep dropping until real anchor.
+
+        # Late-section labels/names this early are always TOC residue
         if late_label_hit or late_name_hit:
             toc_detected = True
             start_idx = idx + 1
@@ -1539,39 +1541,73 @@ def drop_table_of_contents(
             continue
 
         if toc_detected:
-            return blocks[idx:], idx
-
-    if toc_detected:
-        idx = start_idx
-        char_count = 0
-        while idx < len(blocks) and char_count <= char_limit:
-            block = blocks[idx]
-            normalized = normalize_for_matching(block)
-            char_count += len(block)
-            is_table = block.strip().upper().startswith("<TABLE")
-            hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
-            has_toc_dots = bool(TOC_DOTS_RE.search(block))
-            late_label_hit = bool(_LATE_ITEM_RE.match(block.strip()))
-            late_name_hit = any(term in normalized for term in NORMALIZED_LATE_ITEM_NAMES)
-
-            if is_table and hits >= 2:
-                idx += 1
-                continue
-            if "table of contents" in normalized or hits >= 2 or has_toc_dots:
-                idx += 1
-                continue
-            if SECTION_LABEL_RE.match(block.strip()):
-                idx += 1
-                continue
-            if BODY_ANCHOR_RE.match(block.strip()):
-                return blocks[idx:], idx
-            if late_label_hit or late_name_hit:
-                idx += 1
-                continue
+            start_idx = idx
             break
-        start_idx = idx
 
-    return blocks[start_idx:], start_idx
+    if not toc_detected:
+        return blocks, 0
+
+    # ── Second pass: consume any remaining TOC blocks after start_idx ───────
+    idx = start_idx
+    char_count = 0
+    while idx < len(blocks) and char_count <= char_limit:
+        block = blocks[idx]
+        normalized = normalize_for_matching(block)
+        char_count += len(block)
+        is_table = block.strip().upper().startswith("<TABLE")
+        hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
+        has_toc_dots = bool(TOC_DOTS_RE.search(block))
+        late_label_hit = bool(_LATE_ITEM_RE.match(block.strip()))
+        late_name_hit = any(term in normalized for term in NORMALIZED_LATE_ITEM_NAMES)
+
+        if BODY_ANCHOR_RE.match(block.strip()):
+            start_idx = idx
+            break
+        if (is_table and hits >= 2) or has_toc_dots:
+            idx += 1
+            continue
+        if "table of contents" in normalized or hits >= 2:
+            idx += 1
+            continue
+        if SECTION_LABEL_RE.match(block.strip()):
+            idx += 1
+            continue
+        if late_label_hit or late_name_hit:
+            idx += 1
+            continue
+        # Non-TOC, non-anchor block — stop here
+        start_idx = idx
+        break
+
+    # ── Cleanup pass: strip late-item residue before the real body ───────────
+    result = blocks[start_idx:]
+    clean_start = 0
+    for i, block in enumerate(result):
+        normalized = normalize_for_matching(block)
+
+        # Positive stop: real body anchor by label or early section name
+        if BODY_ANCHOR_RE.match(block.strip()):
+            clean_start = i
+            break
+        if any(name in normalized for name in NORMALIZED_EARLY_ITEM_NAMES):
+            clean_start = i
+            break
+
+        # Keep stripping: late labels, late names, structural part labels
+        if (
+            _LATE_ITEM_RE.match(block.strip())
+            or SECTION_LABEL_RE.match(block.strip())
+            or any(name in normalized for name in NORMALIZED_LATE_ITEM_NAMES)
+        ):
+            clean_start = i + 1
+            continue
+
+        # Substantive prose — stop stripping regardless
+        if len(block.strip()) > 80:
+            break
+
+    return result[clean_start:], start_idx
+
 
 
 def identify_repeating_markers(
