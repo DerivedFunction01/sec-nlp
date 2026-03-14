@@ -1316,7 +1316,14 @@ FORM_10K_ITEMS: List[ItemDef] = [
     ItemDef("item 5", 2, ["market for registrant"]),
     ItemDef("item 6", 2, ["selected financial data"], optional=True),
     ItemDef("item 7", 2, ["management's discussion", "results of operations"]),
-    ItemDef("item 7a", 2, ["quantitative and qualitative", "about market risk"]),
+    ItemDef(
+        "item 7a",
+        2,
+        [
+            "quantitative and qualitative",
+            "qualitative and quantitative", "about market risk",
+        ],
+    ),
     ItemDef("item 8", 2, ["financial statements", "supplementary data"]),
     ItemDef("item 9", 2, ["changes in and disagreements", "accountants"]),
     ItemDef("item 9a", 2, ["controls and procedures"]),
