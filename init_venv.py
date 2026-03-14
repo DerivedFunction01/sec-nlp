@@ -48,7 +48,7 @@ CLASSIFICATION_PACKAGES = [
     "uvicorn",
     "pydantic",
     "gunicorn",
-    "transformers",  
+    "transformers",
     "flask",
     "flask_cors",
     "waitress",
@@ -153,10 +153,55 @@ def detect_amd_gpu():
     return False
 
 
+def get_supported_cuda_version(detected: str) -> str:
+    """
+    Clamp the detected CUDA version to the latest wheel PyTorch actually
+    publishes. Newer drivers are backward-compatible, so the highest
+    supported wheel always works.
+
+    Update SUPPORTED_CUDA_VERSIONS when PyTorch adds new wheels.
+    See: https://download.pytorch.org/whl/torch/
+    """
+    # Ordered from lowest to highest
+    SUPPORTED_CUDA_VERSIONS = ["cu118", "cu121", "cu124", "cu126", "cu128"]
+
+    if detected in SUPPORTED_CUDA_VERSIONS:
+        return detected
+
+    # Extract the numeric part (e.g. "cu132" -> 132) for comparison
+    def _ver_num(tag: str) -> int:
+        try:
+            return int(tag.replace("cu", ""))
+        except ValueError:
+            return 0
+
+    detected_num = _ver_num(detected)
+    supported_nums = [_ver_num(v) for v in SUPPORTED_CUDA_VERSIONS]
+
+    # If detected is newer than all known wheels, use the latest supported
+    if detected_num > max(supported_nums):
+        clamped = SUPPORTED_CUDA_VERSIONS[-1]
+        print(
+            f"   ⚠️  CUDA {detected} has no PyTorch wheel yet. "
+            f"Falling back to {clamped} (fully compatible with your driver)."
+        )
+        return clamped
+
+    # If detected is between known versions, pick the closest lower one
+    for ver, num in zip(reversed(SUPPORTED_CUDA_VERSIONS), reversed(supported_nums)):
+        if detected_num >= num:
+            print(f"   ⚠️  No exact wheel for {detected}, using {ver}.")
+            return ver
+
+    # Shouldn't reach here, but default to latest to be safe
+    return SUPPORTED_CUDA_VERSIONS[-1]
+
+
 def get_pytorch_install_cmd():
     """Generate PyTorch installation command based on GPU availability"""
     if GPU_AVAILABLE == "nvidia":
-        return f"torch --index-url https://download.pytorch.org/whl/{CUDA_VERSION}"
+        wheel_tag = get_supported_cuda_version(CUDA_VERSION)
+        return f"torch --index-url https://download.pytorch.org/whl/{wheel_tag}"
     elif GPU_AVAILABLE == "amd":
         return "torch --index-url https://download.pytorch.org/whl/rocm6.2"
     else:
