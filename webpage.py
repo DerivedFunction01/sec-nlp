@@ -1089,12 +1089,12 @@ def extract_fiscal_year(text: str, accession: Optional[str] = None) -> Optional[
         # Limit search to first N chars to avoid false positives later in text
         CHAR_LIMIT = 7500
         header_text = text[:CHAR_LIMIT] 
-        
+
         # Check for 10-K header first
         ar_match = ANNUAL_REPORT_PATTERN.search(header_text)
         if not ar_match:
             return None
-            
+
         fy_match = FISCAL_YEAR_PATTERN.search(header_text)
         if fy_match:
             # Safety Check 1: Distance
@@ -1107,14 +1107,14 @@ def extract_fiscal_year(text: str, accession: Optional[str] = None) -> Optional[
             year_match = re.search(r"\d{4}", date_str)
             if year_match:
                 extracted_year = int(year_match.group(0))
-                
+
                 # Safety Check 2: Year vs Accession
                 if accession and isinstance(accession, str) and len(accession) == 18 and accession.isdigit():
                     try:
                         filing_yy = int(accession[10:12])
                         # Estimate filing year (EDGAR started ~1993)
                         filing_year = (1900 + filing_yy) if filing_yy >= 90 else (2000 + filing_yy)
-                        
+
                         # Allow extracted year to be within [filing_year - 2, filing_year + 1]
                         if not (filing_year - 2 <= extracted_year <= filing_year + 1):
                             return None
@@ -1123,8 +1123,146 @@ def extract_fiscal_year(text: str, accession: Optional[str] = None) -> Optional[
                 return str(extracted_year)
     except Exception:
         pass
-        
+
     return None
+
+TOC_KEYWORDS = [
+    # Core Items (most reliable anchors)
+    "item 1",
+    "item 1a",
+    "item 1b",
+    "item 1c",  # cybersecurity (2023+)
+    "item 2",
+    "item 3",
+    "item 4",
+    "item 5",
+    "item 6",
+    "item 7",
+    "item 7a",
+    "item 8",
+    "item 9",
+    "item 9a",
+    "item 9b",
+    "item 10",
+    "item 11",
+    "item 12",
+    "item 13",
+    "item 14",
+    "item 15",
+    # Parts (very common section headers)
+    "part i",
+    "part ii",
+    "part iii",
+    "part iv",
+    # High-value signature phrases (very stable over time)
+    "business",
+    "risk factors",
+    "unresolved staff comments",
+    "properties",
+    "legal proceedings",
+    "mine safety disclosures",
+    "market for registrant",
+    "selected financial data",  # older filings
+    "management's discussion",
+    "results of operations",
+    "quantitative and qualitative",
+    "about market risk",
+    "financial statements",
+    "supplementary data",
+    "changes in and disagreements",
+    "accountants",
+    "directors",
+    "executive officers",
+    "executive compensation",
+    "security ownership",
+    "certain relationships",
+    "related transactions",
+    "principal accountant fees",
+    "exhibits",
+    "financial statement schedules",
+    # Reserved / omitted indicators (common noise)
+    "[reserved]",
+    "(reserved)",
+    "reserved",
+]
+
+
+COVER_PAGE_KEYWORDS = [
+    "form 10-k",
+    "annual report pursuant",
+    "report pursuant to section 13",
+    "report pursuant to section 15(d)",
+    "transition report pursuant",
+    "securities exchange act",
+    "exchange act of 1934",
+    "indicate by check mark",
+    "indicate by check mark if",
+    "check mark if the registrant is",
+    "well-known seasoned issuer",
+    "rule 405 of the securities act",
+    "not required to file reports",
+    "pursuant to section 13 or 15(d)",
+    "has filed all reports required",
+    "preceding 12 months",
+    "subject to such filing requirements",
+    "past 90 days",
+    "large accelerated filer",
+    "accelerated filer",
+    "non-accelerated filer",
+    "smaller reporting company",
+    "emerging growth company",
+    "shell company",
+    "interactive data file",
+    "rule 405 of regulation s-t",
+    "united states securities and exchange commission",
+    "washington, d.c. 20549",
+    "commission file number",
+    "exact name of registrant",
+    "state or other jurisdiction",
+    "irs employer identification no",
+    "principal executive offices",
+    "aggregate market value",
+    "non-affiliates",
+    "number of shares outstanding",
+    "documents incorporated by reference",
+    "proxy statement",
+]
+
+
+MAX_TOC_SCAN_CHARS = 25000
+
+
+def drop_table_of_contents(blocks: List[str], max_scan: int = 50, char_limit: int = MAX_TOC_SCAN_CHARS) -> List[str]:
+    """Remove leading blocks that appear to be part of the cover/TOC."""
+
+    def find_cover_start(blocks: List[str], scan: int) -> int:
+        for idx, block in enumerate(blocks[:scan]):
+            lower_block = block.lower()
+            match_count = sum(1 for term in COVER_PAGE_KEYWORDS if term in lower_block)
+            if match_count >= 2:
+                return idx + 1
+        return 0
+
+    cover_idx = find_cover_start(blocks, 5)
+    start_idx = cover_idx
+    char_count = 0
+
+    for idx, block in enumerate(blocks[start_idx : start_idx + max_scan], start=start_idx):
+        lower_block = block.lower()
+        char_count += len(block)
+        if char_count > char_limit:
+            break
+        if "table of contents" in lower_block:
+            start_idx = idx + 1
+            break
+
+        match_count = sum(1 for term in TOC_KEYWORDS if term in lower_block)
+        if match_count >= 3:
+            start_idx = idx + 1
+            break
+
+    return blocks[start_idx:]
+
 
 def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> List[str]:
     """Placeholder paragraph splitter with simple heuristics for pruning boilerplate."""
@@ -1140,6 +1278,8 @@ def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> Li
         if company_name and lower_chunk == company_name.strip().lower():
             return True
         if chunk.isdigit():
+            return True
+        if re.fullmatch(r"[A-Za-z]-\d+", chunk):
             return True
         return False
 
@@ -1999,6 +2139,8 @@ def parse_content(data):
             except Exception as e:
                 print(f"  ⚠️  Error extracting blocks from document {doc_idx + 1} of {url}: {e}")
                 continue
+
+        document_blocks = drop_table_of_contents(document_blocks)
 
         # Determine home country from the first document (usually the main filing)
         # Only if not already determined by URL
