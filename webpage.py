@@ -117,9 +117,8 @@ def get_system_config():
 # REGEX PATTERNS AND KEYWORDS
 # =============================================================================
 from defs.table_definitions import HTMLTableConverter
-from defs.region_regex_lite import RegionMatcher, TAX_HAVEN_CODES, REGION_CODES
+from defs.region_regex import RegionMatcher, TAX_HAVEN_CODES, REGION_CODES
 from defs.regex_lib import build_regex
-from report_data_utils import build_unique_report_df, extract_accession_info
 
 FILING_TYPES = {
     "10-K",
