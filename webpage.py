@@ -1514,6 +1514,7 @@ COVER_PAGE_KEYWORDS = [
     "report on form 8-k",
     "form 8-k dated",
     "item 3 02",  # normalized item references in 8-K line
+    "checkbox", "check box", "check mark", "check marks",
 ]
 
 NORMALIZED_COVER_PAGE_KEYWORDS = [
