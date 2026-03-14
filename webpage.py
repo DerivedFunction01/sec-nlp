@@ -1593,7 +1593,7 @@ TOC_DOTS_RE = re.compile(
     r"(?:\.[\s.]*){4,}|(?:\.[\s.]*){3}\s*(?:\d+(?:-\d+)?|[A-Za-z]{1,3}(?:-?\d+)?)\b",
     re.IGNORECASE
 )
-MAX_TOC_SCAN_CHARS = 50000
+MAX_TOC_SCAN_CHARS = 25000
 
 ALPHANUM_RE = re.compile(r"[A-Za-z0-9]")
 _FORM_LABEL_FULL_RE = re.compile(r"^[A-Za-z]-\d+$")
