@@ -1261,6 +1261,15 @@ def drop_table_of_contents(
     start_idx = cover_idx
     char_count = 0
 
+    def block_looks_like_toc(block: str, normalized: str) -> bool:
+        if "table of contents" in normalized:
+            return True
+        match_count = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
+        if match_count >= 2:
+            return True
+        return False
+
+    toc_detected = False
     for idx, block in enumerate(blocks[start_idx : start_idx + max_scan], start=start_idx):
         normalized = normalize_for_matching(block)
         char_count += len(block)
@@ -1268,12 +1277,28 @@ def drop_table_of_contents(
             break
         if "table of contents" in normalized:
             start_idx = idx + 1
+            toc_detected = True
             break
 
         match_count = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
         if match_count >= 3:
             start_idx = idx + 1
+            toc_detected = True
             break
+
+    if toc_detected:
+        additional_idx = start_idx
+        while additional_idx < len(blocks):
+            block = blocks[additional_idx]
+            normalized = normalize_for_matching(block)
+            if block_looks_like_toc(block, normalized):
+                additional_idx += 1
+                continue
+            if block.strip().upper().startswith("<TABLE"):
+                additional_idx += 1
+                continue
+            break
+        start_idx = additional_idx
 
     return blocks[start_idx:], start_idx
 
