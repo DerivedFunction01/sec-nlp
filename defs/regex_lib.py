@@ -2,6 +2,7 @@ from enum import Enum
 import re
 from typing import Any, List, Optional
 
+
 def build_alternation(items: List[str], sort_longest_first: bool = True) -> str:
     """
     Build regex alternation pattern, optionally sorting by length (longest first).
@@ -52,7 +53,7 @@ def add_restrictions(
     base: str,
     lookaheads: Optional[List[str]] = None,
     lookbehinds: Optional[List[str]] = None,
-    lookahead_sep: Optional[str] = "[- ]"
+    lookahead_sep: Optional[str] = "[- ]",
 ) -> str:
     pattern = base
     if lookbehinds:
@@ -64,11 +65,11 @@ def add_restrictions(
     return pattern
 
 
-def build_regex(keywords: list|set, ignore_case: bool = True, use_sep: bool = True) -> re.Pattern:
-    """Build regex for that also builds the alternation."""
-    # Add word boundaries (\b) around each keyword to prevent partial matches
+def build_regex(
+    keywords: list | set | str, use_sep: bool = True, flags: re.RegexFlag = re.IGNORECASE
+) -> re.Pattern:
     pattern = to_build_alternation(keywords)
-    return re.compile(rf"\b{pattern}\b" if use_sep else pattern, re.IGNORECASE if ignore_case else 0)
+    return re.compile(rf"\b{pattern}\b" if use_sep else pattern, flags)
 
 
 def to_list(items: Any) -> List[str]:
@@ -105,6 +106,7 @@ def build_compound(
     suffix_part = f"{sep_suffix}{to_build_alternation(suffix)}" if suffix else ""
     return f"{prefix_part}{core_part}{suffix_part}"
 
+
 def plural(string: str | Enum) -> str:
     if isinstance(string, Enum):
         string = string.value
@@ -134,7 +136,7 @@ SENTENCE_SPLIT_PATTERN = re.compile(
     r"(?<!\bp\.)"  # p. (page) - FIXED (Separated)
     r"(?<!\bpp\.)"  # pp. (pages) - FIXED (Separated)
     r"(?<!\b[Ee]tc\.)"  # etc.
-    r"(?<!\bSt\.)" # St. Petersburg
+    r"(?<!\bSt\.)"  # St. Petersburg
     r"\s+(?=[A-Z_<])"  # Must be followed by Whitespace + Uppercase <-- issue: doesn't consider tags
 )
 
