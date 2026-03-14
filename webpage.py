@@ -42,7 +42,7 @@ import subprocess
 # CONFIGURATION - DEFAULT
 # =============================================================================
 DEBUG = False
-ALL_FIRMS_DATA = "derivatives_data.csv"
+ALL_FIRMS_DATA = "cik_data.csv"
 REPORT_CSV_PATH = "report_data.csv"
 DB_PATH = "web_data.db"
 MAX_LEN = 1000
@@ -110,10 +110,8 @@ def get_system_config():
 # REGEX PATTERNS AND KEYWORDS
 # =============================================================================
 from defs.table_definitions import HTMLTableConverter
-from defs.region_regex import RegionMatcher, TAX_HAVEN_CODES, REGION_CODES
-from defs.union_regex import LABOR_TERMS, RISK_TERMS, DYNAMIC_UNION_REGEX
+from defs.region_regex_lite import RegionMatcher, TAX_HAVEN_CODES, REGION_CODES
 from defs.regex_lib import build_regex
-from defs.text_cleaner import WebTextCleaner
 
 FILING_TYPES = {
     "10-K",
@@ -140,13 +138,9 @@ TABLE_HINT_PATTERN = re.compile(
     r"\b(table|summary|following|below|presented|summarized|\:)\b", re.IGNORECASE
 )
 
-LOOSE_TERMS = LABOR_TERMS.SPECIFIC_PHRASES + RISK_TERMS.PHRASES
-LOOSE_FILTER_REGEX = build_regex(LOOSE_TERMS)
 
-# Initialize RegionMatcher to access specific union regexes (e.g. "UAW", "IG Metall")
+# Initialize RegionMatcher to access location regexes for home-country detection
 REGION_MATCHER = RegionMatcher()
-WEB_CLEANER = WebTextCleaner()
-
 # Pattern to find single newlines that are not preceded or followed by another newline (i.e., wrapped lines)
 WRAPPED_LINE_PATTERN = re.compile(r"(?<!\n)[ \t]*\n[ \t]*(?!\n)")
 PARAGRAPH_SPLIT_PATTERN = re.compile(r"\n\s*\n")
@@ -334,7 +328,7 @@ HOME_COUNTRY_PATTERNS = [
 # =============================================================================
 # LOAD DATA
 # =============================================================================
-all_derivatives_df = pd.DataFrame()
+all_df = pd.DataFrame()
 
 # =============================================================================
 # DEBUG UTILITIES
@@ -385,8 +379,7 @@ def create_db():
             """
             CREATE TABLE IF NOT EXISTS webpage_result (
                 accession TEXT PRIMARY KEY,
-                item1 TEXT,
-                item1a TEXT,
+                documents TEXT,
                 period_of_report TEXT,
                 home_country TEXT
             )
@@ -552,8 +545,13 @@ def save_process_result(df):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute(
-        "INSERT OR REPLACE INTO webpage_result (accession, item1, item1a, period_of_report, home_country) VALUES (?, ?, ?, ?, ?)",
-        (df.accession, json.dumps(df.item1), json.dumps(df.item1a), df.get("period_of_report"), df.get("home_country")),
+        "INSERT OR REPLACE INTO webpage_result (accession, documents, period_of_report, home_country) VALUES (?, ?, ?, ?)",
+        (
+            df.accession,
+            json.dumps(df.documents),
+            df.get("period_of_report"),
+            df.get("home_country"),
+        ),
     )
     conn.commit()
     conn.close()
@@ -566,9 +564,17 @@ def save_process_result_batch(batch_df):
     c = conn.cursor()
     # Use executemany logic via pandas to_sql or raw SQL
     try:
-        data = list(zip(batch_df.accession, batch_df.item1.apply(json.dumps), batch_df.item1a.apply(json.dumps), batch_df.period_of_report, batch_df.home_country))
+        data = list(
+            zip(
+                batch_df.accession,
+                batch_df.documents.apply(json.dumps),
+                batch_df.period_of_report,
+                batch_df.home_country,
+            )
+        )
         c.executemany(
-            "INSERT OR REPLACE INTO webpage_result (accession, item1, item1a, period_of_report, home_country) VALUES (?, ?, ?, ?, ?)", data
+            "INSERT OR REPLACE INTO webpage_result (accession, documents, period_of_report, home_country) VALUES (?, ?, ?, ?)",
+            data,
         )
         conn.commit()
     except Exception as e:
@@ -1253,149 +1259,22 @@ def extract_fiscal_year(text: str, accession: Optional[str] = None) -> Optional[
     return None
 
 def filter_paragraphs_loose(text: str) -> List[str]:
-    blocks = []
-    parts = TABLE_SPLIT_PATTERN.split(text)
-    for part in parts:
-        if not part.strip():
-            continue
-        if part.strip().upper().startswith("<TABLE"):
-            blocks.append(part)
-        else:
-            part = WEB_CLEANER.clean(part)
-            if not LOOSE_FILTER_REGEX.search(part):
-                continue
-            paras = PARAGRAPH_SPLIT_PATTERN.split(part)
-            for p in paras:
-                if p.strip():
-                    blocks.append(p.strip())
-
-    if not blocks:
+    """Placeholder paragraph splitter; keeps whatever text appears with minimal cleanup."""
+    if not text:
         return []
 
-    indices_to_keep = set()
-    WINDOW = 5
+    blocks: List[str] = []
+    for part in TABLE_SPLIT_PATTERN.split(text):
+        if not part.strip():
+            continue
+        # Treat each chunk as a paragraph block
+        for para in PARAGRAPH_SPLIT_PATTERN.split(part):
+            cleaned = para.strip()
+            if cleaned:
+                blocks.append(cleaned)
 
-    # Bidirectional scan
-    left, right = 0, len(blocks) - 1
+    return blocks
 
-    while left <= right:
-        # Scan from left
-        if left <= right:
-            end_idx = min(left + WINDOW, right + 1)
-            chunk_text = " ".join(blocks[left:end_idx])
-            if LOOSE_FILTER_REGEX.search(chunk_text):
-                for j in range(left, end_idx):
-                    indices_to_keep.add(j)
-            left = end_idx
-
-        # Scan from right
-        if left <= right:
-            start_idx = max(right - WINDOW + 1, left)
-            chunk_text = " ".join(blocks[start_idx:right + 1])
-            if LOOSE_FILTER_REGEX.search(chunk_text):
-                for j in range(start_idx, right + 1):
-                    indices_to_keep.add(j)
-            right = start_idx - 1
-
-    # Add context
-    final_indices = set()
-    for i in indices_to_keep:
-        final_indices.add(i)
-        if i > 0:
-            final_indices.add(i - 1)
-        if i < len(blocks) - 1:
-            final_indices.add(i + 1)
-
-    return [blocks[i] for i in sorted(final_indices)]
-
-
-def filter_for_item1(content: str, is_20f: bool = False, is_40f: bool = False) -> Tuple[str, str]:
-    """
-    Filters content to extract Business and Risk Factors sections.
-    
-    Returns:
-        Tuple[str, str]: (business_section, risk_section)
-    """
-    # Select config based on document type
-    if is_40f:
-        config = PATTERN_CONFIG['40F']
-    elif is_20f:
-        config = PATTERN_CONFIG['20F']
-    else:
-        config = PATTERN_CONFIG['10K']
-    
-    patterns = config['patterns']
-    business_label = config['business_label']
-    risk_label = config['risk_label']
-    
-    # ========================================================================
-    # BOUNDARY DETECTION: Find where to search
-    # ========================================================================
-    search_start = 0
-    search_end = len(content)
-    
-    # Find Part I/Part II boundaries
-    p1_match = PART_I_PATTERN.search(content)
-    p2_matches = list(PART_II_PATTERN.finditer(content))
-    
-    if p1_match:
-        search_start = p1_match.start()
-    
-    if p2_matches:
-        # Use the last Part II as the end boundary
-        search_end = p2_matches[-1].start()
-    else:
-        # If no Part II found, cap at 75% of content (rough heuristic)
-        search_end = int(len(content) * 0.75)
-    
-    # Cap the search to avoid processing huge blocks
-    MAX_BLOCK_SIZE = 500000
-    relevant_content = content[search_start:search_end]
-    if len(relevant_content) > MAX_BLOCK_SIZE:
-        relevant_content = relevant_content[:MAX_BLOCK_SIZE]
-    
-    # ========================================================================
-    # PATTERN MATCHING: Find all section starts
-    # ========================================================================
-    matches = []
-    for pattern, label in patterns:
-        for m in pattern.finditer(relevant_content):
-            # Skip boundary matches for 40-F (they're only for delimiting)
-            if label == '40F_BOUNDARY':
-                continue
-            matches.append((m.start(), m.end(), label))
-    
-    if not matches:
-        return "", ""
-    
-    # Sort by position
-    matches.sort(key=lambda x: x[0])
-    
-    # ========================================================================
-    # BLOCK EXTRACTION: Extract content between section headers
-    # ========================================================================
-    business_section = ""
-    risk_section = ""
-    
-    for i, (start, header_end, label) in enumerate(matches):
-        # Determine block end: next section start or end of content
-        if i + 1 < len(matches):
-            block_end = matches[i + 1][0]
-        else:
-            block_end = len(relevant_content)
-        
-        # Extract content (skip the header itself, start from after header)
-        text_block = relevant_content[header_end:block_end].strip()
-        
-        # Store if this is business or risk (use longest match if duplicates)
-        if label == business_label:
-            if len(text_block) > len(business_section):
-                business_section = text_block
-        elif label == risk_label:
-            if len(text_block) > len(risk_section):
-                risk_section = text_block
-    
-    return business_section, risk_section
 
 def filter_by_fyear(filings: list[dict], fyear: int) -> list[dict]:
     return [f for f in filings if f.get("report_date", "").startswith(str(fyear))]
@@ -1508,7 +1387,7 @@ def fetch_all_grouped(saveIteration: int = 100):
     """
     Fetch filings using a Queue-based Producer-Consumer model with Adaptive Rate Limiting.
     """
-    global existing_report_df, all_derivatives_df, SEC_RATE_LIMIT, SEC_RATE
+    global existing_report_df, all_df, SEC_RATE_LIMIT, SEC_RATE
 
     if existing_report_df is None or existing_report_df.empty:
         # Load ALL data (valid=None) to ensure we don't retry failed/empty years
@@ -1522,7 +1401,7 @@ def fetch_all_grouped(saveIteration: int = 100):
         except (ValueError, TypeError):
             pass
             
-    cik_groups = all_derivatives_df.groupby("cik")["year"].apply(list).reset_index()
+    cik_groups = all_df.groupby("cik")["year"].apply(list).reset_index()
 
     # Prepare list of tasks
     unprocessed_tasks = []
@@ -2052,9 +1931,7 @@ def should_retry_with_plaintext(
         has_valid_content = False
         
         for doc in docs:
-            i1, i1a = filter_for_item1(doc, is_20f=is_20f, is_40f=is_40f)
-            # Retry if either is too short (Item 1 < 1000 or Item 1A < 50)
-            if len(i1) > 1000 and len(i1a) > 50:
+            if doc and len(doc.strip()) > 1000:
                 has_valid_content = True
                 break
         
@@ -2163,13 +2040,13 @@ def parse_multi_document_content(raw_text: str) -> List[str]:
 
 def parse_content(data):
     """
-    Parses raw HTML/text, handles multi-document files, filters for keywords,
+    Parses raw HTML/text, handles multi-document files, extracts paragraph blocks,
     and saves to the database. This is a CPU-bound task.
 
     Handles:
     - Multi-document .txt files (split by <document> tags)
     - HTML and plain text documents
-    - Keyword filtering per document
+    - Block extraction per document
     - Returns aggregated results across all documents
     """
     if data is None:
@@ -2196,17 +2073,13 @@ def parse_content(data):
                 {
                     "url": url,
                     "accession": accession,
-                    "item1": [],
-                    "item1a": [],
+                    "documents": [],
                     "period_of_report": None,
                     "home_country": home_country,
                 }
             )
-            
 
-        # 2. Filter each document for keywords and aggregate results
-        item1_matches = []
-        item1a_matches = []
+        document_blocks = []
         detected_year = None
 
         for doc_idx, content in enumerate(parsed_documents):
@@ -2219,30 +2092,16 @@ def parse_content(data):
                 detected_year = extract_fiscal_year(content, accession)
 
             try:
-                # Filter this document for keywords (CPU-intensive)
-                item1, item1a = filter_for_item1(content, is_20f=is_20f, is_40f=is_40f)
-
-                if item1:
-                    filtered = filter_paragraphs_loose(item1)
-                    if filtered:
-                        debug_print(
-                            f"  Document {doc_idx + 1}: Found item 1 ({len(filtered)} paragraphs)"
-                        )
-                        item1_matches.extend(filtered)
+                filtered = filter_paragraphs_loose(content)
+                if filtered:
+                    debug_print(
+                        f"  Document {doc_idx + 1}: Extracted {len(filtered)} blocks"
+                    )
+                    document_blocks.extend(filtered)
                 else:
-                    debug_print(f"  Document {doc_idx + 1}: No matches found")
-                if item1a:
-                    filtered = filter_paragraphs_loose(item1a)
-                    if filtered:
-                        debug_print(
-                            f"  Document {doc_idx + 1}: Found item 1a ({len(filtered)} paragraphs)"
-                        )
-                        item1a_matches.extend(filtered)
-                else:
-                    debug_print(f"  Document {doc_idx + 1}: No matches found")
-
+                    debug_print(f"  Document {doc_idx + 1}: No blocks extracted")
             except Exception as e:
-                print(f"  ⚠️  Error filtering document {doc_idx + 1} from {url}: {e}")
+                print(f"  ⚠️  Error extracting blocks from document {doc_idx + 1} of {url}: {e}")
                 continue
 
         # Determine home country from the first document (usually the main filing)
@@ -2255,18 +2114,17 @@ def parse_content(data):
             {
                 "url": url,
                 "accession": accession,
-                "item1": item1_matches,
-                "item1a": item1a_matches,
+                "documents": document_blocks,
                 "period_of_report": detected_year,
                 "home_country": home_country,
             }
         )
-        if item1_matches and item1a_matches:
+        if document_blocks:
             debug_print(
                 f"✓ Successfully parsed {len(parsed_documents)} documents from {url}"
             )
         else:
-            debug_print(f"No keyword matches found in any document from {url}")
+            debug_print(f"No document blocks extracted from any document in {url}")
 
         return result_row
 
@@ -2738,9 +2596,9 @@ def save_batch(conn, buffer):
     try:
         df_batch = pd.DataFrame(buffer)
         c = conn.cursor()
-        data = list(zip(df_batch.accession, df_batch.item1.apply(json.dumps), df_batch.item1a.apply(json.dumps), df_batch.period_of_report, df_batch.home_country))
+        data = list(zip(df_batch.accession, df_batch.content.apply(json.dumps), df_batch.period_of_report, df_batch.home_country))
         c.executemany(
-            "INSERT OR REPLACE INTO webpage_result (accession, item1, item1a, period_of_report, home_country) VALUES (?, ?, ?, ?, ?)", data
+            "INSERT OR REPLACE INTO webpage_result (accession, content, period_of_report, home_country) VALUES (?, ?, ?, ?)", data
         )
         conn.commit()
     except Exception as e:
@@ -2820,7 +2678,7 @@ if __name__ == "__main__":
     existing_report_df = fetch_report_data()
     print(f"Found {len(existing_report_df)} reports in database")
     NUM_FETCHERS, NUM_PARSERS, CHUNK_SIZE, SEC_RATE_LIMIT = get_system_config()
-    all_derivatives_df = pd.read_csv(ALL_FIRMS_DATA)
+    all_df = pd.read_csv(ALL_FIRMS_DATA)
     if IS_COLAB:
         print("Running in Google Colab environment")
         if not Path(DB_PATH).exists():

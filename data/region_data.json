@@ -1,0 +1,7659 @@
+[
+  {
+    "name": "Canada",
+    "region": "North America",
+    "code": "CA",
+    "phrases": [
+      "canada",
+      "canadian"
+    ],
+    "locations": [
+      {
+        "name": "Toronto",
+        "phrases": [
+          "toronto"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Vancouver",
+        "phrases": [
+          "vancouver"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Montreal",
+        "phrases": [
+          "montreal"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ottawa",
+        "phrases": [
+          "ottawa"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ontario",
+        "phrases": [
+          "ontario"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Quebec",
+        "phrases": [
+          "quebec",
+          "québec"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Alberta",
+        "phrases": [
+          "alberta",
+          "calgary",
+          "edmonton"
+        ],
+        "cities": []
+      },
+      {
+        "name": "British Columbia",
+        "phrases": [
+          "british columbia",
+          "bc"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Winnipeg",
+        "phrases": [
+          "winnipeg"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Windsor",
+        "phrases": [
+          "windsor, on",
+          "windsor, ontario",
+          "windsor, canada"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Oshawa",
+        "phrases": [
+          "oshawa"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Oakville",
+        "phrases": [
+          "oakville"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Brampton",
+        "phrases": [
+          "brampton"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Cambridge",
+        "phrases": [
+          "cambridge, on",
+          "cambridge, ontario",
+          "cambridge, canada"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ingersoll",
+        "phrases": [
+          "ingersoll"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Hamilton",
+        "phrases": [
+          "hamilton, on",
+          "hamilton, ontario",
+          "hamilton, canada"
+        ],
+        "cities": []
+      },
+      {
+        "name": "St. Catharines",
+        "phrases": [
+          "st. catharines"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Sudbury",
+        "phrases": [
+          "sudbury"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Fort McMurray",
+        "phrases": [
+          "fort mcmurray",
+          "athabasca"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Saskatoon",
+        "phrases": [
+          "saskatoon"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "North America",
+    "region": "North America",
+    "code": "NA",
+    "phrases": [
+      "north america",
+      "north american"
+    ],
+    "locations": []
+  },
+  {
+    "name": "United States",
+    "region": "North America",
+    "code": "US",
+    "phrases": [
+      "US",
+      "usa",
+      "united states",
+      "east coast",
+      "west coast",
+      "midwest",
+      "deep south",
+      "new england",
+      "pacific northwest",
+      "southwest",
+      "mountain west",
+      "great plains",
+      "gulf coast",
+      "sun belt",
+      "rust belt",
+      "bible belt",
+      "tri-state area",
+      "the states",
+      "capitol hill",
+      "silicon valley",
+      "twin cities",
+      "appalachia",
+      "(?<!south[- ])(?<!latin[- ])(?<!central[- ])american?"
+    ],
+    "locations": [
+      {
+        "name": "New York",
+        "phrases": [
+          "new york",
+          "ny"
+        ],
+        "cities": [
+          {
+            "name": "New York City",
+            "phrases": [
+              "nyc",
+              "new york city",
+              "manhattan"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "California",
+        "phrases": [
+          "california",
+          "ca",
+          "cal"
+        ],
+        "cities": [
+          {
+            "name": "San Francisco",
+            "phrases": [
+              "san francisco",
+              "sf",
+              "bay area"
+            ]
+          },
+          {
+            "name": "Los Angeles",
+            "phrases": [
+              "los angeles"
+            ]
+          },
+          {
+            "name": "San Diego",
+            "phrases": [
+              "san diego"
+            ]
+          },
+          {
+            "name": "San Jose",
+            "phrases": [
+              "san jose"
+            ]
+          },
+          {
+            "name": "Fremont",
+            "phrases": [
+              "fremont"
+            ]
+          },
+          {
+            "name": "Irvine",
+            "phrases": [
+              "irvine"
+            ]
+          },
+          {
+            "name": "Sacramento",
+            "phrases": [
+              "sacramento"
+            ]
+          },
+          {
+            "name": "Palo Alto",
+            "phrases": [
+              "palo alto"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Texas",
+        "phrases": [
+          "texas",
+          "tx"
+        ],
+        "cities": [
+          {
+            "name": "Houston",
+            "phrases": [
+              "houston"
+            ]
+          },
+          {
+            "name": "Dallas",
+            "phrases": [
+              "dallas"
+            ]
+          },
+          {
+            "name": "Austin",
+            "phrases": [
+              "austin"
+            ]
+          },
+          {
+            "name": "San Antonio",
+            "phrases": [
+              "san antonio"
+            ]
+          },
+          {
+            "name": "Fort Worth",
+            "phrases": [
+              "fort worth"
+            ]
+          },
+          {
+            "name": "Arlington",
+            "phrases": [
+              "arlington, tx",
+              "arlington, texas"
+            ]
+          },
+          {
+            "name": "El Paso",
+            "phrases": [
+              "el paso"
+            ]
+          },
+          {
+            "name": "Laredo",
+            "phrases": [
+              "laredo"
+            ]
+          },
+          {
+            "name": "Lubbock",
+            "phrases": [
+              "lubbock"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Illinois",
+        "phrases": [
+          "illinois"
+        ],
+        "cities": [
+          {
+            "name": "Chicago",
+            "phrases": [
+              "chicago"
+            ]
+          },
+          {
+            "name": "Springfield",
+            "phrases": [
+              "springfield, il"
+            ]
+          },
+          {
+            "name": "Peoria",
+            "phrases": [
+              "peoria"
+            ]
+          },
+          {
+            "name": "Rockford",
+            "phrases": [
+              "rockford"
+            ]
+          },
+          {
+            "name": "Belvidere",
+            "phrases": [
+              "belvidere"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Massachusetts",
+        "phrases": [
+          "massachusetts"
+        ],
+        "cities": [
+          {
+            "name": "Boston",
+            "phrases": [
+              "boston"
+            ]
+          },
+          {
+            "name": "Worcester",
+            "phrases": [
+              "worcester"
+            ]
+          },
+          {
+            "name": "Cambridge",
+            "phrases": [
+              "cambridge, ma"
+            ]
+          },
+          {
+            "name": "Springfield",
+            "phrases": [
+              "springfield, ma"
+            ]
+          },
+          {
+            "name": "Lowell",
+            "phrases": [
+              "lowell"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Washington",
+        "phrases": [
+          "washington"
+        ],
+        "cities": [
+          {
+            "name": "Seattle",
+            "phrases": [
+              "seattle"
+            ]
+          },
+          {
+            "name": "Spokane",
+            "phrases": [
+              "spokane"
+            ]
+          },
+          {
+            "name": "Tacoma",
+            "phrases": [
+              "tacoma"
+            ]
+          },
+          {
+            "name": "Bellevue",
+            "phrases": [
+              "bellevue"
+            ]
+          },
+          {
+            "name": "Everett",
+            "phrases": [
+              "everett"
+            ]
+          },
+          {
+            "name": "Renton",
+            "phrases": [
+              "renton"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Florida",
+        "phrases": [
+          "florida",
+          "fl"
+        ],
+        "cities": [
+          {
+            "name": "Miami",
+            "phrases": [
+              "miami"
+            ]
+          },
+          {
+            "name": "Tampa",
+            "phrases": [
+              "tampa"
+            ]
+          },
+          {
+            "name": "Orlando",
+            "phrases": [
+              "orlando"
+            ]
+          },
+          {
+            "name": "Jacksonville",
+            "phrases": [
+              "jacksonville"
+            ]
+          },
+          {
+            "name": "Tallahassee",
+            "phrases": [
+              "tallahassee"
+            ]
+          },
+          {
+            "name": "Fort Lauderdale",
+            "phrases": [
+              "fort lauderdale"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Michigan",
+        "phrases": [
+          "michigan"
+        ],
+        "cities": [
+          {
+            "name": "Detroit",
+            "phrases": [
+              "detroit",
+              "motor city"
+            ]
+          },
+          {
+            "name": "Dearborn",
+            "phrases": [
+              "dearborn"
+            ]
+          },
+          {
+            "name": "Flint",
+            "phrases": [
+              "flint"
+            ]
+          },
+          {
+            "name": "Lansing",
+            "phrases": [
+              "lansing"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Ohio",
+        "phrases": [
+          "ohio"
+        ],
+        "cities": [
+          {
+            "name": "Cleveland",
+            "phrases": [
+              "cleveland"
+            ]
+          },
+          {
+            "name": "Columbus",
+            "phrases": [
+              "columbus"
+            ]
+          },
+          {
+            "name": "Toledo",
+            "phrases": [
+              "toledo, oh",
+              "toledo, ohio"
+            ]
+          },
+          {
+            "name": "Marysville",
+            "phrases": [
+              "marysville"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Pennsylvania",
+        "phrases": [
+          "pennsylvania"
+        ],
+        "cities": [
+          {
+            "name": "Pittsburgh",
+            "phrases": [
+              "pittsburgh"
+            ]
+          },
+          {
+            "name": "Philadelphia",
+            "phrases": [
+              "philadelphia",
+              "philly"
+            ]
+          },
+          {
+            "name": "Erie",
+            "phrases": [
+              "erie"
+            ]
+          },
+          {
+            "name": "Harrisburg",
+            "phrases": [
+              "harrisburg"
+            ]
+          },
+          {
+            "name": "Allentown",
+            "phrases": [
+              "allentown"
+            ]
+          },
+          {
+            "name": "Scranton",
+            "phrases": [
+              "scranton"
+            ]
+          },
+          {
+            "name": "York",
+            "phrases": [
+              "york, pa"
+            ]
+          },
+          {
+            "name": "Reading",
+            "phrases": [
+              "reading, pa"
+            ]
+          },
+          {
+            "name": "Lancaster",
+            "phrases": [
+              "lancaster, pa"
+            ]
+          },
+          {
+            "name": "Bethlehem",
+            "phrases": [
+              "bethlehem, pa",
+              "bethlehem steel"
+            ]
+          },
+          {
+            "name": "Wilkes-Barre",
+            "phrases": [
+              "wilkes-barre"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Indiana",
+        "phrases": [
+          "indiana"
+        ],
+        "cities": [
+          {
+            "name": "Indianapolis",
+            "phrases": [
+              "indianapolis"
+            ]
+          },
+          {
+            "name": "Lafayette",
+            "phrases": [
+              "lafayette"
+            ]
+          },
+          {
+            "name": "Princeton",
+            "phrases": [
+              "princeton"
+            ]
+          },
+          {
+            "name": "Fort Wayne",
+            "phrases": [
+              "fort wayne"
+            ]
+          },
+          {
+            "name": "South Bend",
+            "phrases": [
+              "south bend"
+            ]
+          },
+          {
+            "name": "Evansville",
+            "phrases": [
+              "evansville"
+            ]
+          },
+          {
+            "name": "Greensburg",
+            "phrases": [
+              "greensburg, in"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Kentucky",
+        "phrases": [
+          "kentucky",
+          "ky"
+        ],
+        "cities": [
+          {
+            "name": "Louisville",
+            "phrases": [
+              "louisville"
+            ]
+          },
+          {
+            "name": "Georgetown",
+            "phrases": [
+              "georgetown"
+            ]
+          },
+          {
+            "name": "Bowling Green",
+            "phrases": [
+              "bowling green"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Tennessee",
+        "phrases": [
+          "tennessee",
+          "tn"
+        ],
+        "cities": [
+          {
+            "name": "Nashville",
+            "phrases": [
+              "nashville"
+            ]
+          },
+          {
+            "name": "Chattanooga",
+            "phrases": [
+              "chattanooga"
+            ]
+          },
+          {
+            "name": "Smyrna",
+            "phrases": [
+              "smyrna"
+            ]
+          },
+          {
+            "name": "Spring Hill",
+            "phrases": [
+              "spring hill"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Alabama",
+        "phrases": [
+          "alabama"
+        ],
+        "cities": [
+          {
+            "name": "Birmingham",
+            "phrases": [
+              "birmingham, al",
+              "birmingham, alabama"
+            ]
+          },
+          {
+            "name": "Huntsville",
+            "phrases": [
+              "huntsville"
+            ]
+          },
+          {
+            "name": "Tuscaloosa",
+            "phrases": [
+              "tuscaloosa"
+            ]
+          },
+          {
+            "name": "Lincoln",
+            "phrases": [
+              "lincoln, al",
+              "lincoln, alabama"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Arizona",
+        "phrases": [
+          "Arizona",
+          "az"
+        ],
+        "cities": [
+          {
+            "name": "Phoenix",
+            "phrases": [
+              "phoenix"
+            ]
+          },
+          {
+            "name": "Tucson",
+            "phrases": [
+              "tucson"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Missouri",
+        "phrases": [
+          "missouri",
+          "mo"
+        ],
+        "cities": [
+          {
+            "name": "St. Louis",
+            "phrases": [
+              "st. louis"
+            ]
+          },
+          {
+            "name": "Kansas City",
+            "phrases": [
+              "kansas city, mo"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Alaska",
+        "phrases": [
+          "alaska",
+          "ak"
+        ],
+        "cities": [
+          {
+            "name": "Anchorage",
+            "phrases": [
+              "anchorage"
+            ]
+          },
+          {
+            "name": "Fairbanks",
+            "phrases": [
+              "fairbanks"
+            ]
+          },
+          {
+            "name": "Juneau",
+            "phrases": [
+              "juneau"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Arkansas",
+        "phrases": [
+          "arkansas",
+          "ar"
+        ],
+        "cities": [
+          {
+            "name": "Little Rock",
+            "phrases": [
+              "little rock"
+            ]
+          },
+          {
+            "name": "Fayetteville",
+            "phrases": [
+              "fayetteville"
+            ]
+          },
+          {
+            "name": "Fort Smith",
+            "phrases": [
+              "fort smith"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Colorado",
+        "phrases": [
+          "colorado"
+        ],
+        "cities": [
+          {
+            "name": "Denver",
+            "phrases": [
+              "denver"
+            ]
+          },
+          {
+            "name": "Colorado Springs",
+            "phrases": [
+              "colorado springs"
+            ]
+          },
+          {
+            "name": "Boulder",
+            "phrases": [
+              "boulder"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Connecticut",
+        "phrases": [
+          "connecticut",
+          "ct"
+        ],
+        "cities": [
+          {
+            "name": "Hartford",
+            "phrases": [
+              "hartford"
+            ]
+          },
+          {
+            "name": "New Haven",
+            "phrases": [
+              "new haven"
+            ]
+          },
+          {
+            "name": "Stamford",
+            "phrases": [
+              "stamford"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Delaware",
+        "phrases": [
+          "delaware"
+        ],
+        "cities": [
+          {
+            "name": "Wilmington",
+            "phrases": [
+              "wilmington"
+            ]
+          },
+          {
+            "name": "Dover",
+            "phrases": [
+              "dover, de",
+              "dover, delaware"
+            ]
+          },
+          {
+            "name": "Newark",
+            "phrases": [
+              "newark"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Georgia",
+        "phrases": [
+          "georgia"
+        ],
+        "cities": [
+          {
+            "name": "Atlanta",
+            "phrases": [
+              "atlanta"
+            ]
+          },
+          {
+            "name": "Savannah",
+            "phrases": [
+              "savannah"
+            ]
+          },
+          {
+            "name": "Augusta",
+            "phrases": [
+              "augusta, ga",
+              "augusta, georgia"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Hawaii",
+        "phrases": [
+          "hawaii"
+        ],
+        "cities": [
+          {
+            "name": "Honolulu",
+            "phrases": [
+              "honolulu"
+            ]
+          },
+          {
+            "name": "Hilo",
+            "phrases": [
+              "hilo"
+            ]
+          },
+          {
+            "name": "Kailua",
+            "phrases": [
+              "kailua"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Idaho",
+        "phrases": [
+          "idaho"
+        ],
+        "cities": [
+          {
+            "name": "Boise",
+            "phrases": [
+              "boise"
+            ]
+          },
+          {
+            "name": "Idaho Falls",
+            "phrases": [
+              "idaho falls"
+            ]
+          },
+          {
+            "name": "Twin Falls",
+            "phrases": [
+              "twin falls"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Iowa",
+        "phrases": [
+          "iowa",
+          "ia"
+        ],
+        "cities": [
+          {
+            "name": "Des Moines",
+            "phrases": [
+              "des moines"
+            ]
+          },
+          {
+            "name": "Cedar Rapids",
+            "phrases": [
+              "cedar rapids"
+            ]
+          },
+          {
+            "name": "Davenport",
+            "phrases": [
+              "davenport"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Kansas",
+        "phrases": [
+          "kansas",
+          "ks"
+        ],
+        "cities": [
+          {
+            "name": "Wichita",
+            "phrases": [
+              "wichita"
+            ]
+          },
+          {
+            "name": "Kansas City",
+            "phrases": [
+              "kansas city"
+            ]
+          },
+          {
+            "name": "Topeka",
+            "phrases": [
+              "topeka"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Louisiana",
+        "phrases": [
+          "louisiana"
+        ],
+        "cities": [
+          {
+            "name": "New Orleans",
+            "phrases": [
+              "new orleans"
+            ]
+          },
+          {
+            "name": "Baton Rouge",
+            "phrases": [
+              "baton rouge"
+            ]
+          },
+          {
+            "name": "Shreveport",
+            "phrases": [
+              "shreveport"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Maine",
+        "phrases": [
+          "maine"
+        ],
+        "cities": [
+          {
+            "name": "Portland",
+            "phrases": [
+              "portland, me"
+            ]
+          },
+          {
+            "name": "Augusta",
+            "phrases": [
+              "augusta, me"
+            ]
+          },
+          {
+            "name": "Bangor",
+            "phrases": [
+              "bangor"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Maryland",
+        "phrases": [
+          "maryland",
+          "md"
+        ],
+        "cities": [
+          {
+            "name": "Baltimore",
+            "phrases": [
+              "baltimore"
+            ]
+          },
+          {
+            "name": "Annapolis",
+            "phrases": [
+              "annapolis"
+            ]
+          },
+          {
+            "name": "Silver Spring",
+            "phrases": [
+              "silver spring"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Minnesota",
+        "phrases": [
+          "minnesota",
+          "mn"
+        ],
+        "cities": [
+          {
+            "name": "Minneapolis",
+            "phrases": [
+              "minneapolis"
+            ]
+          },
+          {
+            "name": "Saint Paul",
+            "phrases": [
+              "saint paul",
+              "st. paul"
+            ]
+          },
+          {
+            "name": "Rochester",
+            "phrases": [
+              "rochester mn"
+            ]
+          },
+          {
+            "name": "Duluth",
+            "phrases": [
+              "duluth",
+              "iron range",
+              "mesabi"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Mississippi",
+        "phrases": [
+          "mississippi",
+          "ms"
+        ],
+        "cities": [
+          {
+            "name": "Jackson",
+            "phrases": [
+              "jackson, ms"
+            ]
+          },
+          {
+            "name": "Gulfport",
+            "phrases": [
+              "gulfport"
+            ]
+          },
+          {
+            "name": "Biloxi",
+            "phrases": [
+              "biloxi"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Montana",
+        "phrases": [
+          "montana",
+          "mt"
+        ],
+        "cities": [
+          {
+            "name": "Billings",
+            "phrases": [
+              "billings"
+            ]
+          },
+          {
+            "name": "Missoula",
+            "phrases": [
+              "missoula"
+            ]
+          },
+          {
+            "name": "Bozeman",
+            "phrases": [
+              "bozeman"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Nebraska",
+        "phrases": [
+          "nebraska"
+        ],
+        "cities": [
+          {
+            "name": "Omaha",
+            "phrases": [
+              "omaha"
+            ]
+          },
+          {
+            "name": "Lincoln",
+            "phrases": [
+              "lincoln, ne"
+            ]
+          },
+          {
+            "name": "Grand Island",
+            "phrases": [
+              "grand island"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Nevada",
+        "phrases": [
+          "nevada",
+          "nv"
+        ],
+        "cities": [
+          {
+            "name": "Las Vegas",
+            "phrases": [
+              "las vegas",
+              "vegas"
+            ]
+          },
+          {
+            "name": "Reno",
+            "phrases": [
+              "reno"
+            ]
+          },
+          {
+            "name": "Henderson",
+            "phrases": [
+              "henderson"
+            ]
+          },
+          {
+            "name": "Elko",
+            "phrases": [
+              "elko",
+              "carlin trend",
+              "gold strike"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "New Hampshire",
+        "phrases": [
+          "new hampshire",
+          "nh"
+        ],
+        "cities": [
+          {
+            "name": "Manchester",
+            "phrases": [
+              "manchester, nh"
+            ]
+          },
+          {
+            "name": "Nashua",
+            "phrases": [
+              "nashua"
+            ]
+          },
+          {
+            "name": "Concord",
+            "phrases": [
+              "concord, nh"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "New Jersey",
+        "phrases": [
+          "new jersey",
+          "nj"
+        ],
+        "cities": [
+          {
+            "name": "Newark",
+            "phrases": [
+              "newark"
+            ]
+          },
+          {
+            "name": "Jersey City",
+            "phrases": [
+              "jersey city"
+            ]
+          },
+          {
+            "name": "Trenton",
+            "phrases": [
+              "trenton"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "New Mexico",
+        "phrases": [
+          "new mexico",
+          "nm"
+        ],
+        "cities": [
+          {
+            "name": "Albuquerque",
+            "phrases": [
+              "albuquerque"
+            ]
+          },
+          {
+            "name": "Santa Fe",
+            "phrases": [
+              "santa fe"
+            ]
+          },
+          {
+            "name": "Las Cruces",
+            "phrases": [
+              "las cruces"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "North Carolina",
+        "phrases": [
+          "north carolina",
+          "nc"
+        ],
+        "cities": [
+          {
+            "name": "Charlotte",
+            "phrases": [
+              "charlotte"
+            ]
+          },
+          {
+            "name": "Raleigh",
+            "phrases": [
+              "raleigh"
+            ]
+          },
+          {
+            "name": "Greensboro",
+            "phrases": [
+              "greensboro"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "North Dakota",
+        "phrases": [
+          "north dakota",
+          "nd"
+        ],
+        "cities": [
+          {
+            "name": "Fargo",
+            "phrases": [
+              "fargo"
+            ]
+          },
+          {
+            "name": "Bismarck",
+            "phrases": [
+              "bismarck"
+            ]
+          },
+          {
+            "name": "Grand Forks",
+            "phrases": [
+              "grand forks"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Oklahoma",
+        "phrases": [
+          "oklahoma"
+        ],
+        "cities": [
+          {
+            "name": "Oklahoma City",
+            "phrases": [
+              "oklahoma city"
+            ]
+          },
+          {
+            "name": "Tulsa",
+            "phrases": [
+              "tulsa"
+            ]
+          },
+          {
+            "name": "Norman",
+            "phrases": [
+              "norman"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Oregon",
+        "phrases": [
+          "oregon"
+        ],
+        "cities": [
+          {
+            "name": "Portland",
+            "phrases": [
+              "portland, or"
+            ]
+          },
+          {
+            "name": "Eugene",
+            "phrases": [
+              "eugene"
+            ]
+          },
+          {
+            "name": "Salem",
+            "phrases": [
+              "salem, or"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Rhode Island",
+        "phrases": [
+          "rhode island"
+        ],
+        "cities": [
+          {
+            "name": "Providence",
+            "phrases": [
+              "providence"
+            ]
+          },
+          {
+            "name": "Warwick",
+            "phrases": [
+              "warwick"
+            ]
+          },
+          {
+            "name": "Newport",
+            "phrases": [
+              "newport, ri"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "South Carolina",
+        "phrases": [
+          "south carolina",
+          "sc"
+        ],
+        "cities": [
+          {
+            "name": "Charleston",
+            "phrases": [
+              "charleston, sc"
+            ]
+          },
+          {
+            "name": "Columbia",
+            "phrases": [
+              "columbia sc"
+            ]
+          },
+          {
+            "name": "Greenville",
+            "phrases": [
+              "greenville, sc"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "South Dakota",
+        "phrases": [
+          "south dakota",
+          "sd"
+        ],
+        "cities": [
+          {
+            "name": "Sioux Falls",
+            "phrases": [
+              "sioux falls"
+            ]
+          },
+          {
+            "name": "Rapid City",
+            "phrases": [
+              "rapid city"
+            ]
+          },
+          {
+            "name": "Pierre",
+            "phrases": [
+              "pierre"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Utah",
+        "phrases": [
+          "utah",
+          "ut"
+        ],
+        "cities": [
+          {
+            "name": "Salt Lake City",
+            "phrases": [
+              "salt lake city"
+            ]
+          },
+          {
+            "name": "Provo",
+            "phrases": [
+              "provo"
+            ]
+          },
+          {
+            "name": "Ogden",
+            "phrases": [
+              "ogden"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Vermont",
+        "phrases": [
+          "vermont",
+          "vt"
+        ],
+        "cities": [
+          {
+            "name": "Burlington",
+            "phrases": [
+              "burlington, vt"
+            ]
+          },
+          {
+            "name": "Montpelier",
+            "phrases": [
+              "montpelier"
+            ]
+          },
+          {
+            "name": "Rutland",
+            "phrases": [
+              "rutland"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Virginia",
+        "phrases": [
+          "virginia"
+        ],
+        "cities": [
+          {
+            "name": "Richmond",
+            "phrases": [
+              "richmond, va"
+            ]
+          },
+          {
+            "name": "Virginia Beach",
+            "phrases": [
+              "virginia beach"
+            ]
+          },
+          {
+            "name": "Norfolk",
+            "phrases": [
+              "norfolk"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "West Virginia",
+        "phrases": [
+          "west virginia",
+          "wv"
+        ],
+        "cities": [
+          {
+            "name": "Charleston",
+            "phrases": [
+              "charleston, wv"
+            ]
+          },
+          {
+            "name": "Morgantown",
+            "phrases": [
+              "morgantown"
+            ]
+          },
+          {
+            "name": "Huntington",
+            "phrases": [
+              "huntington"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Wisconsin",
+        "phrases": [
+          "wisconsin",
+          "wi"
+        ],
+        "cities": [
+          {
+            "name": "Milwaukee",
+            "phrases": [
+              "milwaukee"
+            ]
+          },
+          {
+            "name": "Madison",
+            "phrases": [
+              "madison"
+            ]
+          },
+          {
+            "name": "Green Bay",
+            "phrases": [
+              "green bay"
+            ]
+          }
+        ]
+      },
+      {
+        "name": "Wyoming",
+        "phrases": [
+          "wyoming",
+          "wy"
+        ],
+        "cities": [
+          {
+            "name": "Cheyenne",
+            "phrases": [
+              "cheyenne"
+            ]
+          },
+          {
+            "name": "Casper",
+            "phrases": [
+              "casper"
+            ]
+          },
+          {
+            "name": "Laramie",
+            "phrases": [
+              "laramie"
+            ]
+          },
+          {
+            "name": "Gillette",
+            "phrases": [
+              "gillette",
+              "powder river basin",
+              "prb"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "name": "Albania",
+    "region": "Europe",
+    "code": "AL",
+    "phrases": [
+      "albania",
+      "albanian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Andorra",
+    "region": "Europe",
+    "code": "AD",
+    "phrases": [
+      "andorra",
+      "andorran"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Armenia",
+    "region": "Europe",
+    "code": "AM",
+    "phrases": [
+      "armenia",
+      "armenian"
+    ],
+    "locations": [
+      {
+        "name": "Yerevan",
+        "phrases": [
+          "yerevan"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Austria",
+    "region": "Europe",
+    "code": "AT",
+    "phrases": [
+      "austria",
+      "austrian",
+      "österreich",
+      "oesterreich"
+    ],
+    "locations": [
+      {
+        "name": "Vienna",
+        "phrases": [
+          "vienna"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Linz",
+        "phrases": [
+          "linz"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Salzburg",
+        "phrases": [
+          "salzburg"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Graz",
+        "phrases": [
+          "graz"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Steyr",
+        "phrases": [
+          "steyr"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Azerbaijan",
+    "region": "Europe",
+    "code": "AZ",
+    "phrases": [
+      "azerbaijan",
+      "azerbaijani",
+      "azeri"
+    ],
+    "locations": [
+      {
+        "name": "Baku",
+        "phrases": [
+          "baku"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Balkans",
+    "region": "Europe",
+    "code": "BALK",
+    "phrases": [
+      "balkans",
+      "balkan",
+      "balkan peninsula"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Baltic States",
+    "region": "Europe",
+    "code": "BALT",
+    "phrases": [
+      "baltic states",
+      "baltics",
+      "baltic region"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Belarus",
+    "region": "Europe",
+    "code": "BY",
+    "phrases": [
+      "belarus",
+      "belarusian",
+      "byelorussia"
+    ],
+    "locations": [
+      {
+        "name": "Minsk",
+        "phrases": [
+          "minsk"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Belgium",
+    "region": "Europe",
+    "code": "BE",
+    "phrases": [
+      "belgium",
+      "belgian",
+      "belgique",
+      "belgië",
+      "belgie"
+    ],
+    "locations": [
+      {
+        "name": "Brussels",
+        "phrases": [
+          "brussels"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Antwerp",
+        "phrases": [
+          "antwerp"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ghent",
+        "phrases": [
+          "ghent"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Liege",
+        "phrases": [
+          "liege"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Charleroi",
+        "phrases": [
+          "charleroi"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Liege",
+        "phrases": [
+          "liege",
+          "liège"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bruges",
+        "phrases": [
+          "bruges"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Benelux",
+    "region": "Europe",
+    "code": "BNLX",
+    "phrases": [
+      "benelux"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Bosnia and Herzegovina",
+    "region": "Europe",
+    "code": "BA",
+    "phrases": [
+      "bosnia",
+      "herzegovina",
+      "bosnian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Bulgaria",
+    "region": "Europe",
+    "code": "BG",
+    "phrases": [
+      "bulgaria",
+      "bulgarian"
+    ],
+    "locations": [
+      {
+        "name": "Plovdiv",
+        "phrases": [
+          "plovdiv"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Varna",
+        "phrases": [
+          "varna"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Burgas",
+        "phrases": [
+          "burgas"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ruse",
+        "phrases": [
+          "ruse"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Commonwealth of Independent States",
+    "region": "Europe",
+    "code": "CIS",
+    "phrases": [
+      "cis",
+      "commonwealth of independent states",
+      "ussr",
+      "soviet union",
+      "soviet"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Croatia",
+    "region": "Europe",
+    "code": "HR",
+    "phrases": [
+      "croatia",
+      "croatian",
+      "hrvatska"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Cyprus",
+    "region": "Europe",
+    "code": "CY",
+    "phrases": [
+      "cyprus",
+      "cypriot"
+    ],
+    "locations": [
+      {
+        "name": "Nicosia",
+        "phrases": [
+          "nicosia"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Limassol",
+        "phrases": [
+          "limassol"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Czech Republic",
+    "region": "Europe",
+    "code": "CZ",
+    "phrases": [
+      "czech republic",
+      "czechia",
+      "czech",
+      "česká republika",
+      "ceska republika",
+      "česko",
+      "cesko"
+    ],
+    "locations": [
+      {
+        "name": "Prague",
+        "phrases": [
+          "prague",
+          "praha"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Mlada Boleslav",
+        "phrases": [
+          "mlada boleslav",
+          "mladá boleslav"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kvasiny",
+        "phrases": [
+          "kvasiny"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kolín",
+        "phrases": [
+          "kolin",
+          "kolín"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ostrava",
+        "phrases": [
+          "ostrava"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Brno",
+        "phrases": [
+          "brno"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Plzeň",
+        "phrases": [
+          "plzen",
+          "plzeň"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "DACH",
+    "region": "Europe",
+    "code": "DACH",
+    "phrases": [
+      "dach"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Denmark",
+    "region": "Europe",
+    "code": "DK",
+    "phrases": [
+      "denmark",
+      "danish",
+      "danmark"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Eastern Europe",
+    "region": "Europe",
+    "code": "CEE",
+    "phrases": [
+      "east(?:ern)? europe(?:an)?",
+      "cee",
+      "central europe(?:an)?"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Estonia",
+    "region": "Europe",
+    "code": "EE",
+    "phrases": [
+      "estonia",
+      "estonian",
+      "eesti"
+    ],
+    "locations": [
+      {
+        "name": "Tallinn",
+        "phrases": [
+          "tallinn"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Europe",
+    "region": "Europe",
+    "code": "EUR",
+    "phrases": [
+      "europe(?:an)?"
+    ],
+    "locations": []
+  },
+  {
+    "name": "European Union",
+    "region": "Europe",
+    "code": "EU",
+    "phrases": [
+      "european u",
+      "european union",
+      "eurozone",
+      "eur",
+      "euro"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Faroe Islands",
+    "region": "Europe",
+    "code": "FO",
+    "phrases": [
+      "faroe islands",
+      "faroese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Finland",
+    "region": "Europe",
+    "code": "FI",
+    "phrases": [
+      "finland",
+      "finnish",
+      "suomi"
+    ],
+    "locations": [
+      {
+        "name": "Helsinki",
+        "phrases": [
+          "helsinki"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Espoo",
+        "phrases": [
+          "espoo"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Tampere",
+        "phrases": [
+          "tampere"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Oulu",
+        "phrases": [
+          "oulu"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Turku",
+        "phrases": [
+          "turku"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Vantaa",
+        "phrases": [
+          "vantaa"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "France",
+    "region": "Europe",
+    "code": "FR",
+    "phrases": [
+      "france",
+      "french"
+    ],
+    "locations": [
+      {
+        "name": "Paris",
+        "phrases": [
+          "paris"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Lyon",
+        "phrases": [
+          "lyon"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Marseille",
+        "phrases": [
+          "marseille"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Toulouse",
+        "phrases": [
+          "toulouse"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Lille",
+        "phrases": [
+          "lille"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Nantes",
+        "phrases": [
+          "nantes"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bordeaux",
+        "phrases": [
+          "bordeaux"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Strasbourg",
+        "phrases": [
+          "strasbourg"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Grenoble",
+        "phrases": [
+          "grenoble"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Sophia Antipolis",
+        "phrases": [
+          "sophia antipolis",
+          "valbonne"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Toulon",
+        "phrases": [
+          "toulon"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Montpellier",
+        "phrases": [
+          "montpellier"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Rennes",
+        "phrases": [
+          "rennes"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Grenoble",
+        "phrases": [
+          "grenoble"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Reims",
+        "phrases": [
+          "reims"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Saint-Etienne",
+        "phrases": [
+          "saint-etienne",
+          "saint-étienne"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Le Havre",
+        "phrases": [
+          "le havre"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Germany",
+    "region": "Europe",
+    "code": "DE",
+    "phrases": [
+      "germany",
+      "german",
+      "deutschland"
+    ],
+    "locations": [
+      {
+        "name": "Frankfurt",
+        "phrases": [
+          "frankfurt"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Berlin",
+        "phrases": [
+          "berlin"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Munich",
+        "phrases": [
+          "munich"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Hamburg",
+        "phrases": [
+          "hamburg"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Stuttgart",
+        "phrases": [
+          "stuttgart"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Cologne",
+        "phrases": [
+          "cologne",
+          "koln"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Dusseldorf",
+        "phrases": [
+          "dusseldorf"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Wolfsburg",
+        "phrases": [
+          "wolfsburg"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ingolstadt",
+        "phrases": [
+          "ingolstadt"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ludwigshafen",
+        "phrases": [
+          "ludwigshafen"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Leverkusen",
+        "phrases": [
+          "leverkusen"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Hanover",
+        "phrases": [
+          "hanover",
+          "hannover"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Walldorf",
+        "phrases": [
+          "walldorf"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bonn",
+        "phrases": [
+          "bonn"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Nuremberg",
+        "phrases": [
+          "nuremberg",
+          "nurnberg"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Essen",
+        "phrases": [
+          "essen"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Rüsselsheim",
+        "phrases": [
+          "russelsheim",
+          "ruesselsheim"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Mannheim",
+        "phrases": [
+          "mannheim"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Leipzig",
+        "phrases": [
+          "leipzig"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bremen",
+        "phrases": [
+          "bremen"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Dresden",
+        "phrases": [
+          "dresden"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Gibraltar",
+    "region": "Europe",
+    "code": "GI",
+    "phrases": [
+      "gibraltar"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Greece",
+    "region": "Europe",
+    "code": "GR",
+    "phrases": [
+      "greece",
+      "greek",
+      "hellas",
+      "ellada"
+    ],
+    "locations": [
+      {
+        "name": "Athens",
+        "phrases": [
+          "athens",
+          "athina"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Piraeus",
+        "phrases": [
+          "piraeus",
+          "peiraias"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Thessaloniki",
+        "phrases": [
+          "thessaloniki"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Patras",
+        "phrases": [
+          "patras",
+          "patra"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Heraklion",
+        "phrases": [
+          "heraklion"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Larissa",
+        "phrases": [
+          "larissa"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Volos",
+        "phrases": [
+          "volos"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Greenland",
+    "region": "Europe",
+    "code": "GL",
+    "phrases": [
+      "greenland",
+      "greenlandic"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Guernsey",
+    "region": "Europe",
+    "code": "GG",
+    "phrases": [
+      "guernsey"
+    ],
+    "locations": [
+      {
+        "name": "Saint Peter Port",
+        "phrases": [
+          "saint peter port",
+          "st. peter port"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Hungary",
+    "region": "Europe",
+    "code": "HU",
+    "phrases": [
+      "hungary",
+      "hungarian",
+      "magyarország",
+      "magyarorszag"
+    ],
+    "locations": [
+      {
+        "name": "Budapest",
+        "phrases": [
+          "budapest"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Debrecen",
+        "phrases": [
+          "debrecen"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Győr",
+        "phrases": [
+          "gyor",
+          "győr"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kecskemét",
+        "phrases": [
+          "kecskemet",
+          "kecskemét"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Esztergom",
+        "phrases": [
+          "esztergom"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Szentgotthárd",
+        "phrases": [
+          "szentgotthard",
+          "szentgotthárd"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Iberia",
+    "region": "Europe",
+    "code": "IBE",
+    "phrases": [
+      "iberia",
+      "iberian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Iceland",
+    "region": "Europe",
+    "code": "IS",
+    "phrases": [
+      "iceland",
+      "icelandic",
+      "ísland"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Ireland",
+    "region": "Europe",
+    "code": "IE",
+    "phrases": [
+      "(?<!northern[- ])ireland",
+      "irish"
+    ],
+    "locations": [
+      {
+        "name": "Dublin",
+        "phrases": [
+          "dublin"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Cork",
+        "phrases": [
+          "cork"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Galway",
+        "phrases": [
+          "galway"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Limerick",
+        "phrases": [
+          "limerick"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Waterford",
+        "phrases": [
+          "waterford"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Isle of Man",
+    "region": "Europe",
+    "code": "IM",
+    "phrases": [
+      "isle of man",
+      "manx"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Italy",
+    "region": "Europe",
+    "code": "IT",
+    "phrases": [
+      "italy",
+      "italian",
+      "italia"
+    ],
+    "locations": [
+      {
+        "name": "Milan",
+        "phrases": [
+          "milan"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Rome",
+        "phrases": [
+          "rome"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Turin",
+        "phrases": [
+          "turin",
+          "torino"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Genoa",
+        "phrases": [
+          "genoa",
+          "genova"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bologna",
+        "phrases": [
+          "bologna"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Naples",
+        "phrases": [
+          "naples",
+          "napoli"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Palermo",
+        "phrases": [
+          "palermo"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Florence",
+        "phrases": [
+          "florence",
+          "firenze"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bari",
+        "phrases": [
+          "bari"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Catania",
+        "phrases": [
+          "catania"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Venice",
+        "phrases": [
+          "venice",
+          "venezia"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Verona",
+        "phrases": [
+          "verona"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Messina",
+        "phrases": [
+          "messina"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Padua",
+        "phrases": [
+          "padua",
+          "padova"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Trieste",
+        "phrases": [
+          "trieste"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Taranto",
+        "phrases": [
+          "taranto"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Brescia",
+        "phrases": [
+          "brescia"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Prato",
+        "phrases": [
+          "prato"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Parma",
+        "phrases": [
+          "parma"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Modena",
+        "phrases": [
+          "modena"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Reggio Calabria",
+        "phrases": [
+          "reggio calabria"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Reggio Emilia",
+        "phrases": [
+          "reggio emilia"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Perugia",
+        "phrases": [
+          "perugia"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Livorno",
+        "phrases": [
+          "livorno"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ravenna",
+        "phrases": [
+          "ravenna"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Cagliari",
+        "phrases": [
+          "cagliari"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Foggia",
+        "phrases": [
+          "foggia"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Rimini",
+        "phrases": [
+          "rimini"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Salerno",
+        "phrases": [
+          "salerno"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ferrara",
+        "phrases": [
+          "ferrara"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Jersey",
+    "region": "Europe",
+    "code": "JE",
+    "phrases": [
+      "jersey"
+    ],
+    "locations": [
+      {
+        "name": "Saint Helier",
+        "phrases": [
+          "saint helier",
+          "st. helier"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Kosovo",
+    "region": "Europe",
+    "code": "XK",
+    "phrases": [
+      "kosovo"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Latvia",
+    "region": "Europe",
+    "code": "LV",
+    "phrases": [
+      "latvia",
+      "latvian",
+      "latvija"
+    ],
+    "locations": [
+      {
+        "name": "Riga",
+        "phrases": [
+          "riga"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Liechtenstein",
+    "region": "Europe",
+    "code": "LI",
+    "phrases": [
+      "liechtenstein"
+    ],
+    "locations": [
+      {
+        "name": "Vaduz",
+        "phrases": [
+          "vaduz"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Lithuania",
+    "region": "Europe",
+    "code": "LT",
+    "phrases": [
+      "lithuania",
+      "lithuanian",
+      "lietuva"
+    ],
+    "locations": [
+      {
+        "name": "Vilnius",
+        "phrases": [
+          "vilnius"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kaunas",
+        "phrases": [
+          "kaunas"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Luxembourg",
+    "region": "Europe",
+    "code": "LU",
+    "phrases": [
+      "luxembourg",
+      "luxembourgish",
+      "lëtzebuerg",
+      "letzebuerg"
+    ],
+    "locations": [
+      {
+        "name": "Luxembourg City",
+        "phrases": [
+          "luxembourg city"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Malta",
+    "region": "Europe",
+    "code": "MT",
+    "phrases": [
+      "malta",
+      "maltese"
+    ],
+    "locations": [
+      {
+        "name": "Valletta",
+        "phrases": [
+          "valletta"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Moldova",
+    "region": "Europe",
+    "code": "MD",
+    "phrases": [
+      "moldova",
+      "moldovan"
+    ],
+    "locations": [
+      {
+        "name": "Chisinau",
+        "phrases": [
+          "chisinau",
+          "kishinev"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Monaco",
+    "region": "Europe",
+    "code": "MC",
+    "phrases": [
+      "monaco",
+      "monegasque"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Montenegro",
+    "region": "Europe",
+    "code": "ME",
+    "phrases": [
+      "montenegro",
+      "montenegrin"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Netherlands",
+    "region": "Europe",
+    "code": "NL",
+    "phrases": [
+      "netherlands",
+      "dutch",
+      "holland",
+      "nederland"
+    ],
+    "locations": [
+      {
+        "name": "Amsterdam",
+        "phrases": [
+          "amsterdam"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Rotterdam",
+        "phrases": [
+          "rotterdam"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Eindhoven",
+        "phrases": [
+          "eindhoven"
+        ],
+        "cities": []
+      },
+      {
+        "name": "The Hague",
+        "phrases": [
+          "the hague",
+          "den haag"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Utrecht",
+        "phrases": [
+          "utrecht"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Groningen",
+        "phrases": [
+          "groningen"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Tilburg",
+        "phrases": [
+          "tilburg"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Almere",
+        "phrases": [
+          "almere"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Breda",
+        "phrases": [
+          "breda"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Nijmegen",
+        "phrases": [
+          "nijmegen"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Nordics",
+    "region": "Europe",
+    "code": "NORD",
+    "phrases": [
+      "nordics",
+      "nordic",
+      "scandinavia",
+      "scandinavian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "North Macedonia",
+    "region": "Europe",
+    "code": "MK",
+    "phrases": [
+      "north macedonia",
+      "macedonia",
+      "macedonian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Norway",
+    "region": "Europe",
+    "code": "NO",
+    "phrases": [
+      "norway",
+      "norwegian",
+      "norge"
+    ],
+    "locations": [
+      {
+        "name": "Oslo",
+        "phrases": [
+          "oslo"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bergen",
+        "phrases": [
+          "bergen"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Stavanger",
+        "phrases": [
+          "stavanger"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Trondheim",
+        "phrases": [
+          "trondheim"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Drammen",
+        "phrases": [
+          "drammen"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Fredrikstad",
+        "phrases": [
+          "fredrikstad"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kristiansand",
+        "phrases": [
+          "kristiansand"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Sandnes",
+        "phrases": [
+          "sandnes"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Tromso",
+        "phrases": [
+          "tromso",
+          "tromsø"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Poland",
+    "region": "Europe",
+    "code": "PL",
+    "phrases": [
+      "poland",
+      "polish",
+      "polska"
+    ],
+    "locations": [
+      {
+        "name": "Warsaw",
+        "phrases": [
+          "warsaw"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Krakow",
+        "phrases": [
+          "krakow",
+          "kraków"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Wroclaw",
+        "phrases": [
+          "wroclaw",
+          "wrocław"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Poznan",
+        "phrases": [
+          "poznan",
+          "poznań"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Gdansk",
+        "phrases": [
+          "gdansk",
+          "gdańsk"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Lodz",
+        "phrases": [
+          "lodz",
+          "łódź"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Katowice",
+        "phrases": [
+          "katowice"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Gliwice",
+        "phrases": [
+          "gliwice"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Tychy",
+        "phrases": [
+          "tychy"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Portugal",
+    "region": "Europe",
+    "code": "PT",
+    "phrases": [
+      "portugal",
+      "portuguese"
+    ],
+    "locations": [
+      {
+        "name": "Lisbon",
+        "phrases": [
+          "lisbon",
+          "lisboa"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Porto",
+        "phrases": [
+          "porto",
+          "oportu"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Setubal",
+        "phrases": [
+          "setubal"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Palmela",
+        "phrases": [
+          "palmela"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Mangualde",
+        "phrases": [
+          "mangualde"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Aveiro",
+        "phrases": [
+          "aveiro"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Republic of Georgia",
+    "region": "Europe",
+    "code": "GE",
+    "phrases": [
+      "republic of georgia"
+    ],
+    "locations": [
+      {
+        "name": "Tbilisi",
+        "phrases": [
+          "tbilisi"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Romania",
+    "region": "Europe",
+    "code": "RO",
+    "phrases": [
+      "romania",
+      "romanian",
+      "românia"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Russia",
+    "region": "Europe",
+    "code": "RU",
+    "phrases": [
+      "russia",
+      "russian",
+      "ruble",
+      "rub"
+    ],
+    "locations": [
+      {
+        "name": "Moscow",
+        "phrases": [
+          "moscow"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Saint Petersburg",
+        "phrases": [
+          "saint petersburg",
+          "st. petersburg",
+          "leningrad"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Nizhny Novgorod",
+        "phrases": [
+          "nizhny novgorod",
+          "gorky"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kaluga",
+        "phrases": [
+          "kaluga"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Togliatti",
+        "phrases": [
+          "togliatti",
+          "tolyatti"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "San Marino",
+    "region": "Europe",
+    "code": "SM",
+    "phrases": [
+      "san marino",
+      "sammarinese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Serbia",
+    "region": "Europe",
+    "code": "RS",
+    "phrases": [
+      "serbia",
+      "serbian",
+      "srbija"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Slovakia",
+    "region": "Europe",
+    "code": "SK",
+    "phrases": [
+      "slovakia",
+      "slovak",
+      "slovensko"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Slovenia",
+    "region": "Europe",
+    "code": "SI",
+    "phrases": [
+      "slovenia",
+      "slovenian",
+      "slovenija"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Spain",
+    "region": "Europe",
+    "code": "ES",
+    "phrases": [
+      "spain",
+      "spanish",
+      "España"
+    ],
+    "locations": [
+      {
+        "name": "Madrid",
+        "phrases": [
+          "madrid"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Barcelona",
+        "phrases": [
+          "barcelona"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Valencia",
+        "phrases": [
+          "valencia"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Zaragoza",
+        "phrases": [
+          "zaragoza"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Vigo",
+        "phrases": [
+          "vigo"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bilbao",
+        "phrases": [
+          "bilbao"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Seville",
+        "phrases": [
+          "seville",
+          "sevilla"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Valladolid",
+        "phrases": [
+          "valladolid"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Pamplona",
+        "phrases": [
+          "pamplona"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Martorell",
+        "phrases": [
+          "martorell"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Sweden",
+    "region": "Europe",
+    "code": "SE",
+    "phrases": [
+      "sweden",
+      "swedish",
+      "sverige"
+    ],
+    "locations": [
+      {
+        "name": "Stockholm",
+        "phrases": [
+          "stockholm"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Gothenburg",
+        "phrases": [
+          "gothenburg",
+          "göteborg"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Malmo",
+        "phrases": [
+          "malmo",
+          "malmö"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Gothenburg",
+        "phrases": [
+          "gothenburg",
+          "göteborg"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Malmo",
+        "phrases": [
+          "malmo",
+          "malmö"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Umea",
+        "phrases": [
+          "umea",
+          "umeå"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Lund",
+        "phrases": [
+          "lund"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Uppsala",
+        "phrases": [
+          "uppsala"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Vasteras",
+        "phrases": [
+          "vasteras",
+          "västerås"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Linkoping",
+        "phrases": [
+          "linkoping",
+          "linköping"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Helsingborg",
+        "phrases": [
+          "helsingborg"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Jonkoping",
+        "phrases": [
+          "jonkoping",
+          "jönköping"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Norrkoping",
+        "phrases": [
+          "norrkoping",
+          "norrköping"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Switzerland",
+    "region": "Europe",
+    "code": "CH",
+    "phrases": [
+      "switzerland",
+      "swiss",
+      "chf",
+      "schweiz",
+      "suisse",
+      "svizzera"
+    ],
+    "locations": [
+      {
+        "name": "Zurich",
+        "phrases": [
+          "zurich"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Geneva",
+        "phrases": [
+          "geneva"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Basel",
+        "phrases": [
+          "basel"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bern",
+        "phrases": [
+          "bern"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Lausanne",
+        "phrases": [
+          "lausanne"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Lucerne",
+        "phrases": [
+          "lucerne"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Lugano",
+        "phrases": [
+          "lugano"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Turkey",
+    "region": "Europe",
+    "code": "TR",
+    "phrases": [
+      "turkey",
+      "turkish",
+      "lira",
+      "türkiye",
+      "turkiye"
+    ],
+    "locations": [
+      {
+        "name": "Istanbul",
+        "phrases": [
+          "istanbul"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ankara",
+        "phrases": [
+          "ankara"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Izmir",
+        "phrases": [
+          "izmir"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bursa",
+        "phrases": [
+          "bursa"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kocaeli",
+        "phrases": [
+          "kocaeli",
+          "izmit"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Ukraine",
+    "region": "Europe",
+    "code": "UA",
+    "phrases": [
+      "ukraine",
+      "ukrainian"
+    ],
+    "locations": [
+      {
+        "name": "Kyiv",
+        "phrases": [
+          "kyiv",
+          "kiev"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Lviv",
+        "phrases": [
+          "lviv"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Odesa",
+        "phrases": [
+          "odesa",
+          "odessa"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kharkiv",
+        "phrases": [
+          "kharkiv",
+          "kharkov"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Dnipro",
+        "phrases": [
+          "dnipro",
+          "dnipropetrovsk"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Donetsk",
+        "phrases": [
+          "donetsk"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "United Kingdom",
+    "region": "Europe",
+    "code": "GB",
+    "phrases": [
+      "uk",
+      "britain",
+      "united kingdom",
+      "(?<!new[- ])england",
+      "sterling",
+      "gbp",
+      "british(?![- ](?:columbia|virgin))"
+    ],
+    "locations": [
+      {
+        "name": "London",
+        "phrases": [
+          "london"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Birmingham",
+        "phrases": [
+          "birmingham"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Manchester",
+        "phrases": [
+          "manchester"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Leeds",
+        "phrases": [
+          "leeds"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Glasgow",
+        "phrases": [
+          "glasgow"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Liverpool",
+        "phrases": [
+          "liverpool"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Sheffield",
+        "phrases": [
+          "sheffield"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bristol",
+        "phrases": [
+          "bristol"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Edinburgh",
+        "phrases": [
+          "edinburgh"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Leicester",
+        "phrases": [
+          "leicester"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Coventry",
+        "phrases": [
+          "coventry"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Belfast",
+        "phrases": [
+          "belfast"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Cardiff",
+        "phrases": [
+          "cardiff"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Sunderland",
+        "phrases": [
+          "sunderland"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Solihull",
+        "phrases": [
+          "solihull"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Oxford",
+        "phrases": [
+          "oxford"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Derby",
+        "phrases": [
+          "derby"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Crewe",
+        "phrases": [
+          "crewe"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ellesmere Port",
+        "phrases": [
+          "ellesmere port"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Halewood",
+        "phrases": [
+          "halewood"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Burnaston",
+        "phrases": [
+          "burnaston"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Wales",
+        "phrases": [
+          "wales"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Northern Ireland",
+        "phrases": [
+          "northern ireland"
+        ],
+        "cities": []
+      },
+      {
+        "name": "English Channel",
+        "phrases": [
+          "english channel"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Western Europe",
+    "region": "Europe",
+    "code": "WEU",
+    "phrases": [
+      "west(?:ern)? europe(?:an)?"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Afghanistan",
+    "region": "Asia/Pacific",
+    "code": "AF",
+    "phrases": [
+      "afghanistan",
+      "afghan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "American Samoa",
+    "region": "Asia/Pacific",
+    "code": "AS",
+    "phrases": [
+      "american samoa"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Asia",
+    "region": "Asia/Pacific",
+    "code": "APAC",
+    "phrases": [
+      "asia",
+      "asian",
+      "asia[- ]?pacific",
+      "apac"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Australia",
+    "region": "Asia/Pacific",
+    "code": "AU",
+    "phrases": [
+      "australia",
+      "australian"
+    ],
+    "locations": [
+      {
+        "name": "Sydney",
+        "phrases": [
+          "sydney"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Melbourne",
+        "phrases": [
+          "melbourne"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Brisbane",
+        "phrases": [
+          "brisbane"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Perth",
+        "phrases": [
+          "perth"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Pilbara",
+        "phrases": [
+          "pilbara",
+          "port hedland"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Hunter Valley",
+        "phrases": [
+          "hunter valley",
+          "newcastle"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kalgoorlie",
+        "phrases": [
+          "kalgoorlie",
+          "super pit"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bowen Basin",
+        "phrases": [
+          "bowen basin"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Bangladesh",
+    "region": "Asia/Pacific",
+    "code": "BD",
+    "phrases": [
+      "bangladesh",
+      "bangladeshi"
+    ],
+    "locations": [
+      {
+        "name": "Dhaka",
+        "phrases": [
+          "dhaka"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Chittagong",
+        "phrases": [
+          "chittagong"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Khulna",
+        "phrases": [
+          "khulna"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Sylhet",
+        "phrases": [
+          "sylhet"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Bhutan",
+    "region": "Asia/Pacific",
+    "code": "BT",
+    "phrases": [
+      "bhutan",
+      "bhutanese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Brunei",
+    "region": "Asia/Pacific",
+    "code": "BN",
+    "phrases": [
+      "brunei",
+      "bruneian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Cambodia",
+    "region": "Asia/Pacific",
+    "code": "KH",
+    "phrases": [
+      "cambodia",
+      "cambodian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "China",
+    "region": "Asia/Pacific",
+    "code": "CN",
+    "phrases": [
+      "china",
+      "chinese",
+      "prc",
+      "p.r.c.",
+      "people's republic of china",
+      "yuan",
+      "renminbi",
+      "rmb",
+      "cny"
+    ],
+    "locations": [
+      {
+        "name": "Shanghai",
+        "phrases": [
+          "shanghai"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Beijing",
+        "phrases": [
+          "beijing"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Shenzhen",
+        "phrases": [
+          "shenzhen"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Guangzhou",
+        "phrases": [
+          "guangzhou"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Tianjin",
+        "phrases": [
+          "tianjin"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Chongqing",
+        "phrases": [
+          "chongqing"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Wuhan",
+        "phrases": [
+          "wuhan"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Suzhou",
+        "phrases": [
+          "suzhou"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Chengdu",
+        "phrases": [
+          "chengdu"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Hangzhou",
+        "phrases": [
+          "hangzhou"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Nanjing",
+        "phrases": [
+          "nanjing"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ningbo",
+        "phrases": [
+          "ningbo"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Changchun",
+        "phrases": [
+          "changchun"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Fujian",
+        "phrases": [
+          "fujian"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "East Asia",
+    "region": "Asia/Pacific",
+    "code": "EASIA",
+    "phrases": [
+      "east(?:ern) asian?"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Fiji",
+    "region": "Asia/Pacific",
+    "code": "FJ",
+    "phrases": [
+      "fiji",
+      "fijian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "French Polynesia",
+    "region": "Asia/Pacific",
+    "code": "PF",
+    "phrases": [
+      "french polynesia"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Guam",
+    "region": "Asia/Pacific",
+    "code": "GU",
+    "phrases": [
+      "guam"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Hong Kong",
+    "region": "Asia/Pacific",
+    "code": "HK",
+    "phrases": [
+      "hong kong",
+      "hk"
+    ],
+    "locations": []
+  },
+  {
+    "name": "India",
+    "region": "Asia/Pacific",
+    "code": "IN",
+    "phrases": [
+      "india",
+      "indian",
+      "rupee",
+      "inr",
+      "lakh",
+      "crore"
+    ],
+    "locations": [
+      {
+        "name": "Mumbai",
+        "phrases": [
+          "mumbai",
+          "bombay"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bangalore",
+        "phrases": [
+          "bangalore",
+          "bengaluru"
+        ],
+        "cities": []
+      },
+      {
+        "name": "New Delhi",
+        "phrases": [
+          "new delhi",
+          "delhi"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Chennai",
+        "phrases": [
+          "chennai",
+          "madras"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Hyderabad",
+        "phrases": [
+          "hyderabad"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Pune",
+        "phrases": [
+          "pune"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Indonesia",
+    "region": "Asia/Pacific",
+    "code": "ID",
+    "phrases": [
+      "indonesia",
+      "indonesian"
+    ],
+    "locations": [
+      {
+        "name": "Jakarta",
+        "phrases": [
+          "jakarta"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Surabaya",
+        "phrases": [
+          "surabaya"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bandung",
+        "phrases": [
+          "bandung"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Medan",
+        "phrases": [
+          "medan"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Japan",
+    "region": "Asia/Pacific",
+    "code": "JP",
+    "phrases": [
+      "japan",
+      "japanese",
+      "yen",
+      "jpy",
+      "nihon",
+      "nippon"
+    ],
+    "locations": [
+      {
+        "name": "Tokyo",
+        "phrases": [
+          "tokyo"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Osaka",
+        "phrases": [
+          "osaka"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Nagoya",
+        "phrases": [
+          "nagoya"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Yokohama",
+        "phrases": [
+          "yokohama"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Toyota City",
+        "phrases": [
+          "toyota city"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Kazakhstan",
+    "region": "Asia/Pacific",
+    "code": "KZ",
+    "phrases": [
+      "kazakhstan",
+      "kazakh"
+    ],
+    "locations": [
+      {
+        "name": "Almaty",
+        "phrases": [
+          "almaty"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Astana",
+        "phrases": [
+          "astana",
+          "nur-sultan"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Kiribati",
+    "region": "Asia/Pacific",
+    "code": "KI",
+    "phrases": [
+      "kiribati"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Kyrgyzstan",
+    "region": "Asia/Pacific",
+    "code": "KG",
+    "phrases": [
+      "kyrgyzstan",
+      "kyrgyz"
+    ],
+    "locations": [
+      {
+        "name": "Bishkek",
+        "phrases": [
+          "bishkek"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Laos",
+    "region": "Asia/Pacific",
+    "code": "LA",
+    "phrases": [
+      "laos",
+      "laotian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Macau",
+    "region": "Asia/Pacific",
+    "code": "MO",
+    "phrases": [
+      "macau",
+      "macanese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Malaysia",
+    "region": "Asia/Pacific",
+    "code": "MY",
+    "phrases": [
+      "malaysia",
+      "malaysian"
+    ],
+    "locations": [
+      {
+        "name": "Kuala Lumpur",
+        "phrases": [
+          "kuala lumpur",
+          "kl"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Johor",
+        "phrases": [
+          "johor"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Penang",
+        "phrases": [
+          "penang"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Maldives",
+    "region": "Asia/Pacific",
+    "code": "MV",
+    "phrases": [
+      "maldives",
+      "maldivian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Marshall Islands",
+    "region": "Asia/Pacific",
+    "code": "MH",
+    "phrases": [
+      "marshall islands"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Micronesia",
+    "region": "Asia/Pacific",
+    "code": "FM",
+    "phrases": [
+      "micronesia"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Mongolia",
+    "region": "Asia/Pacific",
+    "code": "MN",
+    "phrases": [
+      "mongolia",
+      "mongolian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Myanmar",
+    "region": "Asia/Pacific",
+    "code": "MM",
+    "phrases": [
+      "myanmar",
+      "burma",
+      "burmese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Nauru",
+    "region": "Asia/Pacific",
+    "code": "NR",
+    "phrases": [
+      "nauru",
+      "nauruan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Nepal",
+    "region": "Asia/Pacific",
+    "code": "NP",
+    "phrases": [
+      "nepal",
+      "nepalese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "New Caledonia",
+    "region": "Asia/Pacific",
+    "code": "NC",
+    "phrases": [
+      "new caledonia"
+    ],
+    "locations": []
+  },
+  {
+    "name": "New Zealand",
+    "region": "Asia/Pacific",
+    "code": "NZ",
+    "phrases": [
+      "new zealand",
+      "nz",
+      "aotearoa"
+    ],
+    "locations": [
+      {
+        "name": "Auckland",
+        "phrases": [
+          "auckland"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Wellington",
+        "phrases": [
+          "wellington"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Christchurch",
+        "phrases": [
+          "christchurch"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Dunedin",
+        "phrases": [
+          "dunedin"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Hamilton",
+        "phrases": [
+          "hamilton, nz"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "North Korea",
+    "region": "Asia/Pacific",
+    "code": "KP",
+    "phrases": [
+      "north korean?",
+      "dprk"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Northern Mariana Islands",
+    "region": "Asia/Pacific",
+    "code": "MP",
+    "phrases": [
+      "northern mariana islands"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Oceania",
+    "region": "Asia/Pacific",
+    "code": "OCN",
+    "phrases": [
+      "oceanian?"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Pakistan",
+    "region": "Asia/Pacific",
+    "code": "PK",
+    "phrases": [
+      "pakistan",
+      "pakistani"
+    ],
+    "locations": [
+      {
+        "name": "Karachi",
+        "phrases": [
+          "karachi"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Lahore",
+        "phrases": [
+          "lahore"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Islamabad",
+        "phrases": [
+          "islamabad"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Faisalabad",
+        "phrases": [
+          "faisalabad"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Palau",
+    "region": "Asia/Pacific",
+    "code": "PW",
+    "phrases": [
+      "palau",
+      "palauan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Papua New Guinea",
+    "region": "Asia/Pacific",
+    "code": "PG",
+    "phrases": [
+      "papua new guinea",
+      "png"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Philippines",
+    "region": "Asia/Pacific",
+    "code": "PH",
+    "phrases": [
+      "philippines",
+      "philippine",
+      "filipino",
+      "pilipinas"
+    ],
+    "locations": [
+      {
+        "name": "Manila",
+        "phrases": [
+          "manila"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Cebu",
+        "phrases": [
+          "cebu"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Davao",
+        "phrases": [
+          "davao"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Samoa",
+    "region": "Asia/Pacific",
+    "code": "WS",
+    "phrases": [
+      "samoa",
+      "samoan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Singapore",
+    "region": "Asia/Pacific",
+    "code": "SG",
+    "phrases": [
+      "singapore",
+      "singaporean"
+    ],
+    "locations": [
+      {
+        "name": "Singapore",
+        "phrases": [
+          "singapore"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Solomon Islands",
+    "region": "Asia/Pacific",
+    "code": "SB",
+    "phrases": [
+      "solomon islands"
+    ],
+    "locations": []
+  },
+  {
+    "name": "South Asia",
+    "region": "Asia/Pacific",
+    "code": "SASIA",
+    "phrases": [
+      "south(?:ern) asian?",
+      "indian subcontinent"
+    ],
+    "locations": []
+  },
+  {
+    "name": "South Korea",
+    "region": "Asia/Pacific",
+    "code": "KR",
+    "phrases": [
+      "south korea",
+      "krw",
+      "(?<!north[- ])(?:korean|korea)"
+    ],
+    "locations": [
+      {
+        "name": "Seoul",
+        "phrases": [
+          "seoul"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Busan",
+        "phrases": [
+          "busan",
+          "pusan"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Incheon",
+        "phrases": [
+          "incheon"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ulsan",
+        "phrases": [
+          "ulsan"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Southeast Asia",
+    "region": "Asia/Pacific",
+    "code": "ASEAN",
+    "phrases": [
+      "southeast asia",
+      "s.e. asia",
+      "asean"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Sri Lanka",
+    "region": "Asia/Pacific",
+    "code": "LK",
+    "phrases": [
+      "sri lanka",
+      "sri lankan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Taiwan",
+    "region": "Asia/Pacific",
+    "code": "TW",
+    "phrases": [
+      "taiwan",
+      "taiwanese"
+    ],
+    "locations": [
+      {
+        "name": "Taipei",
+        "phrases": [
+          "taipei"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Hsinchu",
+        "phrases": [
+          "hsinchu"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kaohsiung",
+        "phrases": [
+          "kaohsiung"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Tajikistan",
+    "region": "Asia/Pacific",
+    "code": "TJ",
+    "phrases": [
+      "tajikistan",
+      "tajik"
+    ],
+    "locations": [
+      {
+        "name": "Dushanbe",
+        "phrases": [
+          "dushanbe"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Thailand",
+    "region": "Asia/Pacific",
+    "code": "TH",
+    "phrases": [
+      "thailand",
+      "thai"
+    ],
+    "locations": [
+      {
+        "name": "Bangkok",
+        "phrases": [
+          "bangkok"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Rayong",
+        "phrases": [
+          "rayong"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Chonburi",
+        "phrases": [
+          "chonburi"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ayutthaya",
+        "phrases": [
+          "ayutthaya"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Timor-Leste",
+    "region": "Asia/Pacific",
+    "code": "TL",
+    "phrases": [
+      "timor-leste",
+      "east timor"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Tonga",
+    "region": "Asia/Pacific",
+    "code": "TO",
+    "phrases": [
+      "tonga",
+      "tongan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Turkmenistan",
+    "region": "Asia/Pacific",
+    "code": "TM",
+    "phrases": [
+      "turkmenistan",
+      "turkmen"
+    ],
+    "locations": [
+      {
+        "name": "Ashgabat",
+        "phrases": [
+          "ashgabat"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Tuvalu",
+    "region": "Asia/Pacific",
+    "code": "TV",
+    "phrases": [
+      "tuvalu",
+      "tuvaluan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Uzbekistan",
+    "region": "Asia/Pacific",
+    "code": "UZ",
+    "phrases": [
+      "uzbekistan",
+      "uzbek"
+    ],
+    "locations": [
+      {
+        "name": "Tashkent",
+        "phrases": [
+          "tashkent"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Vanuatu",
+    "region": "Asia/Pacific",
+    "code": "VU",
+    "phrases": [
+      "vanuatu",
+      "vanuatuan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Vietnam",
+    "region": "Asia/Pacific",
+    "code": "VN",
+    "phrases": [
+      "vietnam",
+      "vietnamese",
+      "việt nam"
+    ],
+    "locations": [
+      {
+        "name": "Ho Chi Minh City",
+        "phrases": [
+          "ho chi minh city",
+          "hcmc",
+          "saigon"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Hanoi",
+        "phrases": [
+          "hanoi"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Haiphong",
+        "phrases": [
+          "haiphong"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Antigua and Barbuda",
+    "region": "Latin America",
+    "code": "AG",
+    "phrases": [
+      "antigua",
+      "barbuda"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Argentina",
+    "region": "Latin America",
+    "code": "AR",
+    "phrases": [
+      "argentina",
+      "argentine"
+    ],
+    "locations": [
+      {
+        "name": "Buenos Aires",
+        "phrases": [
+          "buenos aires"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Cordoba",
+        "phrases": [
+          "cordoba"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Rosario",
+        "phrases": [
+          "rosario"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Pacheco",
+        "phrases": [
+          "pacheco"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Aruba",
+    "region": "Latin America",
+    "code": "AW",
+    "phrases": [
+      "aruba",
+      "aruban"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Bahamas",
+    "region": "Latin America",
+    "code": "BS",
+    "phrases": [
+      "bahamas",
+      "bahamian"
+    ],
+    "locations": [
+      {
+        "name": "Nassau",
+        "phrases": [
+          "nassau"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Barbados",
+    "region": "Latin America",
+    "code": "BB",
+    "phrases": [
+      "barbados",
+      "barbadian"
+    ],
+    "locations": [
+      {
+        "name": "Bridgetown",
+        "phrases": [
+          "bridgetown"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Belize",
+    "region": "Latin America",
+    "code": "BZ",
+    "phrases": [
+      "belize",
+      "belizean"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Bermuda",
+    "region": "Latin America",
+    "code": "BM",
+    "phrases": [
+      "bermuda",
+      "bermudian"
+    ],
+    "locations": [
+      {
+        "name": "Hamilton",
+        "phrases": [
+          "hamilton, bermuda"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Bolivia",
+    "region": "Latin America",
+    "code": "BO",
+    "phrases": [
+      "bolivia",
+      "bolivian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Brazil",
+    "region": "Latin America",
+    "code": "BR",
+    "phrases": [
+      "brazil",
+      "bra(?:z|s)ilian",
+      "reais",
+      "brl",
+      "Brasil"
+    ],
+    "locations": [
+      {
+        "name": "Sao Paulo",
+        "phrases": [
+          "sao paulo"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Rio de Janeiro",
+        "phrases": [
+          "rio de janeiro"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Sao Bernardo do Campo",
+        "phrases": [
+          "sao bernardo do campo"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Curitiba",
+        "phrases": [
+          "curitiba"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Belo Horizonte",
+        "phrases": [
+          "belo horizonte"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Parauapebas",
+        "phrases": [
+          "parauapebas",
+          "carajas",
+          "carajás"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "British Virgin Islands",
+    "region": "Latin America",
+    "code": "VG",
+    "phrases": [
+      "british virgin islands",
+      "bvi"
+    ],
+    "locations": [
+      {
+        "name": "Road Town",
+        "phrases": [
+          "road town"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Caribbean",
+    "region": "Latin America",
+    "code": "CARIB",
+    "phrases": [
+      "caribbean",
+      "west indies"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Cayman Islands",
+    "region": "Latin America",
+    "code": "KY",
+    "phrases": [
+      "cayman islands",
+      "cayman",
+      "caymans"
+    ],
+    "locations": [
+      {
+        "name": "George Town",
+        "phrases": [
+          "george town"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Central America",
+    "region": "Latin America",
+    "code": "CAM",
+    "phrases": [
+      "central america",
+      "central american"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Chile",
+    "region": "Latin America",
+    "code": "CL",
+    "phrases": [
+      "chile",
+      "chilean"
+    ],
+    "locations": [
+      {
+        "name": "Santiago",
+        "phrases": [
+          "santiago"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Antofagasta",
+        "phrases": [
+          "antofagasta"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Valparaiso",
+        "phrases": [
+          "valparaiso"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Calama",
+        "phrases": [
+          "calama",
+          "chuquicamata"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Copiapo",
+        "phrases": [
+          "copiapo",
+          "copiapó"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Rancagua",
+        "phrases": [
+          "rancagua",
+          "el teniente"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Colombia",
+    "region": "Latin America",
+    "code": "CO",
+    "phrases": [
+      "colombia",
+      "colombian"
+    ],
+    "locations": [
+      {
+        "name": "Bogota",
+        "phrases": [
+          "bogota"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Medellin",
+        "phrases": [
+          "medellin"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Cali",
+        "phrases": [
+          "cali"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Costa Rica",
+    "region": "Latin America",
+    "code": "CR",
+    "phrases": [
+      "costa rica",
+      "costa rican"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Cuba",
+    "region": "Latin America",
+    "code": "CU",
+    "phrases": [
+      "cuba",
+      "cuban"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Curacao",
+    "region": "Latin America",
+    "code": "CW",
+    "phrases": [
+      "curacao",
+      "curaçao"
+    ],
+    "locations": [
+      {
+        "name": "Willemstad",
+        "phrases": [
+          "willemstad"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Dominica",
+    "region": "Latin America",
+    "code": "DM",
+    "phrases": [
+      "dominica"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Dominican Republic",
+    "region": "Latin America",
+    "code": "DO",
+    "phrases": [
+      "dominican republic",
+      "dominican",
+      "república dominicana",
+      "republica dominicana"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Ecuador",
+    "region": "Latin America",
+    "code": "EC",
+    "phrases": [
+      "ecuador",
+      "ecuadorian"
+    ],
+    "locations": [
+      {
+        "name": "Quito",
+        "phrases": [
+          "quito"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Guayaquil",
+        "phrases": [
+          "guayaquil"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "El Salvador",
+    "region": "Latin America",
+    "code": "SV",
+    "phrases": [
+      "el salvador",
+      "salvadoran"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Grenada",
+    "region": "Latin America",
+    "code": "GD",
+    "phrases": [
+      "grenada",
+      "grenadian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Guatemala",
+    "region": "Latin America",
+    "code": "GT",
+    "phrases": [
+      "guatemala",
+      "guatemalan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Guyana",
+    "region": "Latin America",
+    "code": "GY",
+    "phrases": [
+      "guyana",
+      "guyanese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Haiti",
+    "region": "Latin America",
+    "code": "HT",
+    "phrases": [
+      "haiti",
+      "haitian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Honduras",
+    "region": "Latin America",
+    "code": "HN",
+    "phrases": [
+      "honduras",
+      "honduran"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Jamaica",
+    "region": "Latin America",
+    "code": "JM",
+    "phrases": [
+      "jamaica",
+      "jamaican"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Latin America",
+    "region": "Latin America",
+    "code": "LATAM",
+    "phrases": [
+      "latin america",
+      "latin american",
+      "latam"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Mexico",
+    "region": "Latin America",
+    "code": "MX",
+    "phrases": [
+      "mexico",
+      "mexican",
+      "méxico"
+    ],
+    "locations": [
+      {
+        "name": "Mexico City",
+        "phrases": [
+          "mexico city",
+          "cdmx"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Monterrey",
+        "phrases": [
+          "monterrey"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Saltillo",
+        "phrases": [
+          "saltillo",
+          "ramos arizpe"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Hermosillo",
+        "phrases": [
+          "hermosillo"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Puebla",
+        "phrases": [
+          "puebla"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Toluca",
+        "phrases": [
+          "toluca"
+        ],
+        "cities": []
+      },
+      {
+        "name": "San Luis Potosi",
+        "phrases": [
+          "san luis potosi",
+          "slp"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Aguascalientes",
+        "phrases": [
+          "aguascalientes"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Silao",
+        "phrases": [
+          "silao"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Guanajuato",
+        "phrases": [
+          "guanajuato"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Queretaro",
+        "phrases": [
+          "queretaro"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Tijuana",
+        "phrases": [
+          "tijuana"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Juarez",
+        "phrases": [
+          "juarez",
+          "ciudad juarez"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Cuautitlan",
+        "phrases": [
+          "cuautitlan"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Nicaragua",
+    "region": "Latin America",
+    "code": "NI",
+    "phrases": [
+      "nicaragua",
+      "nicaraguan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Panama",
+    "region": "Latin America",
+    "code": "PA",
+    "phrases": [
+      "panama",
+      "panamanian",
+      "panamá"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Paraguay",
+    "region": "Latin America",
+    "code": "PY",
+    "phrases": [
+      "paraguay",
+      "paraguayan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Peru",
+    "region": "Latin America",
+    "code": "PE",
+    "phrases": [
+      "peru",
+      "peruvian",
+      "perú"
+    ],
+    "locations": [
+      {
+        "name": "Lima",
+        "phrases": [
+          "lima"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Arequipa",
+        "phrases": [
+          "arequipa"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Cajamarca",
+        "phrases": [
+          "cajamarca",
+          "yanacocha"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Puerto Rico",
+    "region": "Latin America",
+    "code": "PR",
+    "phrases": [
+      "puerto rico",
+      "puerto rican"
+    ],
+    "locations": [
+      {
+        "name": "San Juan",
+        "phrases": [
+          "san juan"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Saint Kitts and Nevis",
+    "region": "Latin America",
+    "code": "KN",
+    "phrases": [
+      "saint kitts",
+      "nevis"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Saint Lucia",
+    "region": "Latin America",
+    "code": "LC",
+    "phrases": [
+      "saint lucia"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Saint Martin",
+    "region": "Latin America",
+    "code": "MF",
+    "phrases": [
+      "saint martin"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Saint Vincent and the Grenadines",
+    "region": "Latin America",
+    "code": "VC",
+    "phrases": [
+      "saint vincent",
+      "grenadines"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Sint Maarten",
+    "region": "Latin America",
+    "code": "SX",
+    "phrases": [
+      "sint maarten"
+    ],
+    "locations": []
+  },
+  {
+    "name": "South America",
+    "region": "Latin America",
+    "code": "SAM",
+    "phrases": [
+      "south america",
+      "south american"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Suriname",
+    "region": "Latin America",
+    "code": "SR",
+    "phrases": [
+      "suriname",
+      "surinamese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Trinidad and Tobago",
+    "region": "Latin America",
+    "code": "TT",
+    "phrases": [
+      "trinidad",
+      "tobago"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Turks and Caicos Islands",
+    "region": "Latin America",
+    "code": "TC",
+    "phrases": [
+      "turks and caicos"
+    ],
+    "locations": []
+  },
+  {
+    "name": "U.S. Virgin Islands",
+    "region": "Latin America",
+    "code": "VI",
+    "phrases": [
+      "us virgin islands",
+      "usvi"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Uruguay",
+    "region": "Latin America",
+    "code": "UY",
+    "phrases": [
+      "uruguay",
+      "uruguayan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Venezuela",
+    "region": "Latin America",
+    "code": "VE",
+    "phrases": [
+      "venezuela",
+      "venezuelan"
+    ],
+    "locations": [
+      {
+        "name": "Caracas",
+        "phrases": [
+          "caracas"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Africa",
+    "region": "Middle East/Africa",
+    "code": "AFR",
+    "phrases": [
+      "africa",
+      "african(?![- ]american)"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Algeria",
+    "region": "Middle East/Africa",
+    "code": "DZ",
+    "phrases": [
+      "algeria",
+      "algerian",
+      "algérie",
+      "algerie"
+    ],
+    "locations": [
+      {
+        "name": "Algiers",
+        "phrases": [
+          "algiers"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Oran",
+        "phrases": [
+          "oran",
+          "wahran"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Constantine",
+        "phrases": [
+          "constantine"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Annaba",
+        "phrases": [
+          "annaba"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Blida",
+        "phrases": [
+          "blida"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Angola",
+    "region": "Middle East/Africa",
+    "code": "AO",
+    "phrases": [
+      "angola",
+      "angolan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Bahrain",
+    "region": "Middle East/Africa",
+    "code": "BH",
+    "phrases": [
+      "bahrain",
+      "bahraini"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Benin",
+    "region": "Middle East/Africa",
+    "code": "BJ",
+    "phrases": [
+      "benin",
+      "beninese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Botswana",
+    "region": "Middle East/Africa",
+    "code": "BW",
+    "phrases": [
+      "botswana"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Burkina Faso",
+    "region": "Middle East/Africa",
+    "code": "BF",
+    "phrases": [
+      "burkina faso",
+      "burkinabe"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Burundi",
+    "region": "Middle East/Africa",
+    "code": "BI",
+    "phrases": [
+      "burundi",
+      "burundian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Cabo Verde",
+    "region": "Middle East/Africa",
+    "code": "CV",
+    "phrases": [
+      "cabo verde",
+      "cape verde"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Cameroon",
+    "region": "Middle East/Africa",
+    "code": "CM",
+    "phrases": [
+      "cameroon",
+      "cameroonian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Central Africa",
+    "region": "Middle East/Africa",
+    "code": "CAFR",
+    "phrases": [
+      "Central african?"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Central African Republic",
+    "region": "Middle East/Africa",
+    "code": "CF",
+    "phrases": [
+      "central african republic",
+      "car"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Chad",
+    "region": "Middle East/Africa",
+    "code": "TD",
+    "phrases": [
+      "chad",
+      "chadian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Comoros",
+    "region": "Middle East/Africa",
+    "code": "KM",
+    "phrases": [
+      "comoros",
+      "comorian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Congo",
+    "region": "Middle East/Africa",
+    "code": "CG",
+    "phrases": [
+      "republic of the congo",
+      "congo-brazzaville"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Côte d'Ivoire",
+    "region": "Middle East/Africa",
+    "code": "CI",
+    "phrases": [
+      "côte d'ivoire",
+      "ivory coast"
+    ],
+    "locations": []
+  },
+  {
+    "name": "DRC",
+    "region": "Middle East/Africa",
+    "code": "CD",
+    "phrases": [
+      "democratic republic of the congo",
+      "drc",
+      "congo-kinshasa",
+      "zaire"
+    ],
+    "locations": [
+      {
+        "name": "Kinshasa",
+        "phrases": [
+          "kinshasa"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Lubumbashi",
+        "phrases": [
+          "lubumbashi"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kolwezi",
+        "phrases": [
+          "kolwezi"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Djibouti",
+    "region": "Middle East/Africa",
+    "code": "DJ",
+    "phrases": [
+      "djibouti",
+      "djiboutian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "East Africa",
+    "region": "Middle East/Africa",
+    "code": "EAFR",
+    "phrases": [
+      "East(?:ern)? african?"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Egypt",
+    "region": "Middle East/Africa",
+    "code": "EG",
+    "phrases": [
+      "egypt",
+      "egyptian"
+    ],
+    "locations": [
+      {
+        "name": "Cairo",
+        "phrases": [
+          "cairo"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Alexandria",
+        "phrases": [
+          "alexandria, egypt"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Giza",
+        "phrases": [
+          "giza"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Suez",
+        "phrases": [
+          "suez"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Equatorial Guinea",
+    "region": "Middle East/Africa",
+    "code": "GQ",
+    "phrases": [
+      "equatorial guinea"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Eritrea",
+    "region": "Middle East/Africa",
+    "code": "ER",
+    "phrases": [
+      "eritrea",
+      "eritrean"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Eswatini",
+    "region": "Middle East/Africa",
+    "code": "SZ",
+    "phrases": [
+      "eswatini",
+      "swaziland"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Ethiopia",
+    "region": "Middle East/Africa",
+    "code": "ET",
+    "phrases": [
+      "ethiopia",
+      "ethiopian"
+    ],
+    "locations": [
+      {
+        "name": "Addis Ababa",
+        "phrases": [
+          "addis ababa",
+          "addis"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Dire Dawa",
+        "phrases": [
+          "dire dawa"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Mekelle",
+        "phrases": [
+          "mekelle",
+          "mekele"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Gondar",
+        "phrases": [
+          "gondar"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Adama",
+        "phrases": [
+          "adama"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Gabon",
+    "region": "Middle East/Africa",
+    "code": "GA",
+    "phrases": [
+      "gabon",
+      "gabonese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Gambia",
+    "region": "Middle East/Africa",
+    "code": "GM",
+    "phrases": [
+      "gambia",
+      "gambian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Ghana",
+    "region": "Middle East/Africa",
+    "code": "GH",
+    "phrases": [
+      "ghana",
+      "ghanaian"
+    ],
+    "locations": [
+      {
+        "name": "Accra",
+        "phrases": [
+          "accra"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kumasi",
+        "phrases": [
+          "kumasi"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Tema",
+        "phrases": [
+          "tema"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Guinea",
+    "region": "Middle East/Africa",
+    "code": "GN",
+    "phrases": [
+      "guinea",
+      "guinean"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Guinea-Bissau",
+    "region": "Middle East/Africa",
+    "code": "GW",
+    "phrases": [
+      "guinea-bissau"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Gulf States",
+    "region": "Middle East/Africa",
+    "code": "GCC",
+    "phrases": [
+      "gulf states",
+      "gcc",
+      "gulf cooperation council",
+      "arabian gulf"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Iran",
+    "region": "Middle East/Africa",
+    "code": "IR",
+    "phrases": [
+      "iran",
+      "iranian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Iraq",
+    "region": "Middle East/Africa",
+    "code": "IQ",
+    "phrases": [
+      "iraq",
+      "iraqi"
+    ],
+    "locations": [
+      {
+        "name": "Baghdad",
+        "phrases": [
+          "baghdad"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Mosul",
+        "phrases": [
+          "mosul"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Basra",
+        "phrases": [
+          "basra",
+          "basrah"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Erbil",
+        "phrases": [
+          "erbil",
+          "arbil"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kirkuk",
+        "phrases": [
+          "kirkuk"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Israel",
+    "region": "Middle East/Africa",
+    "code": "IL",
+    "phrases": [
+      "israel",
+      "israeli",
+      "shekel",
+      "ils"
+    ],
+    "locations": [
+      {
+        "name": "Tel Aviv",
+        "phrases": [
+          "tel aviv"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Jerusalem",
+        "phrases": [
+          "jerusalem"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Beer Sheva",
+        "phrases": [
+          "beer sheva"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Netanya",
+        "phrases": [
+          "netanya"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Ashdod",
+        "phrases": [
+          "ashdod"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Haifa",
+        "phrases": [
+          "haifa"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Jordan",
+    "region": "Middle East/Africa",
+    "code": "JO",
+    "phrases": [
+      "jordan",
+      "jordanian"
+    ],
+    "locations": [
+      {
+        "name": "Amman",
+        "phrases": [
+          "amman"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Zarqa",
+        "phrases": [
+          "zarqa"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Irbid",
+        "phrases": [
+          "irbid"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Russeifa",
+        "phrases": [
+          "russeifa",
+          "rusaifa"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Aqaba",
+        "phrases": [
+          "aqaba"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Kenya",
+    "region": "Middle East/Africa",
+    "code": "KE",
+    "phrases": [
+      "kenya",
+      "kenyan"
+    ],
+    "locations": [
+      {
+        "name": "Nairobi",
+        "phrases": [
+          "nairobi"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Mombasa",
+        "phrases": [
+          "mombasa"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kisumu",
+        "phrases": [
+          "kisumu"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Nakuru",
+        "phrases": [
+          "nakuru"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Kuwait",
+    "region": "Middle East/Africa",
+    "code": "KW",
+    "phrases": [
+      "kuwait",
+      "kuwaiti"
+    ],
+    "locations": [
+      {
+        "name": "Kuwait City",
+        "phrases": [
+          "kuwait city"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Al Ahmadi",
+        "phrases": [
+          "al ahmadi",
+          "ahmadi"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Hawalli",
+        "phrases": [
+          "hawalli"
+        ],
+        "cities": []
+      },
+      {
+        "name": "As Salimiyah",
+        "phrases": [
+          "salimiyah",
+          "salmiya"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Lebanon",
+    "region": "Middle East/Africa",
+    "code": "LB",
+    "phrases": [
+      "lebanon",
+      "lebanese"
+    ],
+    "locations": [
+      {
+        "name": "Beirut",
+        "phrases": [
+          "beirut"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Tripoli",
+        "phrases": [
+          "tripoli, lebanon"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Sidon",
+        "phrases": [
+          "sidon"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Tyre",
+        "phrases": [
+          "tyre",
+          "sour"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Nabatieh",
+        "phrases": [
+          "nabatieh"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Lesotho",
+    "region": "Middle East/Africa",
+    "code": "LS",
+    "phrases": [
+      "lesotho"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Liberia",
+    "region": "Middle East/Africa",
+    "code": "LR",
+    "phrases": [
+      "liberia",
+      "liberian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Libya",
+    "region": "Middle East/Africa",
+    "code": "LY",
+    "phrases": [
+      "libya",
+      "libyan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Madagascar",
+    "region": "Middle East/Africa",
+    "code": "MG",
+    "phrases": [
+      "madagascar",
+      "malagasy"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Malawi",
+    "region": "Middle East/Africa",
+    "code": "MW",
+    "phrases": [
+      "malawi",
+      "malawian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Mali",
+    "region": "Middle East/Africa",
+    "code": "ML",
+    "phrases": [
+      "mali",
+      "malian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Mauritania",
+    "region": "Middle East/Africa",
+    "code": "MR",
+    "phrases": [
+      "mauritania",
+      "mauritanian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Mauritius",
+    "region": "Middle East/Africa",
+    "code": "MU",
+    "phrases": [
+      "mauritius",
+      "mauritian"
+    ],
+    "locations": [
+      {
+        "name": "Port Louis",
+        "phrases": [
+          "port louis"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Middle East",
+    "region": "Middle East/Africa",
+    "code": "ME",
+    "phrases": [
+      "middle east",
+      "middle eastern"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Middle East & Africa",
+    "region": "Middle East/Africa",
+    "code": "MEA",
+    "phrases": [
+      "middle east and africa",
+      "middle east & africa",
+      "mena"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Morocco",
+    "region": "Middle East/Africa",
+    "code": "MA",
+    "phrases": [
+      "morocco",
+      "moroccan",
+      "maroc"
+    ],
+    "locations": [
+      {
+        "name": "Casablanca",
+        "phrases": [
+          "casablanca"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Rabat",
+        "phrases": [
+          "rabat"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Marrakech",
+        "phrases": [
+          "marrakech"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Tangier",
+        "phrases": [
+          "tangier",
+          "tanger"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Mozambique",
+    "region": "Middle East/Africa",
+    "code": "MZ",
+    "phrases": [
+      "mozambique",
+      "mozambican"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Niger",
+    "region": "Middle East/Africa",
+    "code": "NE",
+    "phrases": [
+      "niger",
+      "nigerien"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Nigeria",
+    "region": "Middle East/Africa",
+    "code": "NG",
+    "phrases": [
+      "nigeria",
+      "nigerian"
+    ],
+    "locations": [
+      {
+        "name": "Lagos",
+        "phrases": [
+          "lagos"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Abuja",
+        "phrases": [
+          "abuja"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Port Harcourt",
+        "phrases": [
+          "port harcourt"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "North Africa",
+    "region": "Middle East/Africa",
+    "code": "NAFR",
+    "phrases": [
+      "north(?:ern)? african?"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Oman",
+    "region": "Middle East/Africa",
+    "code": "OM",
+    "phrases": [
+      "oman",
+      "omanese"
+    ],
+    "locations": [
+      {
+        "name": "Muscat",
+        "phrases": [
+          "muscat"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Seeb",
+        "phrases": [
+          "seeb",
+          "as seeb"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Salalah",
+        "phrases": [
+          "salalah"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Sohar",
+        "phrases": [
+          "sohar"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bawshar",
+        "phrases": [
+          "bawshar"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Palestine",
+    "region": "Middle East/Africa",
+    "code": "PS",
+    "phrases": [
+      "palestine",
+      "palestinian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Qatar",
+    "region": "Middle East/Africa",
+    "code": "QA",
+    "phrases": [
+      "qatar",
+      "qatari"
+    ],
+    "locations": [
+      {
+        "name": "Doha",
+        "phrases": [
+          "doha"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Al Rayyan",
+        "phrases": [
+          "al rayyan",
+          "rayyan"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Al Wakrah",
+        "phrases": [
+          "al wakrah",
+          "wakrah"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Al Khor",
+        "phrases": [
+          "al khor"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Rwanda",
+    "region": "Middle East/Africa",
+    "code": "RW",
+    "phrases": [
+      "rwanda",
+      "rwandan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Saudi Arabia",
+    "region": "Middle East/Africa",
+    "code": "SA",
+    "phrases": [
+      "saudi arabia",
+      "saudi",
+      "riyal",
+      "sar"
+    ],
+    "locations": [
+      {
+        "name": "Riyadh",
+        "phrases": [
+          "riyadh"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Jeddah",
+        "phrases": [
+          "jeddah"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Dammam",
+        "phrases": [
+          "dammam"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Khobar",
+        "phrases": [
+          "khobar"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Dhahran",
+        "phrases": [
+          "dhahran"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Senegal",
+    "region": "Middle East/Africa",
+    "code": "SN",
+    "phrases": [
+      "senegal",
+      "senegalese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Seychelles",
+    "region": "Middle East/Africa",
+    "code": "SC",
+    "phrases": [
+      "seychelles",
+      "seychellois"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Sierra Leone",
+    "region": "Middle East/Africa",
+    "code": "SL",
+    "phrases": [
+      "sierra leone",
+      "sierra leonean"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Somalia",
+    "region": "Middle East/Africa",
+    "code": "SO",
+    "phrases": [
+      "somalia",
+      "somali"
+    ],
+    "locations": []
+  },
+  {
+    "name": "South Africa",
+    "region": "Middle East/Africa",
+    "code": "ZA",
+    "phrases": [
+      "south africa",
+      "south african",
+      "rand",
+      "zar"
+    ],
+    "locations": [
+      {
+        "name": "Johannesburg",
+        "phrases": [
+          "johannesburg",
+          "joburg"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Cape Town",
+        "phrases": [
+          "cape town"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Durban",
+        "phrases": [
+          "durban"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Port Elizabeth",
+        "phrases": [
+          "port elizabeth",
+          "gqeberha"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Pretoria",
+        "phrases": [
+          "pretoria"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Rustenburg",
+        "phrases": [
+          "rustenburg",
+          "marikana",
+          "bushveld"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "South Sudan",
+    "region": "Middle East/Africa",
+    "code": "SS",
+    "phrases": [
+      "south sudan",
+      "south sudanese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Southern Africa",
+    "region": "Middle East/Africa",
+    "code": "SAFR",
+    "phrases": [
+      "southern african?"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Sub-Saharan Africa",
+    "region": "Middle East/Africa",
+    "code": "SSA",
+    "phrases": [
+      "sub[- ]?saharan african?",
+      "sub[- ]?saharan?"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Sudan",
+    "region": "Middle East/Africa",
+    "code": "SD",
+    "phrases": [
+      "sudan",
+      "sudanese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Syria",
+    "region": "Middle East/Africa",
+    "code": "SY",
+    "phrases": [
+      "syria",
+      "syrian"
+    ],
+    "locations": []
+  },
+  {
+    "name": "São Tomé and Príncipe",
+    "region": "Middle East/Africa",
+    "code": "ST",
+    "phrases": [
+      "são tomé",
+      "principe"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Tanzania",
+    "region": "Middle East/Africa",
+    "code": "TZ",
+    "phrases": [
+      "tanzania",
+      "tanzanian"
+    ],
+    "locations": [
+      {
+        "name": "Dar es Salaam",
+        "phrases": [
+          "dar es salaam",
+          "dar"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Mwanza",
+        "phrases": [
+          "mwanza"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Dodoma",
+        "phrases": [
+          "dodoma"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Arusha",
+        "phrases": [
+          "arusha"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Mbeya",
+        "phrases": [
+          "mbeya"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Togo",
+    "region": "Middle East/Africa",
+    "code": "TG",
+    "phrases": [
+      "togo",
+      "togolese"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Tunisia",
+    "region": "Middle East/Africa",
+    "code": "TN",
+    "phrases": [
+      "tunisia",
+      "tunisian",
+      "tunisie"
+    ],
+    "locations": [
+      {
+        "name": "Tunis",
+        "phrases": [
+          "tunis"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Sfax",
+        "phrases": [
+          "sfax"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Sousse",
+        "phrases": [
+          "sousse"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kairouan",
+        "phrases": [
+          "kairouan"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Bizerte",
+        "phrases": [
+          "bizerte"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Uganda",
+    "region": "Middle East/Africa",
+    "code": "UG",
+    "phrases": [
+      "uganda",
+      "ugandan"
+    ],
+    "locations": []
+  },
+  {
+    "name": "United Arab Emirates",
+    "region": "Middle East/Africa",
+    "code": "AE",
+    "phrases": [
+      "uae",
+      "emirates",
+      "dirham",
+      "aed"
+    ],
+    "locations": [
+      {
+        "name": "Dubai",
+        "phrases": [
+          "dubai"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Abu Dhabi",
+        "phrases": [
+          "abu dhabi"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Sharjah",
+        "phrases": [
+          "sharjah"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Jebel Ali",
+        "phrases": [
+          "jebel ali"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "West Africa",
+    "region": "Middle East/Africa",
+    "code": "WAFR",
+    "phrases": [
+      "west(?:ern)? african?"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Yemen",
+    "region": "Middle East/Africa",
+    "code": "YE",
+    "phrases": [
+      "yemen",
+      "yemeni"
+    ],
+    "locations": []
+  },
+  {
+    "name": "Zambia",
+    "region": "Middle East/Africa",
+    "code": "ZM",
+    "phrases": [
+      "zambia",
+      "zambian"
+    ],
+    "locations": [
+      {
+        "name": "Lusaka",
+        "phrases": [
+          "lusaka"
+        ],
+        "cities": []
+      },
+      {
+        "name": "Kitwe",
+        "phrases": [
+          "kitwe",
+          "copperbelt"
+        ],
+        "cities": []
+      }
+    ]
+  },
+  {
+    "name": "Zimbabwe",
+    "region": "Middle East/Africa",
+    "code": "ZW",
+    "phrases": [
+      "zimbabwe",
+      "zimbabwean"
+    ],
+    "locations": []
+  }
+]
