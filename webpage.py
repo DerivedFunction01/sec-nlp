@@ -1563,6 +1563,28 @@ PROSE_INDICATOR_WORDS = {
     "believe", "expect", "anticipate", "estimate", "intend",
     "continue", "provide", "include", "represent", "require",
     "result", "occur", "affect", "exceed", "increase", "decrease",
+
+    # Forward-looking verbs and phrases
+    "anticipate", "expect", "believe", "estimate", "intend",
+    "project", "forecast", "plan", "seek", "target",
+    "hope", "assume", "predict", "foresee",
+
+    # Modal + forward-looking combos (the modal is already caught,
+    # but these verb stems add specificity)
+    "achieve", "attain", "realize", "deliver", "execute",
+    "grow", "expand", "improve", "reduce", "increase", "decrease",
+    "generate", "maintain", "sustain", "develop", "implement",
+    "complete", "launch", "enter", "pursue", "continue",
+
+    # Hedging language that always accompanies forward-looking statements
+    "approximately", "substantially", "materially", "adversely",
+    "significantly", "potentially", "primarily", "generally",
+    "historically", "currently", "prospectively",
+
+    # Risk / uncertainty markers
+    "uncertainty", "uncertainties",
+    "assumption", "assumptions", "contingent", "dependent",
+    "exposure", "likelihood",
 }
 
 _PROSE_INDICATOR_RE = build_regex(PROSE_INDICATOR_WORDS)
