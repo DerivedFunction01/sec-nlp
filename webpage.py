@@ -133,7 +133,7 @@ FILING_TYPES = {
 
 CLEANUP_PATTERNS = [
     (re.compile(r"(?:\b\d{1,3}\s*)?<PAGE>(?:\s*\d{1,3}\b)?", re.IGNORECASE), r""),
-    (re.compile(r"\b-\d{1,3}-\b", re.IGNORECASE), r""),
+    (re.compile(r"(?<!\w)-\d{1,3}-(?!\w)", re.IGNORECASE), r""),
 ]
 
 
