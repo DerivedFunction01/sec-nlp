@@ -1196,7 +1196,6 @@ TOC_KEYWORDS = [
 
 
 COVER_PAGE_KEYWORDS = [
-    "form 10-k",
     "annual report pursuant",
     "report pursuant to section 13",
     "report pursuant to section 15(d)",
