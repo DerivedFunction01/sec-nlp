@@ -136,6 +136,8 @@ _LITERAL_TAG_RE = re.compile(
 )
 _TEXT_TAG_RE = re.compile(r"</?TEXT>\\s*", re.IGNORECASE)
 
+TABLE_SPLIT_PATTERN = re.compile(r"(<TABLE>.*?</TABLE>)", re.DOTALL | re.IGNORECASE)
+
 _PLAIN_TABLE_RULES: Dict[str, re.Pattern | Any] = {
     "separator": re.compile(r"^\s*[-=_]{4,}\s*$"),
     "numeric_token": re.compile(r"[\$%\*]|\b\d+[\.,]?\d*\b"),
@@ -190,7 +192,8 @@ def detect_and_wrap_plaintext_tables(
         if not stripped:
             continue
 
-        if stripped.upper().startswith("<TABLE>"):
+        upper = stripped.upper()
+        if "<TABLE>" in upper or "</TABLE>" in upper:
             output_parts.append(stripped)
             continue
 
@@ -208,7 +211,27 @@ def detect_and_wrap_plaintext_tables(
     return "\n\n".join(output_parts)
 
 
-TABLE_SPLIT_PATTERN = re.compile(r"(<TABLE>.*?</TABLE>)", re.DOTALL | re.IGNORECASE)
+def _process_plaintext_chunk(part: str) -> List[str]:
+    text = detect_and_wrap_plaintext_tables(part)
+    segments = TABLE_SPLIT_PATTERN.split(text)
+    processed = []
+
+    for idx, segment in enumerate(segments):
+        if idx % 2 == 1:
+            processed.append(segment)
+            continue
+
+        chunk = UNDERLINE_RE.sub("\n\n", segment)
+        paragraphs = PARAGRAPH_SPLIT_PATTERN.split(chunk)
+        cleaned = [
+            WRAPPED_LINE_PATTERN.sub(" ", p).strip()
+            for p in paragraphs
+            if p.strip()
+        ]
+        if cleaned:
+            processed.append("\n\n".join(cleaned))
+    return processed
+
 
 TABLE_HINT_PATTERN = re.compile(
     rf"\b(?:{build_alternation([
@@ -1030,24 +1053,16 @@ def extract_content(data: str, asHTML=True) -> str:
             text = soup.get_text(separator="\n\n", strip=True)
 
     else:
-        # Plain text processing (wrap ASCII tables first)
-        text = detect_and_wrap_plaintext_tables(data)
-        parts = TABLE_SPLIT_PATTERN.split(text)
+        # Plain text processing: keep existing tables separate and run the ASCII detector on the rest
+        parts = TABLE_SPLIT_PATTERN.split(data)
         processed_parts = []
-        for i, part in enumerate(parts):
-            if i % 2 == 1:
+        for idx, part in enumerate(parts):
+            if idx % 2 == 1:
                 processed_parts.append(part)
-            else:
-                part = UNDERLINE_RE.sub("\n\n", part)
-                paragraphs = PARAGRAPH_SPLIT_PATTERN.split(part)
-                processed_paragraphs = [
-                    WRAPPED_LINE_PATTERN.sub(" ", p).strip()
-                    for p in paragraphs
-                    if p.strip()
-                ]
-                processed_parts.append(
-                    "\n\n".join(p for p in processed_paragraphs if p)
-                )
+                continue
+
+            processed_parts.extend(_process_plaintext_chunk(part))
+
         text = "".join(processed_parts)
 
     for pattern, replacement in CLEANUP_PATTERNS:
