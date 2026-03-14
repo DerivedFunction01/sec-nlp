@@ -1318,7 +1318,7 @@ SECTION_LABEL_RE = re.compile(
     rf"^(?:{build_alternation([_RE['part'], _RE['item'], _RE['fwd']], sort_longest_first=False)})$",
     re.IGNORECASE,
 )
-MAX_TOC_SCAN_CHARS = 25000
+MAX_TOC_SCAN_CHARS = 50000
 
 
 def prefilter_blocks(blocks: List[str]) -> List[str]:
@@ -1363,7 +1363,7 @@ def drop_cover_page(
 
 def drop_table_of_contents(
     blocks: List[str],
-    max_scan: int = 20,
+    max_scan: int = 50,
     char_limit: int = MAX_TOC_SCAN_CHARS,
 ) -> Tuple[List[str], int]:
     start_idx = 0
