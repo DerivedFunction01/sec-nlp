@@ -131,11 +131,6 @@ FILING_TYPES = {
 }
 
 
-_LITERAL_TAG_RE = re.compile(
-    r"<(?:TYPE|SEQUENCE|FILENAME|DESCRIPTION)>[^<\\n\\r]*", re.IGNORECASE
-)
-_TEXT_TAG_RE = re.compile(r"</?TEXT>\\s*", re.IGNORECASE)
-
 TABLE_SPLIT_PATTERN = re.compile(r"(<TABLE>.*?</TABLE>)", re.DOTALL | re.IGNORECASE)
 
 _PLAIN_TABLE_RULES: Dict[str, re.Pattern | Any] = {
@@ -166,7 +161,9 @@ def _score_block_as_table(lines: List[str]) -> float:
 
     separator_count = sum(1 for line in lines if _is_separator_line(line))
     data_count = sum(1 for line in lines if _is_data_line(line))
-    gap_count = sum(len(_PLAIN_TABLE_RULES["whitespace_gap"].findall(line)) for line in lines)
+    gap_count = sum(
+        len(_PLAIN_TABLE_RULES["whitespace_gap"].findall(line)) for line in lines
+    )
     total = len(lines)
 
     score = 0.0
@@ -182,7 +179,7 @@ def _score_block_as_table(lines: List[str]) -> float:
 
 def detect_and_wrap_plaintext_tables(
     text: str,
-    threshold: float = _PLAIN_TABLE_RULES["score_threshold"], # type: ignore
+    threshold: float = _PLAIN_TABLE_RULES["score_threshold"],  # type: ignore
 ) -> str:
     paragraphs = PARAGRAPH_SPLIT_PATTERN.split(text)
     output_parts = []
@@ -198,7 +195,7 @@ def detect_and_wrap_plaintext_tables(
             continue
 
         lines = stripped.splitlines()
-        if len(lines) < _PLAIN_TABLE_RULES["min_lines"]: # type: ignore
+        if len(lines) < _PLAIN_TABLE_RULES["min_lines"]:  # type: ignore
             output_parts.append(stripped)
             continue
 
@@ -224,9 +221,7 @@ def _process_plaintext_chunk(part: str) -> List[str]:
         chunk = UNDERLINE_RE.sub("\n\n", segment)
         paragraphs = PARAGRAPH_SPLIT_PATTERN.split(chunk)
         cleaned = [
-            WRAPPED_LINE_PATTERN.sub(" ", p).strip()
-            for p in paragraphs
-            if p.strip()
+            WRAPPED_LINE_PATTERN.sub(" ", p).strip() for p in paragraphs if p.strip()
         ]
         if cleaned:
             processed.append("\n\n".join(cleaned))
@@ -934,8 +929,13 @@ UNDERLINE_RE = re.compile(r"(?:^\s*-{3,}\s*$\n?)+", re.MULTILINE)
 CLEANUP_PATTERNS = [
     (re.compile(r"(?:\b\d{1,3}\s*)?<PAGE>(?:\s*\d{1,3}\b)?", re.IGNORECASE), r""),
     (re.compile(r"(?<!\d)-\s*\d{1,3}\s*-(?!\d)", re.IGNORECASE), r""),
-    (_LITERAL_TAG_RE, r""),
-    (_TEXT_TAG_RE, r""),
+    (
+        re.compile(
+            r"<(?:TYPE|SEQUENCE|FILENAME|DESCRIPTION)>[^<\\n\\r]*", re.IGNORECASE
+        ),
+        r"",
+    ),
+    (re.compile(r"</?(?:TEXT|TYPE|SEQUENCE|FILENAME|DESCRIPTION)>", re.IGNORECASE), r""),
 ]
 
 def extract_content(data: str, asHTML=True) -> str:
@@ -1421,6 +1421,7 @@ PAGE_MARKER_RE = re.compile(
 )
 LONE_NUMBER_RE = re.compile(r"^\s*\d{1,3}\s*$")
 FORM_LABEL_RE = re.compile(r"^[A-Za-z]-\d+$")
+
 
 def prefilter_blocks(blocks: List[str]) -> List[str]:
     filtered = []
