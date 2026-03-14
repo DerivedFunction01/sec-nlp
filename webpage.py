@@ -31,12 +31,11 @@ from pathlib import Path
 import threading
 import html2text
 from bs4 import XMLParsedAsHTMLWarning
+import unicodedata
 import warnings
+import subprocess
 
 warnings.filterwarnings("ignore", category=XMLParsedAsHTMLWarning)
-
-# Importing required module
-import subprocess
 
 # =============================================================================
 # CONFIGURATION - DEFAULT
@@ -314,7 +313,7 @@ def create_db():
         conn.close()
 
 
-def save_batch_report_urls(df):
+def save_batch_report_urls(df: pd.DataFrame):
     with sqlite3.connect(DB_PATH) as conn:
         try:
             name = df[["cik", "name"]].drop_duplicates()
@@ -445,7 +444,7 @@ def get_processed_accessions() -> set:
     return set(r[0] for r in rows)
 
 
-def save_process_result(df):
+def save_process_result(df: pd.DataFrame):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute(
@@ -461,7 +460,7 @@ def save_process_result(df):
     conn.close()
 
 
-def save_process_result_batch(batch_df):
+def save_process_result_batch(batch_df: pd.DataFrame):
     if batch_df.empty:
         return
     conn = sqlite3.connect(DB_PATH)
@@ -617,9 +616,6 @@ def get_cik_filings(
 # =============================================================================
 # CONTENT EXTRACTION
 # =============================================================================
-import unicodedata
-
-
 def normalize_unicode(text: str) -> str:
     """
     Converts common Unicode punctuation to ASCII equivalents, then
