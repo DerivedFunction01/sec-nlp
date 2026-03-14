@@ -931,6 +931,8 @@ def _detect_by_border(filtered_trs: List, rows: List[List[str]]) -> int:
 
 
 UNDERLINE_RE = re.compile(r"(?:^\s*-{3,}\s*$\n?)+", re.MULTILINE)
+_EXHIBIT_TYPE_RE = re.compile(r"<TYPE>\s*(EX-[0-9A-Z]+)", re.IGNORECASE)
+_ALLOWED_EXHIBITS = {"EX-13"}
 
 CLEANUP_PATTERNS = [
     (re.compile(r"(?:\b\d{1,3}\s*)?<PAGE>(?:\s*\d{1,3}\b)?", re.IGNORECASE), r""),
@@ -2389,14 +2391,22 @@ def parse_multi_document_content(raw_text: str) -> List[str]:
         if not doc_content:
             return
 
-        # Detect if this document is HTML (only check for html/body tags)
+        type_match = _EXHIBIT_TYPE_RE.search(doc_content)
+        if type_match:
+            doc_type = type_match.group(1).upper()
+            if doc_type not in _ALLOWED_EXHIBITS:
+                debug_print(
+                    f"  ℹ️  Skipping doc {index_label}: <TYPE>{doc_type} not allowed"
+                )
+                return
+
         is_html = bool(HTML_REGEX.search(doc_content))
 
         try:
             if is_html:
                 debug_print(f"  📄 Document {index_label}: Parsing as HTML")
                 content = extract_content(doc_content, asHTML=True)
-            elif XML_REGEX.search(doc_content):  # just check if the word "xml exists"
+            elif XML_REGEX.search(doc_content):
                 debug_print(f"  📄 Document {index_label}: Is XML, skipping")
                 return
             else:
@@ -2405,7 +2415,6 @@ def parse_multi_document_content(raw_text: str) -> List[str]:
 
             if content and len(content.strip()) > 0:
                 parsed_contents.append(content)
-
         except Exception as e:
             print(f"  ⚠️  Error parsing document {index_label}: {e}")
 
