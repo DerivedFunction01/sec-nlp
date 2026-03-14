@@ -1255,7 +1255,10 @@ COVER_PAGE_KEYWORDS = [
 NORMALIZED_TOC_KEYWORDS = [normalize_for_matching(term) for term in TOC_KEYWORDS]
 NORMALIZED_COVER_PAGE_KEYWORDS = [normalize_for_matching(term) for term in COVER_PAGE_KEYWORDS]
 BODY_ANCHOR_RE = re.compile(
-    r"^\s*(?:PART\s+(?:I|1)\b|ITEM\s+1[\.\s]|FORWARD[- ]?LOOKING\s+STATEMENTS)",
+    r"^\s*(?:PART\s+(?:I|1)\b|ITEM\s+1[\.\s]|FORWARD[- ]?LOOKING\s+STATEMENTS)", 
+    re.IGNORECASE)
+SECTION_LABEL_RE = re.compile(
+    r"^(?:PART\s+(?:[IVX1]+|\d+)|ITEM\s+\d+\.?|FORWARD[- ]?LOOKING\s+STATEMENTS)$",
     re.IGNORECASE,
 )
 
@@ -1358,11 +1361,7 @@ def drop_table_of_contents(
                 continue
             if body_anchor_found:
                 return blocks[idx:], idx
-            if re.match(
-                r"^(?:PART\s+(?:[IVX1]+|\d+)|Item\s+\d+\.?|FORWARD[- ]?LOOKING\s+STATEMENTS)$",
-                block.strip(),
-                re.IGNORECASE,
-            ):
+            if SECTION_LABEL_RE.match(block.strip()):
                 idx += 1
                 continue
             break
