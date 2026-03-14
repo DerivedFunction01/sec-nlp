@@ -1254,7 +1254,10 @@ COVER_PAGE_KEYWORDS = [
 
 NORMALIZED_TOC_KEYWORDS = [normalize_for_matching(term) for term in TOC_KEYWORDS]
 NORMALIZED_COVER_PAGE_KEYWORDS = [normalize_for_matching(term) for term in COVER_PAGE_KEYWORDS]
-BODY_ANCHOR_RE = re.compile(r"^\s*(?:PART\s+(?:I|1)\b|ITEM\s+1[\.\s])", re.IGNORECASE)
+BODY_ANCHOR_RE = re.compile(
+    r"^\s*(?:PART\s+(?:I|1)\b|ITEM\s+1[\.\s]|FORWARD[- ]?LOOKING\s+STATEMENTS)",
+    re.IGNORECASE,
+)
 
 
 MAX_TOC_SCAN_CHARS = 25000
