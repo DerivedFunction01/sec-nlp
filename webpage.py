@@ -41,8 +41,9 @@ import subprocess
 # CONFIGURATION - DEFAULT
 # =============================================================================
 DEBUG = False
-ALL_FIRMS_DATA = "cik_data.csv"
-REPORT_CSV_PATH = "report_data.csv"
+ALL_FIRMS_DATA = "data/cik_data.csv"
+REPORT_PATH = Path("data/report_data.parquet")
+REPORT_CSV_PATH = Path("data/report_data.csv")
 DB_PATH = "web_data.db"
 MAX_LEN = 1000
 
@@ -116,8 +117,9 @@ def get_system_config():
 # REGEX PATTERNS AND KEYWORDS
 # =============================================================================
 from defs.table_definitions import HTMLTableConverter
-from defs.region_regex import RegionMatcher, TAX_HAVEN_CODES, REGION_CODES
+from defs.region_regex_lite import RegionMatcher, TAX_HAVEN_CODES, REGION_CODES
 from defs.regex_lib import build_regex
+from report_data_utils import build_unique_report_df, extract_accession_info
 
 FILING_TYPES = {
     "10-K",
@@ -1185,7 +1187,7 @@ def cik_fetch_worker(
                 except (ValueError, TypeError):
                     pass
 
-            if not years_to_fetch:
+            if years and not years_to_fetch:
                 continue
 
             # get_cik_filings handles rate limiting via fetch_json
@@ -1206,13 +1208,14 @@ def cik_fetch_worker(
                             pass
 
             # Add placeholder for checked years that were NOT found
-            for year in years:
-                try:
-                    y_int = int(year)
-                    if y_int not in found_years and (cik_int, y_int) not in already_done_set:
-                        cik_records.append({"cik": cik_int, "year": y_int, "url": ""})
-                except (ValueError, TypeError):
-                    pass
+            if years:
+                for year in years:
+                    try:
+                        y_int = int(year)
+                        if y_int not in found_years and (cik_int, y_int) not in already_done_set:
+                            cik_records.append({"cik": cik_int, "year": y_int, "url": ""})
+                    except (ValueError, TypeError):
+                        pass
 
             if cik_records:
                 result_queue.put(cik_records)
@@ -1263,32 +1266,26 @@ def fetch_all_grouped(saveIteration: int = 100):
     
     # Ensure types match DB (int) for robust comparison
     already_done = set()
+    processed_ciks = set()
     for c, y in zip(existing_report_df["cik"], existing_report_df["year"]):
         try:
-            already_done.add((int(c), int(y)))
+            cik_int = int(c)
+            already_done.add((cik_int, int(y)))
+            processed_ciks.add(cik_int)
         except (ValueError, TypeError):
             pass
-            
-    cik_groups = all_df.groupby("cik")["year"].apply(list).reset_index()
 
-    # Prepare list of tasks
-    unprocessed_tasks = []
-    for row in cik_groups.itertuples(index=False):
-        try:
-            cik = int(row.cik) # type: ignore
-        except (ValueError, TypeError):
-            continue
-            
-        years = []
-        for y in row.year: # type: ignore
+    cik_values = []
+    if "cik" in all_df:
+        for raw_cik in all_df["cik"]:
             try:
-                years.append(int(y))
+                cik_values.append(int(raw_cik))
             except (ValueError, TypeError):
-                pass
+                continue
+    unique_ciks = sorted(set(cik_values))
 
-        # Quick check if any year needs fetching
-        if any((cik, y) not in already_done for y in years):
-            unprocessed_tasks.append((cik, years))
+    # Prepare list of tasks (only schedule CIKs we have not processed yet)
+    unprocessed_tasks = [(cik, []) for cik in unique_ciks if cik not in processed_ciks]
             
     total_tasks = len(unprocessed_tasks)
     print(f"Found {total_tasks} CIKs to process.")
