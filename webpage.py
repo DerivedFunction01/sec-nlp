@@ -1644,14 +1644,22 @@ def drop_cover_page(
         hits = sum(1 for term in NORMALIZED_COVER_PAGE_KEYWORDS if term in normalized)
         if hits >= 1:
             cover_end = idx + 1
-            break
 
     if cover_end == 0:
         return blocks, 0
 
     for idx in range(cover_end, min(len(blocks), cover_end + anchor_limit)):
-        if BODY_ANCHOR_RE.match(blocks[idx].strip()):
+        stripped = blocks[idx].strip()
+        if BODY_ANCHOR_RE.match(stripped):
+            # Peek ahead: if next non-empty block is a short number or TOC line, skip
+            lookahead = [b.strip() for b in blocks[idx + 1 : idx + 3] if b.strip()]
+            if lookahead and (
+                LONE_NUMBER_RE.match(lookahead[0])
+                or len(lookahead[0]) < 40  # short = likely still cover/TOC
+            ):
+                continue
             return blocks[idx:], idx
+
     return blocks[cover_end:], cover_end
 
 
@@ -1664,7 +1672,7 @@ def drop_table_of_contents(
     start_idx = 0
     char_count = 0
     toc_detected = False
-    _TOC_RESIDUE_MAX_LEN = 120  # chars — TOC lines are short; real prose is longer
+    _TOC_RESIDUE_MAX_LEN = 120
 
     derived = FORM_DERIVED_CACHE.get(form_type, FORM_DERIVED_CACHE["10-K"])
     norm_toc_kw = derived["normalized_toc_keywords"]
@@ -1672,12 +1680,8 @@ def drop_table_of_contents(
     norm_late_names = derived["normalized_late_names"]
     norm_early_names = derived["normalized_early_names"]
 
-    # ── Fast path: forward-looking statement is an unambiguous body start ───
-    for idx, block in enumerate(blocks[:max_scan]):
-        if re.match(_RE["fwd"], block.strip(), re.IGNORECASE):
-            next_blocks = [b for b in blocks[idx + 1 : idx + 4] if b.strip()]
-            if next_blocks and len(next_blocks[0].strip()) > _TOC_RESIDUE_MAX_LEN:
-                return blocks[idx:], idx
+    # Bug 1 fix: FWD fast-path must require toc_detected first.
+    # Instead of a separate pre-scan, integrate it into the main loop below.
 
     for idx, block in enumerate(blocks[:max_scan]):
         normalized = normalize_for_matching(block)
@@ -1685,17 +1689,23 @@ def drop_table_of_contents(
         if char_count > char_limit:
             break
 
-        is_table = block.strip().upper().startswith("<TABLE")
+        stripped = block.strip()
+        is_table = stripped.upper().startswith("<TABLE")
         hits = sum(1 for term in norm_toc_kw if term in normalized)
         has_toc_dots = bool(TOC_DOTS_RE.search(block))
-        late_label_hit = bool(late_item_re.match(block.strip()))
+        late_label_hit = bool(late_item_re.match(stripped))
         late_name_hit = any(term in normalized for term in norm_late_names)
 
-        # Body anchor only valid AFTER we've seen TOC content
-        if toc_detected and BODY_ANCHOR_RE.match(block.strip()):
-            return blocks[idx:], idx
+        # Body anchor and FWD anchor: only valid AFTER toc has been detected
+        if toc_detected:
+            if BODY_ANCHOR_RE.match(stripped):
+                return blocks[idx:], idx
+            # Bug 1 fix: FWD fast-path now lives here, gated by toc_detected
+            if re.match(_RE["fwd"], stripped, re.IGNORECASE):
+                next_blocks = [b for b in blocks[idx + 1 : idx + 4] if b.strip()]
+                if next_blocks and len(next_blocks[0].strip()) > _TOC_RESIDUE_MAX_LEN:
+                    return blocks[idx:], idx
 
-        # Late-section labels/names this early are always TOC residue
         if late_label_hit or late_name_hit:
             toc_detected = True
             start_idx = idx + 1
@@ -1718,7 +1728,7 @@ def drop_table_of_contents(
     if not toc_detected:
         return blocks, 0
 
-    # ── Second pass: consume any remaining TOC blocks after start_idx ───────
+    # ── Second pass: consume remaining TOC residue ───────────────────────────
     idx = start_idx
     char_count = 0
     while idx < len(blocks) and char_count <= char_limit:
@@ -1733,82 +1743,66 @@ def drop_table_of_contents(
         late_name_hit = any(term in normalized for term in norm_late_names)
         early_name_hit = any(term in normalized for term in norm_early_names)
 
-        # Long block = real prose, stop immediately regardless of keyword hits
-        if len(stripped) > _TOC_RESIDUE_MAX_LEN:
+        if len(stripped) > 200:
             start_idx = idx
             break
-            
-        # Prose indicator match = real content, stop immediately
+
         if _PROSE_INDICATOR_RE.search(stripped):
             start_idx = idx
             break
 
-        # Early item name match = real body start, stop and keep
         if early_name_hit:
             start_idx = idx
             break
 
-        # Unambiguous body anchor
         if BODY_ANCHOR_RE.match(stripped):
             start_idx = idx
             break
 
-        # Definitive TOC table
         if is_table and hits >= 2:
             idx += 1
             continue
 
-        # TOC dots are unambiguous
         if has_toc_dots:
             idx += 1
             continue
 
-        # Explicit "table of contents" label
         if "table of contents" in normalized:
             idx += 1
             continue
 
-        # Structural part/item label with no substantive content
         if SECTION_LABEL_RE.match(stripped):
             idx += 1
             continue
 
-        # Late-item label or name — only consume if it's a short line
-        if (late_label_hit or late_name_hit) and len(stripped) <= _TOC_RESIDUE_MAX_LEN:
+        if (late_label_hit or late_name_hit) and len(stripped) <= 200:
             idx += 1
             continue
 
-        # Anything else — stop, don't risk consuming real content
         start_idx = idx
         break
 
-    # ── Cleanup pass: strip late-item residue before the real body ───────────
+    # ── Cleanup pass ─────────────────────────────────────────────────────────
     result = blocks[start_idx:]
     clean_start = 0
     for i, block in enumerate(result):
         normalized = normalize_for_matching(block)
         stripped = block.strip()
 
-        # Long block = real content, stop immediately
-        if len(stripped) > _TOC_RESIDUE_MAX_LEN:
+        if len(stripped) > 200:
             break
 
-        # Prose indicator match = real content, stop immediately
         if _PROSE_INDICATOR_RE.search(stripped):
             break
 
-        # Early item name = real body start, stop and keep this block
-        # Check BEFORE any stripping logic so e.g. "Business" is never consumed
         if any(name in normalized for name in norm_early_names):
             clean_start = i
             break
 
-        # Body anchor label (PART I, ITEM 1, FORWARD-LOOKING)
         if BODY_ANCHOR_RE.match(stripped):
             clean_start = i
             break
 
-        # Only strip if it's purely a late-item signal with no early-item content
         if (
             late_item_re.match(stripped)
             or SECTION_LABEL_RE.match(stripped)
@@ -1817,7 +1811,6 @@ def drop_table_of_contents(
             clean_start = i + 1
             continue
 
-        # Short block, no signal either way — stop, don't risk over-stripping
         break
 
     return result[clean_start:], start_idx
