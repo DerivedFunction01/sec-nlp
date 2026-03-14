@@ -21,7 +21,7 @@ import json
 import sqlite3
 import unicodedata
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import random
 import re
 from tqdm import tqdm
@@ -136,16 +136,7 @@ _LITERAL_TAG_RE = re.compile(
 )
 _TEXT_TAG_RE = re.compile(r"</?TEXT>\\s*", re.IGNORECASE)
 
-CLEANUP_PATTERNS = [
-    (re.compile(r"(?:\b\d{1,3}\s*)?<PAGE>(?:\s*\d{1,3}\b)?", re.IGNORECASE), r""),
-    (re.compile(r"(?<!\d)-\s*\d{1,3}\s*-(?!\d)", re.IGNORECASE), r""),
-    (_LITERAL_TAG_RE, r""),
-    (_TEXT_TAG_RE, r""),
-]
-
-_WHITESPACE_GAP_RE = re.compile(r" +")
-
-_PLAIN_TABLE_RULES = {
+_PLAIN_TABLE_RULES: Dict[str, re.Pattern | Any] = {
     "separator": re.compile(r"^\s*[-=_]{4,}\s*$"),
     "numeric_token": re.compile(r"[\$%\*]|\b\d+[\.,]?\d*\b"),
     "whitespace_gap": re.compile(r" {2,}"),
@@ -173,7 +164,7 @@ def _score_block_as_table(lines: List[str]) -> float:
 
     separator_count = sum(1 for line in lines if _is_separator_line(line))
     data_count = sum(1 for line in lines if _is_data_line(line))
-    gap_count = sum(len(_WHITESPACE_GAP_RE.findall(line)) for line in lines)
+    gap_count = sum(len(_PLAIN_TABLE_RULES["whitespace_gap"].findall(line)) for line in lines)
     total = len(lines)
 
     score = 0.0
@@ -189,7 +180,7 @@ def _score_block_as_table(lines: List[str]) -> float:
 
 def detect_and_wrap_plaintext_tables(
     text: str,
-    threshold: float = _PLAIN_TABLE_RULES["score_threshold"],
+    threshold: float = _PLAIN_TABLE_RULES["score_threshold"], # type: ignore
 ) -> str:
     paragraphs = PARAGRAPH_SPLIT_PATTERN.split(text)
     output_parts = []
@@ -204,7 +195,7 @@ def detect_and_wrap_plaintext_tables(
             continue
 
         lines = stripped.splitlines()
-        if len(lines) < _PLAIN_TABLE_RULES["min_lines"]:
+        if len(lines) < _PLAIN_TABLE_RULES["min_lines"]: # type: ignore
             output_parts.append(stripped)
             continue
 
@@ -215,13 +206,6 @@ def detect_and_wrap_plaintext_tables(
             output_parts.append(stripped)
 
     return "\n\n".join(output_parts)
-
-
-PAGE_MARKER_RE = re.compile(
-    r"^(?:-\s*\d{1,3}\s*-|pp?\s*\.?\s*\d{1,3}|page\s+\d{1,3})$", re.IGNORECASE
-)
-LONE_NUMBER_RE = re.compile(r"^\s*\d{1,3}\s*$")
-FORM_LABEL_RE = re.compile(r"^[A-Za-z]-\d+$")
 
 
 TABLE_SPLIT_PATTERN = re.compile(r"(<TABLE>.*?</TABLE>)", re.DOTALL | re.IGNORECASE)
@@ -922,8 +906,14 @@ def _detect_by_border(filtered_trs: List, rows: List[List[str]]) -> int:
     return 0
 
 
-underline_regex = re.compile(r"(?:^\s*-{3,}\s*$\n?)+", re.MULTILINE)
+UNDERLINE_RE = re.compile(r"(?:^\s*-{3,}\s*$\n?)+", re.MULTILINE)
 
+CLEANUP_PATTERNS = [
+    (re.compile(r"(?:\b\d{1,3}\s*)?<PAGE>(?:\s*\d{1,3}\b)?", re.IGNORECASE), r""),
+    (re.compile(r"(?<!\d)-\s*\d{1,3}\s*-(?!\d)", re.IGNORECASE), r""),
+    (_LITERAL_TAG_RE, r""),
+    (_TEXT_TAG_RE, r""),
+]
 
 def extract_content(data: str, asHTML=True) -> str:
     """
@@ -1048,7 +1038,7 @@ def extract_content(data: str, asHTML=True) -> str:
             if i % 2 == 1:
                 processed_parts.append(part)
             else:
-                part = underline_regex.sub("\n\n", part)
+                part = UNDERLINE_RE.sub("\n\n", part)
                 paragraphs = PARAGRAPH_SPLIT_PATTERN.split(part)
                 processed_paragraphs = [
                     WRAPPED_LINE_PATTERN.sub(" ", p).strip()
@@ -1411,6 +1401,11 @@ MAX_TOC_SCAN_CHARS = 50000
 ALPHANUM_RE = re.compile(r"[A-Za-z0-9]")
 _FORM_LABEL_FULL_RE = re.compile(r"^[A-Za-z]-\d+$")
 
+PAGE_MARKER_RE = re.compile(
+    r"^(?:-\s*\d{1,3}\s*-|pp?\s*\.?\s*\d{1,3}|page\s+\d{1,3})$", re.IGNORECASE
+)
+LONE_NUMBER_RE = re.compile(r"^\s*\d{1,3}\s*$")
+FORM_LABEL_RE = re.compile(r"^[A-Za-z]-\d+$")
 
 def prefilter_blocks(blocks: List[str]) -> List[str]:
     filtered = []
