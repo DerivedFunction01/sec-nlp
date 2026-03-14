@@ -17,14 +17,12 @@ import requests
 import time
 from bs4 import BeautifulSoup, Comment
 import json
-from io import StringIO
 import sqlite3
 import unicodedata
 from enum import Enum
 from typing import List, Optional, Tuple
 import random
 import re
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 import multiprocessing as mp
 import psutil
