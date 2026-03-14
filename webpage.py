@@ -1456,7 +1456,7 @@ def drop_cover_page(
     for idx, block in enumerate(blocks[:scan]):
         normalized = normalize_for_matching(block)
         hits = sum(1 for term in NORMALIZED_COVER_PAGE_KEYWORDS if term in normalized)
-        if hits >= 2:
+        if hits >= 1:
             cover_end = idx + 1
             break
 
