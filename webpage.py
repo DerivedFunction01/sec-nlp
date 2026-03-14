@@ -1506,6 +1506,16 @@ def drop_table_of_contents(
     start_idx = 0
     char_count = 0
     toc_detected = False
+    _TOC_RESIDUE_MAX_LEN = 120  # chars — TOC lines are short; real prose is longer
+
+    # ── Fast path: forward-looking statement is an unambiguous body start ───
+    for idx, block in enumerate(blocks[:max_scan]):
+        if re.match(_RE["fwd"], block.strip(), re.IGNORECASE):
+            # Confirm it's the real section, not a TOC entry:
+            # the next non-empty block should be prose, not another label
+            next_blocks = [b for b in blocks[idx + 1 : idx + 4] if b.strip()]
+            if next_blocks and len(next_blocks[0].strip()) > _TOC_RESIDUE_MAX_LEN:
+                return blocks[idx:], idx
 
     # ── First pass: find the TOC and its end ────────────────────────────────
     for idx, block in enumerate(blocks[:max_scan]):
@@ -1580,7 +1590,6 @@ def drop_table_of_contents(
         break
 
     # ── Cleanup pass: strip late-item residue before the real body ───────────
-    _TOC_RESIDUE_MAX_LEN = 120  # chars — TOC lines are short; real prose is longer
 
     result = blocks[start_idx:]
     clean_start = 0
