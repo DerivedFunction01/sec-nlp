@@ -22,6 +22,7 @@ import sqlite3
 import unicodedata
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
 import random
 import re
 from tqdm import tqdm
@@ -1285,30 +1286,79 @@ def normalize_for_matching(text: str) -> str:
     sanitized = re.sub(r"[^a-z0-9]+", " ", text.lower())
     return SPACE_PATTERN.sub(" ", sanitized).strip()
 
+@dataclass
+class ItemDef:
+    item: str
+    part: int
+    names: List[str]
+    optional: bool = False
+    early: bool = False  # True = can legitimately appear before the TOC body anchor
+
+
+FORM_10K_ITEMS: List[ItemDef] = [
+    # PART I
+    ItemDef("item 1", 1, ["business", "description of business"], early=True),
+    ItemDef("item 1a", 1, ["risk factors"], optional=True, early=True),
+    ItemDef("item 1b", 1, ["unresolved staff comments"], optional=True, early=True),
+    ItemDef("item 1c", 1, ["cybersecurity"], optional=True, early=True),
+    ItemDef("item 2", 1, ["properties", "property"]),
+    ItemDef("item 3", 1, ["legal proceedings"]),
+    ItemDef(
+        "item 4",
+        1,
+        [
+            "mine safety disclosures",
+            "submission of matters to a vote",
+            "reserved",
+        ],
+    ),
+    # PART II
+    ItemDef("item 5", 2, ["market for registrant"]),
+    ItemDef("item 6", 2, ["selected financial data"], optional=True),
+    ItemDef("item 7", 2, ["management's discussion", "results of operations"]),
+    ItemDef("item 7a", 2, ["quantitative and qualitative", "about market risk"]),
+    ItemDef("item 8", 2, ["financial statements", "supplementary data"]),
+    ItemDef("item 9", 2, ["changes in and disagreements", "accountants"]),
+    ItemDef("item 9a", 2, ["controls and procedures"]),
+    ItemDef("item 9b", 2, ["other information"]),
+    # PART III
+    ItemDef("item 10", 3, ["directors", "executive officers"]),
+    ItemDef("item 11", 3, ["executive compensation"]),
+    ItemDef("item 12", 3, ["security ownership"]),
+    ItemDef("item 13", 3, ["certain relationships", "related transactions"]),
+    ItemDef("item 14", 3, ["principal accountant fees"]),
+    # PART IV
+    ItemDef("item 15", 4, ["exhibits", "financial statement schedules"]),
+]
+
+# Items that should never appear before the body anchor — Part I item 2+ and all Part II+
+LATE_ITEMS: List[str] = [item.item for item in FORM_10K_ITEMS if not item.early]
+LATE_ITEM_NAMES: List[str] = [
+    name for item in FORM_10K_ITEMS if not item.early for name in item.names
+]
+
+# True body anchors — seeing the label OR name means we've hit real content
+EARLY_ITEMS: List[str] = [item.item for item in FORM_10K_ITEMS if item.early]
+EARLY_ITEM_NAMES: List[str] = [
+    name for item in FORM_10K_ITEMS if item.early for name in item.names
+]
+
+_LATE_ITEM_RE = re.compile(
+    rf"^\s*(?:{build_alternation(LATE_ITEMS + ['part ii', 'part 2', 'part iii', 'part 3', 'part iv', 'part 4'])})\b",
+    re.IGNORECASE,
+)
+
+NORMALIZED_LATE_ITEM_NAMES: List[str] = [
+    normalize_for_matching(t) for t in LATE_ITEM_NAMES
+]
+NORMALIZED_EARLY_ITEM_NAMES: List[str] = [
+    normalize_for_matching(t) for t in EARLY_ITEM_NAMES
+]
 
 TOC_KEYWORDS = [
-    # Core Items (most reliable anchors)
-    "item 1",
-    "item 1a",
-    "item 1b",
-    "item 1c",  # cybersecurity (2023+)
-    "item 2",
-    "item 3",
-    "item 4",
-    "item 5",
-    "item 6",
-    "item 7",
-    "item 7a",
-    "item 8",
-    "item 9",
-    "item 9a",
-    "item 9b",
-    "item 10",
-    "item 11",
-    "item 12",
-    "item 13",
-    "item 14",
-    "item 15",
+    # Early items only: safer anchors for TOC detection
+    *EARLY_ITEMS,
+    *EARLY_ITEM_NAMES,
     # Parts (very common section headers)
     "part i",
     "part 1",
@@ -1318,32 +1368,6 @@ TOC_KEYWORDS = [
     "part 3",
     "part iv",
     "part 4",
-    # High-value signature phrases (very stable over time)
-    "business",
-    "risk factors",
-    "unresolved staff comments",
-    "properties",
-    "legal proceedings",
-    "mine safety disclosures",
-    "market for registrant",
-    "selected financial data",  # older filings
-    "management's discussion",
-    "results of operations",
-    "quantitative and qualitative",
-    "about market risk",
-    "financial statements",
-    "supplementary data",
-    "changes in and disagreements",
-    "accountants",
-    "directors",
-    "executive officers",
-    "executive compensation",
-    "security ownership",
-    "certain relationships",
-    "related transactions",
-    "principal accountant fees",
-    "exhibits",
-    "financial statement schedules",
     # Reserved / omitted indicators (common noise)
     "[reserved]",
     "(reserved)",
@@ -1492,10 +1516,17 @@ def drop_table_of_contents(
         is_table = block.strip().upper().startswith("<TABLE")
         hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
         has_toc_dots = bool(TOC_DOTS_RE.search(block))
+        late_label_hit = bool(_LATE_ITEM_RE.match(block.strip()))
+        late_name_hit = any(term in normalized for term in NORMALIZED_LATE_ITEM_NAMES)
 
         # ✅ Only use BODY_ANCHOR_RE as an exit signal AFTER we've seen TOC content
         if toc_detected and BODY_ANCHOR_RE.match(block.strip()):
             return blocks[idx:], idx
+        # Late items this early are usually TOC noise; keep dropping until real anchor.
+        if late_label_hit or late_name_hit:
+            toc_detected = True
+            start_idx = idx + 1
+            continue
 
         if is_table and hits >= 2:
             toc_detected = True
@@ -1520,6 +1551,8 @@ def drop_table_of_contents(
             is_table = block.strip().upper().startswith("<TABLE")
             hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
             has_toc_dots = bool(TOC_DOTS_RE.search(block))
+            late_label_hit = bool(_LATE_ITEM_RE.match(block.strip()))
+            late_name_hit = any(term in normalized for term in NORMALIZED_LATE_ITEM_NAMES)
 
             if is_table and hits >= 2:
                 idx += 1
@@ -1532,6 +1565,9 @@ def drop_table_of_contents(
                 continue
             if BODY_ANCHOR_RE.match(block.strip()):
                 return blocks[idx:], idx
+            if late_label_hit or late_name_hit:
+                idx += 1
+                continue
             break
         start_idx = idx
 
