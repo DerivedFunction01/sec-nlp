@@ -1563,10 +1563,10 @@ def drop_table_of_contents(
         if BODY_ANCHOR_RE.match(block.strip()):
             start_idx = idx
             break
-        if (is_table and hits >= 2) or has_toc_dots:
+        if (is_table and hits > 0) or has_toc_dots:
             idx += 1
             continue
-        if "table of contents" in normalized or hits >= 2:
+        if "table of contents" in normalized or hits > 0:
             idx += 1
             continue
         if SECTION_LABEL_RE.match(block.strip()):
