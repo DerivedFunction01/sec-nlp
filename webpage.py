@@ -6,6 +6,7 @@
 import queue
 import string
 import sys
+from collections import defaultdict
 
 
 # Increase recursion limit to handle deeply nested HTML structures
@@ -1303,6 +1304,48 @@ def drop_table_of_contents(
     return blocks[start_idx:], start_idx
 
 
+def identify_repeating_markers(
+    blocks: List[str],
+    min_occurrences: int = 3,
+    proximity_window: int = 20,
+) -> set[str]:
+    positions = defaultdict(list)
+    for idx, block in enumerate(blocks):
+        normalized = normalize_for_matching(block)
+        if not normalized or len(normalized) < 4 or len(normalized) > 80:
+            continue
+        positions[normalized].append(idx)
+
+    markers = set()
+    total = len(blocks)
+    for normalized, idxs in positions.items():
+        if len(idxs) < min_occurrences:
+            continue
+        if idxs[0] < proximity_window or idxs[-1] >= total - proximity_window:
+            markers.add(normalized)
+
+    return markers
+
+
+def remove_repeating_markers(
+    blocks: List[str],
+    min_occurrences: int = 3,
+    proximity_window: int = 12,
+) -> Tuple[List[str], set[str]]:
+    markers = identify_repeating_markers(blocks, min_occurrences, proximity_window)
+    if not markers:
+        return blocks, markers
+
+    filtered = []
+    for block in blocks:
+        normalized = normalize_for_matching(block)
+        if normalized in markers:
+            continue
+        filtered.append(block)
+
+    return filtered, markers
+
+
 def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> List[str]:
     """Placeholder paragraph splitter with simple heuristics for pruning boilerplate."""
     if not text:
@@ -2180,7 +2223,10 @@ def parse_content(data):
                 continue
 
         document_blocks, toc_start_idx = drop_table_of_contents(document_blocks)
+        document_blocks, header_markers = remove_repeating_markers(document_blocks)
         debug_print(f"Skipped {toc_start_idx} cover/TOC blocks")
+        if header_markers:
+            debug_print(f"Removed {len(header_markers)} repeating markers")
 
         # Determine home country from the first document (usually the main filing)
         # Only if not already determined by URL
