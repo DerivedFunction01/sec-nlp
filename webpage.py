@@ -132,6 +132,17 @@ FILING_TYPES = {
 
 
 TABLE_SPLIT_PATTERN = re.compile(r"(<TABLE>.*?</TABLE>)", re.DOTALL | re.IGNORECASE)
+TABLE_HINT_PATTERN = re.compile(
+    rf"\b(?:{build_alternation([
+        "table",
+        "summary",
+        "following",
+        "below",
+        "presented",
+        "summarized",
+    ])})\b|:",
+    re.IGNORECASE,
+)
 
 _PLAIN_TABLE_RULES: Dict[str, re.Pattern | Any] = {
     "separator": re.compile(r"^\s*[-=_]{4,}\s*$"),
@@ -180,6 +191,7 @@ def _score_block_as_table(lines: List[str]) -> float:
 def detect_and_wrap_plaintext_tables(
     text: str,
     threshold: float = _PLAIN_TABLE_RULES["score_threshold"],  # type: ignore
+    hint_bonus: float = 0.0,
 ) -> str:
     paragraphs = PARAGRAPH_SPLIT_PATTERN.split(text)
     output_parts = []
@@ -200,6 +212,8 @@ def detect_and_wrap_plaintext_tables(
             continue
 
         score = _score_block_as_table(lines)
+        if hint_bonus:
+            score = min(1.0, score + hint_bonus)
         if score >= threshold:
             output_parts.append(f"<TABLE>\n{stripped}\n</TABLE>")
         else:
@@ -209,7 +223,10 @@ def detect_and_wrap_plaintext_tables(
 
 
 def _process_plaintext_chunk(part: str) -> List[str]:
-    text = detect_and_wrap_plaintext_tables(part)
+    hint_bonus = 0.0
+    if TABLE_HINT_PATTERN.search(part):
+        hint_bonus = 0.1
+    text = detect_and_wrap_plaintext_tables(part, hint_bonus=hint_bonus)
     segments = TABLE_SPLIT_PATTERN.split(text)
     processed = []
 
@@ -228,17 +245,6 @@ def _process_plaintext_chunk(part: str) -> List[str]:
     return processed
 
 
-TABLE_HINT_PATTERN = re.compile(
-    rf"\b(?:{build_alternation([
-        "table",
-        "summary",
-        "following",
-        "below",
-        "presented",
-        "summarized",
-    ])})\b|:",
-    re.IGNORECASE,
-)
 # Initialize RegionMatcher to access location regexes for home-country detection
 REGION_MATCHER = RegionMatcher()
 # Pattern to find single newlines that are not preceded or followed by another newline (i.e., wrapped lines)
