@@ -147,7 +147,7 @@ TABLE_HINT_PATTERN = re.compile(
 _PLAIN_TABLE_RULES: Dict[str, re.Pattern | Any] = {
     "separator": re.compile(r"^\s*[-=_]{4,}\s*$"),
     "numeric_token": re.compile(r"[\$%\*]|\b\d+[\.,]?\d*\b"),
-    "whitespace_gap": re.compile(r" {2,}"),
+    "whitespace_gap": re.compile(r" {3,}"),
     "score_threshold": 0.65,
     "min_lines": 3,
 }
