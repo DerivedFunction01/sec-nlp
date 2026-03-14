@@ -1466,23 +1466,27 @@ def remove_repeating_markers(
 
     return filtered, markers
 
+_NO_ALPHANUM_RE = re.compile(r"[A-Za-z0-9]")
+_FORM_LABEL_FULL_RE = re.compile(r"^[A-Za-z]-\d+$")
 
 def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> List[str]:
-    """Placeholder paragraph splitter with simple heuristics for pruning boilerplate."""
+    """Paragraph splitter with simple heuristics for pruning boilerplate."""
     if not text:
         return []
 
+    _company = company_name.strip().lower() if company_name else None
+
     def is_discardable(chunk: str) -> bool:
-        lower_chunk = chunk.lower()
-        if not re.search(r"[A-Za-z0-9]", chunk):
-            return True
-        if lower_chunk == "table of contents":
-            return True
-        if company_name and lower_chunk == company_name.strip().lower():
+        if not _NO_ALPHANUM_RE.search(chunk):
             return True
         if chunk.isdigit():
             return True
-        if re.fullmatch(r"[A-Za-z]-\d+", chunk):
+        if _FORM_LABEL_FULL_RE.match(chunk):
+            return True
+        lower_chunk = chunk.lower()
+        if lower_chunk == "table of contents":
+            return True
+        if _company and lower_chunk == _company:
             return True
         return False
 
@@ -1502,7 +1506,6 @@ def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> Li
                 merged_blocks.append(stripped_part)
             continue
 
-        # Treat non-table chunks as paragraph blocks
         for para in PARAGRAPH_SPLIT_PATTERN.split(part):
             cleaned = para.strip()
             if not cleaned or is_discardable(cleaned):
