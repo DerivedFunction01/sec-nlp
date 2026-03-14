@@ -1165,9 +1165,13 @@ TOC_KEYWORDS = [
     "item 15",
     # Parts (very common section headers)
     "part i",
+    "part 1",
     "part ii",
+    "part 2",
     "part iii",
+    "part 3",
     "part iv",
+    "part 4",
     # High-value signature phrases (very stable over time)
     "business",
     "risk factors",
