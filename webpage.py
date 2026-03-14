@@ -142,7 +142,7 @@ _PLAIN_TABLE_RULES: Dict[str, re.Pattern | Any] = {
     "separator": re.compile(r"^\s*[-=_]{4,}\s*$"),
     "numeric_token": re.compile(r"[\$%\*]|\b\d+[\.,]?\d*\b"),
     "whitespace_gap": re.compile(r" {2,}"),
-    "score_threshold": 0.5,
+    "score_threshold": 0.55,
     "min_lines": 3,
 }
 
