@@ -1283,7 +1283,7 @@ def drop_cover_page(
     for idx, block in enumerate(blocks[:scan]):
         normalized = normalize_for_matching(block)
         hits = sum(1 for term in NORMALIZED_COVER_PAGE_KEYWORDS if term in normalized)
-        if hits >= 2:
+        if hits >= 1:
             cover_end = idx + 1
             break
 
@@ -1317,7 +1317,7 @@ def drop_table_of_contents(
             break
 
         hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
-        if hits >= 3:
+        if hits >= 2:
             start_idx = idx + 1
             toc_detected = True
             break
