@@ -1418,7 +1418,10 @@ SECTION_LABEL_RE = re.compile(
     rf"^(?:{build_alternation([_RE['part'], _RE['item'], _RE['fwd']], sort_longest_first=False)})$",
     re.IGNORECASE,
 )
-TOC_DOTS_RE = re.compile(r"(?:\.[\s.]*){3,}\s*(?:\d+(?:-\d+)?|[A-Za-z]{1,3}(?:-?\d+)?)\b", re.IGNORECASE)
+TOC_DOTS_RE = re.compile(
+    r"(?:\.[\s.]*){4,}|(?:\.[\s.]*){3}\s*(?:\d+(?:-\d+)?|[A-Za-z]{1,3}(?:-?\d+)?)\b",
+    re.IGNORECASE
+)
 MAX_TOC_SCAN_CHARS = 50000
 
 ALPHANUM_RE = re.compile(r"[A-Za-z0-9]")
