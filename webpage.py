@@ -1488,6 +1488,32 @@ COVER_PAGE_KEYWORDS = [
     "definitive proxy statement",
     "incorporated herein by reference",
     "context indicates otherwise",
+    "annual report under section 13",
+    "name of small business issuer",
+    "title of class",
+    "title if class", 
+    "issuer s telephone number",
+    "issuer's telephone number",
+    "securities registered under section 12",
+    "of the exchange act",
+    "par value",  # "Common Stock, $0.001 par value"
+    # Checkbox / filer status language
+    "as defined in rule",
+    "yes no",  # bare checkbox line
+    # Shares / equity boilerplate
+    "voting and non-voting common equity",
+    "last business day",
+    "most recently completed second fiscal quarter",
+    "number of shares of common stock",
+    "shares of the issuer",
+    "par value outstanding",
+    # Index / TOC header lines specific to cover
+    "index to report",
+    "for the fiscal year ended",
+    # Documents incorporated
+    "report on form 8-k",
+    "form 8-k dated",
+    "item 3 02",  # normalized item references in 8-K line
 ]
 
 NORMALIZED_COVER_PAGE_KEYWORDS = [
@@ -1509,6 +1535,37 @@ SECTION_LABEL_RE = re.compile(
     rf"^(?:{build_alternation([_RE['part'], _RE['item'], _RE['fwd']], sort_longest_first=False)})$",
     re.IGNORECASE,
 )
+
+PROSE_INDICATOR_WORDS = {
+    # Linking / state verbs (almost never in headers)
+    "are", "were", "was", "is", "has", "have", "had",
+    "may", "will", "would", "could", "should", "might",
+    "does", "did", "been", "being",
+
+    # Conjunctions / concessive openers
+    "although", "however", "whereas", "nevertheless", "notwithstanding",
+    "therefore", "accordingly", "furthermore", "moreover", "consequently",
+    "because", "since", "whether", "unless", "until", "while",
+
+    # Relative / subordinating markers
+    "which", "whose", "whereby", "thereof", "therein", "thereto",
+    "herein", "hereof", "hereunder", "pursuant",
+
+    # Prepositions that only appear mid-sentence
+    "including", "excluding", "regarding", "relating", "consisting",
+    "resulting", "arising", "following", "preceding",
+
+    # Quantifiers / determiners
+    "our", "its", "their", "such", "each", "any", "all", "certain",
+    "various", "other", "additional", "significant",
+
+    # Prose-specific verbs
+    "believe", "expect", "anticipate", "estimate", "intend",
+    "continue", "provide", "include", "represent", "require",
+    "result", "occur", "affect", "exceed", "increase", "decrease",
+}
+
+_PROSE_INDICATOR_RE = build_regex(PROSE_INDICATOR_WORDS)
 TOC_DOTS_RE = re.compile(
     r"(?:\.[\s.]*){4,}|(?:\.[\s.]*){3}\s*(?:\d+(?:-\d+)?|[A-Za-z]{1,3}(?:-?\d+)?)\b",
     re.IGNORECASE
@@ -1657,6 +1714,11 @@ def drop_table_of_contents(
         if len(stripped) > _TOC_RESIDUE_MAX_LEN:
             start_idx = idx
             break
+            
+        # Prose indicator match = real content, stop immediately
+        if _PROSE_INDICATOR_RE.search(stripped):
+            start_idx = idx
+            break
 
         # Early item name match = real body start, stop and keep
         if early_name_hit:
@@ -1706,6 +1768,10 @@ def drop_table_of_contents(
 
         # Long block = real content, stop immediately
         if len(stripped) > _TOC_RESIDUE_MAX_LEN:
+            break
+
+        # Prose indicator match = real content, stop immediately
+        if _PROSE_INDICATOR_RE.search(stripped):
             break
 
         # Early item name = real body start, stop and keep this block
