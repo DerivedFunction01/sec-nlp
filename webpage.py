@@ -131,12 +131,14 @@ FILING_TYPES = {
 }
 
 
-_LITERAL_TAG_RE = re.compile(r"<(?:TYPE|SEQUENCE|FILENAME|DESCRIPTION|TEXT)>[^<\\n\\r]*", re.IGNORECASE)
+_LITERAL_TAG_RE = re.compile(r"<(?:TYPE|SEQUENCE|FILENAME|DESCRIPTION)>[^<\\n\\r]*", re.IGNORECASE)
+_TEXT_TAG_RE = re.compile(r"</?TEXT>\\s*", re.IGNORECASE)
 
 CLEANUP_PATTERNS = [
     (re.compile(r"(?:\b\d{1,3}\s*)?<PAGE>(?:\s*\d{1,3}\b)?", re.IGNORECASE), r""),
     (re.compile(r"(?<!\d)-\s*\d{1,3}\s*-(?!\d)", re.IGNORECASE), r""),
     (_LITERAL_TAG_RE, r""),
+    (_TEXT_TAG_RE, r""),
 ]
 
 PAGE_MARKER_RE = re.compile(
