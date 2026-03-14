@@ -141,6 +141,79 @@ CLEANUP_PATTERNS = [
     (_TEXT_TAG_RE, r""),
 ]
 
+_WHITESPACE_GAP_RE = re.compile(r" +")
+
+_PLAIN_TABLE_RULES = {
+    "separator": re.compile(r"^\s*[-=_]{4,}\s*$"),
+    "numeric_token": re.compile(r"[\$%\*]|\b\d+[\.,]?\d*\b"),
+    "whitespace_gap": re.compile(r" {2,}"),
+    "score_threshold": 0.5,
+    "min_lines": 3,
+}
+
+
+def _is_separator_line(line: str) -> bool:
+    return bool(_PLAIN_TABLE_RULES["separator"].match(line.strip()))
+
+
+def _is_data_line(line: str) -> bool:
+    stripped = line.strip()
+    if not stripped:
+        return False
+    numeric_hits = len(_PLAIN_TABLE_RULES["numeric_token"].findall(stripped))
+    gap_hits = len(_PLAIN_TABLE_RULES["whitespace_gap"].findall(line))
+    return numeric_hits >= 2 or (numeric_hits >= 1 and gap_hits >= 2)
+
+
+def _score_block_as_table(lines: List[str]) -> float:
+    if not lines:
+        return 0.0
+
+    separator_count = sum(1 for line in lines if _is_separator_line(line))
+    data_count = sum(1 for line in lines if _is_data_line(line))
+    gap_count = sum(len(_WHITESPACE_GAP_RE.findall(line)) for line in lines)
+    total = len(lines)
+
+    score = 0.0
+    if separator_count >= 1:
+        score += 0.5
+
+    score += min(0.3, (data_count / total) * 0.3)
+    avg_gaps = gap_count / total if total else 0
+    score += min(0.2, (avg_gaps / 5) * 0.2)
+
+    return score
+
+
+def detect_and_wrap_plaintext_tables(
+    text: str,
+    threshold: float = _PLAIN_TABLE_RULES["score_threshold"],
+) -> str:
+    paragraphs = PARAGRAPH_SPLIT_PATTERN.split(text)
+    output_parts = []
+
+    for para in paragraphs:
+        stripped = para.strip()
+        if not stripped:
+            continue
+
+        if stripped.upper().startswith("<TABLE>"):
+            output_parts.append(stripped)
+            continue
+
+        lines = stripped.splitlines()
+        if len(lines) < _PLAIN_TABLE_RULES["min_lines"]:
+            output_parts.append(stripped)
+            continue
+
+        score = _score_block_as_table(lines)
+        if score >= threshold:
+            output_parts.append(f"<TABLE>\n{stripped}\n</TABLE>")
+        else:
+            output_parts.append(stripped)
+
+    return "\n\n".join(output_parts)
+
 PAGE_MARKER_RE = re.compile(
     r"^(?:-\s*\d{1,3}\s*-|pp?\s*\.?\s*\d{1,3}|page\s+\d{1,3})$", re.IGNORECASE
 )
@@ -959,8 +1032,9 @@ def extract_content(data: str, asHTML=True) -> str:
             text = soup.get_text(separator="\n\n", strip=True)
 
     else:
-        # Plain text processing (unchanged)
-        parts = TABLE_SPLIT_PATTERN.split(data)
+        # Plain text processing (wrap ASCII tables first)
+        text = detect_and_wrap_plaintext_tables(data)
+        parts = TABLE_SPLIT_PATTERN.split(text)
         processed_parts = []
         for i, part in enumerate(parts):
             if i % 2 == 1:
