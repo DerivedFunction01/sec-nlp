@@ -17,7 +17,7 @@ IS_COLAB = Path(DRIVE_PATH).exists()
 DB_PATH = "web_data.db"
 DATA_DIR = Path("data")
 REPORT_PATH = DATA_DIR / "report_data.parquet"
-NAMES_PATH = DATA_DIR / "names_export.parquet"
+NAMES_PATH = DATA_DIR / "names.parquet"
 
 # =============================================================================
 # HELPER FUNCTIONS
