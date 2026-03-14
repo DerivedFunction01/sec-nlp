@@ -42,8 +42,7 @@ import subprocess
 # =============================================================================
 DEBUG = False
 ALL_FIRMS_DATA = "data/cik_data.csv"
-REPORT_PATH = Path("data/report_data.parquet")
-REPORT_CSV_PATH = Path("data/report_data.csv")
+REPORT_PATH = "data/report_data.parquet"
 DB_PATH = "web_data.db"
 MAX_LEN = 1000
 
@@ -344,10 +343,10 @@ def fetch_report_data(valid: Optional[bool] = True):
         count = 0
         
     # If empty, try to load from CSV
-    if count == 0 and Path(REPORT_CSV_PATH).exists():
-        print(f"📥 Importing {REPORT_CSV_PATH} into database...")
+    if count == 0 and Path(REPORT_PATH).exists():
+        print(f"📥 Importing {REPORT_PATH} into database...")
         try:
-            df = pd.read_csv(REPORT_CSV_PATH)
+            df = pd.read_parquet(REPORT_PATH)
             if {'cik', 'year', 'url'}.issubset(df.columns):
                 # Use a dictionary to deduplicate by accession
                 unique_records = {}
@@ -2542,7 +2541,7 @@ if __name__ == "__main__":
     existing_report_df = fetch_report_data()
     print(f"Found {len(existing_report_df)} reports in database")
     NUM_FETCHERS, NUM_PARSERS, CHUNK_SIZE, SEC_RATE_LIMIT = get_system_config()
-    all_df = pd.read_csv(ALL_FIRMS_DATA)
+    all_df = pd.read_parquet(ALL_FIRMS_DATA)
     if IS_COLAB:
         print("Running in Google Colab environment")
         if not Path(DB_PATH).exists():
