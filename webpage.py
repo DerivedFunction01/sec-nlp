@@ -131,7 +131,9 @@ FILING_TYPES = {
 }
 
 
-_LITERAL_TAG_RE = re.compile(r"<(?:TYPE|SEQUENCE|FILENAME|DESCRIPTION)>[^<\\n\\r]*", re.IGNORECASE)
+_LITERAL_TAG_RE = re.compile(
+    r"<(?:TYPE|SEQUENCE|FILENAME|DESCRIPTION)>[^<\\n\\r]*", re.IGNORECASE
+)
 _TEXT_TAG_RE = re.compile(r"</?TEXT>\\s*", re.IGNORECASE)
 
 CLEANUP_PATTERNS = [
@@ -214,6 +216,7 @@ def detect_and_wrap_plaintext_tables(
 
     return "\n\n".join(output_parts)
 
+
 PAGE_MARKER_RE = re.compile(
     r"^(?:-\s*\d{1,3}\s*-|pp?\s*\.?\s*\d{1,3}|page\s+\d{1,3})$", re.IGNORECASE
 )
@@ -257,25 +260,30 @@ FISCAL_YEAR_PATTERN = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 
-JURISDICTION_PATTERN = re.compile(
-    r"\bJurisdiction\s+of\s+incorporation\s+or\s+organization\b",
-    re.IGNORECASE | re.MULTILINE,
-)
-OFFICE_PATTERN = re.compile(
-    r"\bAddress\s+of\s+principal\s+executive\s+offices\b", re.IGNORECASE | re.MULTILINE
-)
 FILING_20F = re.compile(r"\b20-F\b", re.IGNORECASE | re.MULTILINE)
 FILING_40F = re.compile(r"\b40-F\b", re.IGNORECASE | re.MULTILINE)
 
 HOME_COUNTRY_PATTERNS = [
-    (JURISDICTION_PATTERN, 5.0),
+    (
+        re.compile(
+            r"\bJurisdiction\s+of\s+incorporation\s+or\s+organization\b",
+            re.IGNORECASE | re.MULTILINE,
+        ),
+        5.0,
+    ),
     (build_regex([r"home\s+country"]), 4.0),
     (build_regex([r"(?:headquartered|incorporated)\s+in"]), 3.0),
     (build_regex([r"domiciled?"]), 3.0),
     (build_regex([r"principal\s+place\s+of\s+business"]), 3.0),
     (build_regex([r"corporate\s+headquarters"]), 2.5),
     (build_regex([r"reporting\s+currency"]), 2.0),
-    (OFFICE_PATTERN, 2.0),
+    (
+        re.compile(
+            r"\bAddress\s+of\s+principal\s+executive\s+offices\b",
+            re.IGNORECASE | re.MULTILINE,
+        ),
+        2.0,
+    ),
     (build_regex([r"executive\s+offices?"]), 1.5),
     (build_regex([r"registered\s+office"]), 1.0),
     (
@@ -1403,6 +1411,7 @@ MAX_TOC_SCAN_CHARS = 50000
 ALPHANUM_RE = re.compile(r"[A-Za-z0-9]")
 _FORM_LABEL_FULL_RE = re.compile(r"^[A-Za-z]-\d+$")
 
+
 def prefilter_blocks(blocks: List[str]) -> List[str]:
     filtered = []
     for block in blocks:
@@ -1545,6 +1554,7 @@ def remove_repeating_markers(
         filtered.append(block)
 
     return filtered, markers
+
 
 def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> List[str]:
     """Paragraph splitter with simple heuristics for pruning boilerplate."""
