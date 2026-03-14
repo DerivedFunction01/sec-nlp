@@ -2459,9 +2459,17 @@ def save_batch(conn, buffer):
     try:
         df_batch = pd.DataFrame(buffer)
         c = conn.cursor()
-        data = list(zip(df_batch.accession, df_batch.content.apply(json.dumps), df_batch.period_of_report, df_batch.home_country))
+        data = list(
+            zip(
+                df_batch.accession,
+                df_batch.documents.apply(json.dumps),
+                df_batch.period_of_report,
+                df_batch.home_country,
+            )
+        )
         c.executemany(
-            "INSERT OR REPLACE INTO webpage_result (accession, content, period_of_report, home_country) VALUES (?, ?, ?, ?)", data
+            "INSERT OR REPLACE INTO webpage_result (accession, documents, period_of_report, home_country) VALUES (?, ?, ?, ?)",
+            data,
         )
         conn.commit()
     except Exception as e:
