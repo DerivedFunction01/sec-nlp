@@ -1126,6 +1126,13 @@ def extract_fiscal_year(text: str, accession: Optional[str] = None) -> Optional[
 
     return None
 
+def normalize_for_matching(text: str) -> str:
+    if not text:
+        return ""
+    sanitized = re.sub(r"[^a-z0-9]+", " ", text.lower())
+    return SPACE_PATTERN.sub(" ", sanitized).strip()
+
+
 TOC_KEYWORDS = [
     # Core Items (most reliable anchors)
     "item 1",
@@ -1228,40 +1235,47 @@ COVER_PAGE_KEYWORDS = [
     "proxy statement",
 ]
 
+NORMALIZED_TOC_KEYWORDS = [normalize_for_matching(term) for term in TOC_KEYWORDS]
+NORMALIZED_COVER_PAGE_KEYWORDS = [normalize_for_matching(term) for term in COVER_PAGE_KEYWORDS]
+
 
 MAX_TOC_SCAN_CHARS = 25000
 
 
-def drop_table_of_contents(blocks: List[str], max_scan: int = 50, char_limit: int = MAX_TOC_SCAN_CHARS) -> List[str]:
-    """Remove leading blocks that appear to be part of the cover/TOC."""
+def drop_table_of_contents(
+    blocks: List[str],
+    max_scan: int = 20,
+    char_limit: int = MAX_TOC_SCAN_CHARS,
+) -> Tuple[List[str], int]:
+    """Remove leading blocks that appear to be part of the cover/TOC and return the index where the body starts."""
 
     def find_cover_start(blocks: List[str], scan: int) -> int:
         for idx, block in enumerate(blocks[:scan]):
-            lower_block = block.lower()
-            match_count = sum(1 for term in COVER_PAGE_KEYWORDS if term in lower_block)
+            normalized = normalize_for_matching(block)
+            match_count = sum(1 for term in NORMALIZED_COVER_PAGE_KEYWORDS if term in normalized)
             if match_count >= 2:
                 return idx + 1
         return 0
 
-    cover_idx = find_cover_start(blocks, 5)
+    cover_idx = find_cover_start(blocks, 20)
     start_idx = cover_idx
     char_count = 0
 
     for idx, block in enumerate(blocks[start_idx : start_idx + max_scan], start=start_idx):
-        lower_block = block.lower()
+        normalized = normalize_for_matching(block)
         char_count += len(block)
         if char_count > char_limit:
             break
-        if "table of contents" in lower_block:
+        if "table of contents" in normalized:
             start_idx = idx + 1
             break
 
-        match_count = sum(1 for term in TOC_KEYWORDS if term in lower_block)
+        match_count = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
         if match_count >= 3:
             start_idx = idx + 1
             break
 
-    return blocks[start_idx:]
+    return blocks[start_idx:], start_idx
 
 
 def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> List[str]:
@@ -2140,7 +2154,8 @@ def parse_content(data):
                 print(f"  ⚠️  Error extracting blocks from document {doc_idx + 1} of {url}: {e}")
                 continue
 
-        document_blocks = drop_table_of_contents(document_blocks)
+        document_blocks, toc_start_idx = drop_table_of_contents(document_blocks)
+        debug_print(f"Skipped {toc_start_idx} cover/TOC blocks")
 
         # Determine home country from the first document (usually the main filing)
         # Only if not already determined by URL
