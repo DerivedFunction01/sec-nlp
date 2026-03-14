@@ -2541,7 +2541,7 @@ if __name__ == "__main__":
     existing_report_df = fetch_report_data()
     print(f"Found {len(existing_report_df)} reports in database")
     NUM_FETCHERS, NUM_PARSERS, CHUNK_SIZE, SEC_RATE_LIMIT = get_system_config()
-    all_df = pd.read_parquet(ALL_FIRMS_DATA)
+    all_df = pd.read_csv(ALL_FIRMS_DATA)
     if IS_COLAB:
         print("Running in Google Colab environment")
         if not Path(DB_PATH).exists():
