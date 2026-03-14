@@ -1580,31 +1580,37 @@ def drop_table_of_contents(
         break
 
     # ── Cleanup pass: strip late-item residue before the real body ───────────
+    _TOC_RESIDUE_MAX_LEN = 120  # chars — TOC lines are short; real prose is longer
+
     result = blocks[start_idx:]
     clean_start = 0
     for i, block in enumerate(result):
         normalized = normalize_for_matching(block)
+        stripped = block.strip()
+
+        # Long block = real content, stop immediately regardless of keyword hits
+        if len(stripped) > _TOC_RESIDUE_MAX_LEN:
+            break
 
         # Positive stop: real body anchor by label or early section name
-        if BODY_ANCHOR_RE.match(block.strip()):
+        if BODY_ANCHOR_RE.match(stripped):
             clean_start = i
             break
         if any(name in normalized for name in NORMALIZED_EARLY_ITEM_NAMES):
             clean_start = i
             break
 
-        # Keep stripping: late labels, late names, structural part labels
+        # Keep stripping only short blocks that look like TOC residue
         if (
-            _LATE_ITEM_RE.match(block.strip())
-            or SECTION_LABEL_RE.match(block.strip())
+            _LATE_ITEM_RE.match(stripped)
+            or SECTION_LABEL_RE.match(stripped)
             or any(name in normalized for name in NORMALIZED_LATE_ITEM_NAMES)
         ):
             clean_start = i + 1
             continue
 
-        # Substantive prose — stop stripping regardless
-        if len(block.strip()) > 80:
-            break
+        # Short block but no TOC signal — stop, don't risk dropping real content
+        break
 
     return result[clean_start:], start_idx
 
