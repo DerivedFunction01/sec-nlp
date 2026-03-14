@@ -1488,11 +1488,13 @@ def drop_table_of_contents(
         char_count += len(block)
         if char_count > char_limit:
             break
+
         is_table = block.strip().upper().startswith("<TABLE")
         hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
         has_toc_dots = bool(TOC_DOTS_RE.search(block))
 
-        if BODY_ANCHOR_RE.match(block.strip()):
+        # ✅ Only use BODY_ANCHOR_RE as an exit signal AFTER we've seen TOC content
+        if toc_detected and BODY_ANCHOR_RE.match(block.strip()):
             return blocks[idx:], idx
 
         if is_table and hits >= 2:
