@@ -1250,7 +1250,7 @@ COVER_PAGE_KEYWORDS = [
 
 NORMALIZED_TOC_KEYWORDS = [normalize_for_matching(term) for term in TOC_KEYWORDS]
 NORMALIZED_COVER_PAGE_KEYWORDS = [normalize_for_matching(term) for term in COVER_PAGE_KEYWORDS]
-BODY_ANCHOR_RE = re.compile(r"^\s*(?:PART\s+I\b|ITEM\s+1[\.\s])", re.IGNORECASE)
+BODY_ANCHOR_RE = re.compile(r"^\s*(?:PART\s+(?:I|1)\b|ITEM\s+1[\.\s])", re.IGNORECASE)
 
 
 MAX_TOC_SCAN_CHARS = 25000
@@ -1283,7 +1283,7 @@ def drop_cover_page(
     for idx, block in enumerate(blocks[:scan]):
         normalized = normalize_for_matching(block)
         hits = sum(1 for term in NORMALIZED_COVER_PAGE_KEYWORDS if term in normalized)
-        if hits >= 1:
+        if hits >= 2:
             cover_end = idx + 1
             break
 
@@ -1310,31 +1310,41 @@ def drop_table_of_contents(
         char_count += len(block)
         if char_count > char_limit:
             break
-
-        if "table of contents" in normalized:
-            start_idx = idx + 1
-            toc_detected = True
-            break
-
+        is_table = block.strip().upper().startswith("<TABLE")
         hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
-        if hits >= 2:
-            start_idx = idx + 1
+
+        if BODY_ANCHOR_RE.match(block.strip()):
+            return blocks[idx:], idx
+
+        if is_table and hits >= 2:
             toc_detected = True
+            start_idx = idx + 1
+            continue
+
+        if "table of contents" in normalized or hits >= 3:
+            toc_detected = True
+            start_idx = idx + 1
+            continue
+
+        if toc_detected:
+            return blocks[idx:], idx
+
+    if toc_detected:
+        idx = start_idx
+        while idx < len(blocks):
+            normalized = normalize_for_matching(blocks[idx])
+            hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
+            is_table = blocks[idx].strip().upper().startswith("<TABLE")
+            if is_table and hits >= 2:
+                idx += 1
+                continue
+            if "table of contents" in normalized or hits >= 2:
+                idx += 1
+                continue
+            if BODY_ANCHOR_RE.match(blocks[idx].strip()):
+                return blocks[idx:], idx
             break
-
-    if not toc_detected:
-        return blocks, 0
-
-    while start_idx < len(blocks):
-        normalized = normalize_for_matching(blocks[start_idx])
-        hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
-        if "table of contents" in normalized or hits >= 2:
-            start_idx += 1
-            continue
-        if blocks[start_idx].strip().upper().startswith("<TABLE"):
-            start_idx += 1
-            continue
-        break
+        start_idx = idx
 
     return blocks[start_idx:], start_idx
 
