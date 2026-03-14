@@ -20,6 +20,7 @@ import json
 from io import StringIO
 import sqlite3
 import unicodedata
+from enum import Enum
 from typing import List, Optional, Tuple
 import random
 import re
@@ -61,6 +62,13 @@ DRIVE_SAVE_INTERVAL_RESULTS = 4000
 # =============================================================================
 QUEUE_BATCH_SIZE = 20 # URLs to add per fill
 QUEUE_FILL_INTERVAL_SECONDS = 2  # Seconds between fills
+
+
+class FetchStatus(Enum):
+    RETRY = "RETRY"
+    FAILED = "FAILED"
+    RATE_LIMITED = "RATE_LIMITED"
+    PERMANENT_FAILURE = "PERMANENT_FAILURE"
 
 # =============================================================================
 # COLAB CONFIGURATION
@@ -1766,7 +1774,7 @@ def should_retry_with_plaintext(
     """
     Checks if a pre-2011 filing should be retried with plain text URL.
     Returns:
-      - ("RETRY", new_txt_url) if retry needed
+      - (FetchStatus.RETRY, new_txt_url) if retry needed
       - None if no retry needed
     """
     try:
@@ -1797,11 +1805,11 @@ def should_retry_with_plaintext(
                 has_valid_content = True
                 break
         
-        if not has_valid_content:
-            txt_url = f"https://www.sec.gov/Archives/edgar/data/{cik_part}/{accession}/{txt_filename}"
-            if txt_url != url:
-                debug_print(f"  🔄 Retry with plain text for {url}")
-                return "RETRY", url, txt_url
+            if not has_valid_content:
+                txt_url = f"https://www.sec.gov/Archives/edgar/data/{cik_part}/{accession}/{txt_filename}"
+                if txt_url != url:
+                    debug_print(f"  🔄 Retry with plain text for {url}")
+                    return FetchStatus.RETRY, url, txt_url
 
     except Exception as e:
         print(f"Error in retry logic for {url}: {e}")
@@ -1828,7 +1836,7 @@ def fetch_raw_content(url: str, accession: str, rate_limiter: Optional[ThreadSaf
         # Try retry logic for short pre-2011 reports
         retry_result = should_retry_with_plaintext(url, raw_text, rate_limiter)
         if retry_result:
-            if retry_result[0] == "RETRY":
+            if retry_result[0] == FetchStatus.RETRY:
                 # Return signal to re-queue the new .txt URL
                 return retry_result
 
@@ -1837,7 +1845,7 @@ def fetch_raw_content(url: str, accession: str, rate_limiter: Optional[ThreadSaf
     elif raw_text is None and url:
         # fetch_url returned None - could be 429, timeout, or other error
         # The rate_limiter was already notified by fetch_url
-        return "FAILED", url
+        return FetchStatus.FAILED, url
 
     return None
 
@@ -2409,7 +2417,7 @@ def fetch_worker_adaptive(
 
             # 4. Put into Queue
             if result:
-                if result[0] == "RETRY":
+                if result[0] == FetchStatus.RETRY:
                     # Re-queue the new .txt URL
                     if len(result) == 3:
                         # result is ("RETRY", old_url, new_url)
@@ -2419,19 +2427,19 @@ def fetch_worker_adaptive(
                     else:
                         # Fallback
                         url_queue.put((result[1], accession))
-                elif result[0] == "RATE_LIMITED":
+                elif result[0] == FetchStatus.RATE_LIMITED:
                     # Explicit rate limit - signal the rate limiter
                     rate_limiter.signal_429()
                     # Put URL back for retry (sleep already increased)
                     url_queue.put((url, accession))
 
-                elif result[0] == "FAILED":
+                elif result[0] == FetchStatus.FAILED:
                     # Other failure (timeout, connection error) - retry but don't increase sleep
                     rate_limiter.signal_timeout()
                     url_queue.put((url, accession))
                     time.sleep(0.5)
                 
-                elif result[0] == "PERMANENT_FAILURE":
+                elif result[0] == FetchStatus.PERMANENT_FAILURE:
                     print(f"🛑 Permanent failure (404) for {url}. Dropping.")
 
                 else:
