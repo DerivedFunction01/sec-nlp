@@ -1320,6 +1320,8 @@ SECTION_LABEL_RE = re.compile(
 )
 MAX_TOC_SCAN_CHARS = 50000
 
+ALPHANUM_RE = re.compile(r"[A-Za-z0-9]")
+_FORM_LABEL_FULL_RE = re.compile(r"^[A-Za-z]-\d+$")
 
 def prefilter_blocks(blocks: List[str]) -> List[str]:
     filtered = []
@@ -1333,7 +1335,7 @@ def prefilter_blocks(blocks: List[str]) -> List[str]:
             continue
         if FORM_LABEL_RE.match(stripped):
             continue
-        if not re.search(r"[A-Za-z0-9]", stripped):
+        if not ALPHANUM_RE.search(stripped):
             continue
         filtered.append(block)
     return filtered
@@ -1462,9 +1464,6 @@ def remove_repeating_markers(
 
     return filtered, markers
 
-_NO_ALPHANUM_RE = re.compile(r"[A-Za-z0-9]")
-_FORM_LABEL_FULL_RE = re.compile(r"^[A-Za-z]-\d+$")
-
 def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> List[str]:
     """Paragraph splitter with simple heuristics for pruning boilerplate."""
     if not text:
@@ -1473,7 +1472,7 @@ def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> Li
     _company = company_name.strip().lower() if company_name else None
 
     def is_discardable(chunk: str) -> bool:
-        if not _NO_ALPHANUM_RE.search(chunk):
+        if not ALPHANUM_RE.search(chunk):
             return True
         if chunk.isdigit():
             return True
