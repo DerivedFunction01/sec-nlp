@@ -1524,6 +1524,14 @@ PAGE_MARKER_RE = re.compile(
 LONE_NUMBER_RE = re.compile(r"^\s*\d{1,3}\s*$")
 FORM_LABEL_RE = re.compile(r"^[A-Za-z]-\d+$")
 
+_RESIDUAL_MIN_LEN = 4  # after stripping, less than this = discard
+
+def is_structural_only(text: str) -> bool:
+    """True if the block has negligible alphanumeric content after removing punctuation/symbols."""
+    residual = ALPHANUM_RE.sub("", text).strip()
+    # Collapse whitespace to measure actual content
+    residual = SPACE_PATTERN.sub(" ", residual).strip()
+    return len(residual) < _RESIDUAL_MIN_LEN
 
 def prefilter_blocks(blocks: List[str]) -> List[str]:
     filtered = []
@@ -1538,6 +1546,8 @@ def prefilter_blocks(blocks: List[str]) -> List[str]:
         if FORM_LABEL_RE.match(stripped):
             continue
         if not ALPHANUM_RE.search(stripped):
+            continue
+        if is_structural_only(stripped):
             continue
         filtered.append(block)
     return filtered
@@ -1635,28 +1645,55 @@ def drop_table_of_contents(
         block = blocks[idx]
         normalized = normalize_for_matching(block)
         char_count += len(block)
-        is_table = block.strip().upper().startswith("<TABLE")
+        stripped = block.strip()
+        is_table = stripped.upper().startswith("<TABLE")
         hits = sum(1 for term in norm_toc_kw if term in normalized)
         has_toc_dots = bool(TOC_DOTS_RE.search(block))
-        late_label_hit = bool(late_item_re.match(block.strip()))
+        late_label_hit = bool(late_item_re.match(stripped))
         late_name_hit = any(term in normalized for term in norm_late_names)
+        early_name_hit = any(term in normalized for term in norm_early_names)
 
-        if BODY_ANCHOR_RE.match(block.strip()):
+        # Long block = real prose, stop immediately regardless of keyword hits
+        if len(stripped) > _TOC_RESIDUE_MAX_LEN:
             start_idx = idx
             break
-        if (is_table and hits >= 2) or has_toc_dots:
+
+        # Early item name match = real body start, stop and keep
+        if early_name_hit:
+            start_idx = idx
+            break
+
+        # Unambiguous body anchor
+        if BODY_ANCHOR_RE.match(stripped):
+            start_idx = idx
+            break
+
+        # Definitive TOC table
+        if is_table and hits >= 2:
             idx += 1
             continue
-        if "table of contents" in normalized or hits >= 2:
+
+        # TOC dots are unambiguous
+        if has_toc_dots:
             idx += 1
             continue
-        if SECTION_LABEL_RE.match(block.strip()):
+
+        # Explicit "table of contents" label
+        if "table of contents" in normalized:
             idx += 1
             continue
-        if late_label_hit or late_name_hit:
+
+        # Structural part/item label with no substantive content
+        if SECTION_LABEL_RE.match(stripped):
             idx += 1
             continue
-        # Non-TOC, non-anchor block — stop here
+
+        # Late-item label or name — only consume if it's a short line
+        if (late_label_hit or late_name_hit) and len(stripped) <= _TOC_RESIDUE_MAX_LEN:
+            idx += 1
+            continue
+
+        # Anything else — stop, don't risk consuming real content
         start_idx = idx
         break
 
