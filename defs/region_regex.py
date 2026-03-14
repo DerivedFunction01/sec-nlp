@@ -212,3 +212,26 @@ TAX_HAVEN_CODES = {
     "MU",
     "PA",
 }
+
+MAJOR_CURRENCIES = {
+    "USD": {"symbols": ["$"], "names": ["dollar", "dollars"], "prefix": True},
+    "EUR": {"symbols": ["€"], "names": ["euro", "euros"], "prefix": True},
+    "GBP": {"symbols": ["£"], "names": ["pound", "pounds", "sterling"], "prefix": True},
+    "JPY": {"symbols": ["¥"], "names": ["yen"], "prefix": True},
+    "CNY": {"symbols": ["¥"], "names": ["yuan", "renminbi"], "prefix": True},
+    "INR": {"symbols": ["₹"], "names": ["rupee", "rupees"], "suffix": True},
+    "CAD": {"symbols": ["C$", "CAD"], "names": ["canadian dollar"], "prefix": True},
+    "AUD": {"symbols": ["A$", "AUD"], "names": ["australian dollar"], "prefix": True},
+    "CHF": {"symbols": ["CHF"], "names": ["swiss franc"], "prefix": True},
+    "SEK": {"symbols": ["kr"], "names": ["krona", "kronor"], "suffix": True},
+    "NOK": {"symbols": ["kr"], "names": ["krone", "kroner"], "suffix": True},
+    "DKK": {"symbols": ["kr"], "names": ["krone"], "suffix": True},
+    "MXN": {"symbols": ["Mex$"], "names": ["mexican peso"], "prefix": True},
+    "BRL": {"symbols": ["R$", "BRL"], "names": ["brazilian real"], "prefix": True},
+    "ARS": {"symbols": ["$"], "names": ["peso", "pesos"], "prefix": True},
+    "IDR": {"symbols": ["Rp"], "names": ["rupiah"], "prefix": True},
+    "KRW": {"symbols": ["₩"], "names": ["won"], "prefix": True},
+    "RUB": {"symbols": ["₽"], "names": ["ruble", "rubles", "rouble", "roubles"], "prefix": True},
+    "SAR": {"symbols": ["﷼", "SR"], "names": ["riyal", "riyals"], "prefix": True},
+    "TRY": {"symbols": ["₺"], "names": ["lira"], "prefix": True},
+}
