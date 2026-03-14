@@ -1375,6 +1375,8 @@ TOC_KEYWORDS = [
     "part 3",
     "part iv",
     "part 4",
+    "part v",
+    "part 5",
     # Reserved / omitted indicators (common noise)
     "[reserved]",
     "(reserved)",
