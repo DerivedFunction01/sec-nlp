@@ -1318,6 +1318,7 @@ SECTION_LABEL_RE = re.compile(
     rf"^(?:{build_alternation([_RE['part'], _RE['item'], _RE['fwd']], sort_longest_first=False)})$",
     re.IGNORECASE,
 )
+TOC_DOTS_RE = re.compile(r"\.{3,}\s*\d+", re.IGNORECASE)
 MAX_TOC_SCAN_CHARS = 50000
 
 ALPHANUM_RE = re.compile(r"[A-Za-z0-9]")
@@ -1379,6 +1380,7 @@ def drop_table_of_contents(
             break
         is_table = block.strip().upper().startswith("<TABLE")
         hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
+        has_toc_dots = bool(TOC_DOTS_RE.search(block))
 
         if BODY_ANCHOR_RE.match(block.strip()):
             return blocks[idx:], idx
@@ -1388,7 +1390,7 @@ def drop_table_of_contents(
             start_idx = idx + 1
             continue
 
-        if "table of contents" in normalized or hits >= 3:
+        if "table of contents" in normalized or hits >= 3 or has_toc_dots:
             toc_detected = True
             start_idx = idx + 1
             continue
@@ -1405,11 +1407,12 @@ def drop_table_of_contents(
             char_count += len(block)
             is_table = block.strip().upper().startswith("<TABLE")
             hits = sum(1 for term in NORMALIZED_TOC_KEYWORDS if term in normalized)
+            has_toc_dots = bool(TOC_DOTS_RE.search(block))
 
             if is_table and hits >= 2:
                 idx += 1
                 continue
-            if "table of contents" in normalized or hits >= 2:
+            if "table of contents" in normalized or hits >= 2 or has_toc_dots:
                 idx += 1
                 continue
             if SECTION_LABEL_RE.match(block.strip()):
