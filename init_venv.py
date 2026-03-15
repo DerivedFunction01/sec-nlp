@@ -52,6 +52,7 @@ CLASSIFICATION_PACKAGES = [
     "flask",
     "flask_cors",
     "waitress",
+    "evaluate"
 ]
 
 # Packages for Unsloth fine-tuning (platform-dependent)
