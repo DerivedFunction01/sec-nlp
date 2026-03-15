@@ -1692,7 +1692,7 @@ def _is_toc_line(stripped: str, late_label_hit: bool, late_name_hit: bool) -> bo
 def drop_table_of_contents(
     blocks: List[str],
     form_type: FilingFormType = "10-K",
-    max_scan: int = 50,
+    max_scan: int = 10,
     char_limit: int = MAX_TOC_SCAN_CHARS,
 ) -> Tuple[List[str], int]:
     start_idx = 0
