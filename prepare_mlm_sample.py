@@ -62,9 +62,9 @@ log = logging.getLogger(__name__)
 # =============================================================================
 
 _WS_RE = re.compile(r"\s+")
-_DASH_RUN_RE = re.compile(r"(?:-|\u2013|\u2014){4,}")
+_DASH_RUN_RE = re.compile(r"(?:-|\u2013|\u2014|=){4,}")
 _UNDER_RUN_RE = re.compile(r"_ {0,1}_+")
-_SPACE_AROUND_DASH = re.compile(r"\s*[-\u2013\u2014]{2,}\s*")
+_SPACE_AROUND_DASH = re.compile(r"\s*[-\u2013\u2014=]{2,}\s*")
 _ALPHA_RE = re.compile(r"[A-Za-z]")
 _DIGIT_RE = re.compile(r"\d")
 _TABLE_TAG_RE = re.compile(r"^\s*<TABLE", re.IGNORECASE)
