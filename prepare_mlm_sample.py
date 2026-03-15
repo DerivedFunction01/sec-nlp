@@ -36,14 +36,25 @@ import pandas as pd
 from tqdm import tqdm
 
 # =============================================================================
-# LOGGING
+# LOGGING  — routed through tqdm.write so the progress bar never breaks
 # =============================================================================
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s %(levelname)s %(message)s",
-    datefmt="%H:%M:%S",
+
+class _TqdmHandler(logging.StreamHandler):
+    """Emit log records via tqdm.write so they don't corrupt the progress bar."""
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            tqdm.write(self.format(record))
+        except Exception:
+            self.handleError(record)
+
+
+_handler = _TqdmHandler()
+_handler.setFormatter(
+    logging.Formatter("%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 )
+logging.basicConfig(handlers=[_handler], level=logging.INFO, force=True)
 log = logging.getLogger(__name__)
 
 # =============================================================================
@@ -219,6 +230,7 @@ def db_reader_thread(
     reader_batch: int,
     worker_batch: int,
     stop_event: threading.Event,
+    counters: Dict,  # shared — reader increments "filings_read"
 ) -> None:
     """
     Reads rows from SQLite in `reader_batch` pages and pushes
@@ -247,6 +259,7 @@ def db_reader_thread(
                 break
 
             last_rowid = rows[-1][0]
+            counters["filings_read"] += len(rows)
 
             # Slice into worker-sized sub-batches and enqueue
             stripped = [(acc, doc, cik, yr) for _, acc, doc, cik, yr in rows]
@@ -268,7 +281,7 @@ def writer_thread(
     chunks_dir: Path,
     chunk_size: int,
     seen_keys: set,  # shared dedupe set (only touched by writer)
-    counters: Dict,  # {"written": int, "dropped_dupe": int}
+    counters: Dict,  # {"written", "dropped_dupe", "chunks"}
     stop_event: threading.Event,
     num_workers: int,
 ) -> None:
@@ -306,12 +319,14 @@ def writer_thread(
         # Flush chunk
         if len(buffer) >= chunk_size:
             _write_chunk(buffer, chunks_dir, chunk_idx)
+            counters["chunks"] += 1
             chunk_idx += 1
             buffer.clear()
 
     # Flush remainder
     if buffer:
         _write_chunk(buffer, chunks_dir, chunk_idx)
+        counters["chunks"] += 1
 
 
 def _next_chunk_index(chunks_dir: Path) -> int:
@@ -325,7 +340,7 @@ def _next_chunk_index(chunks_dir: Path) -> int:
 def _write_chunk(buffer: List[Dict[str, Any]], chunks_dir: Path, idx: int) -> None:
     path = chunks_dir / f"chunk_{idx:06d}.parquet"
     pd.DataFrame(buffer).to_parquet(path, index=False)
-    log.info("Wrote chunk %s (%d rows)", path.name, len(buffer))
+    log.info("Chunk %06d written — %d rows → %s", idx, len(buffer), path.name)
 
 
 # =============================================================================
@@ -515,6 +530,15 @@ def merge_chunks(
 
 
 def get_total_rows(db_path: str) -> int:
+    """
+    Count rows using the same LEFT JOIN the reader executes so the
+    tqdm total always matches what the reader will actually yield.
+    A plain COUNT(*) on webpage_result would overcount if any accessions
+    have no matching report_data row and the join filters them out —
+    but since we use LEFT JOIN, the real risk is the opposite: orphaned
+    webpage_result rows are still returned (cik/year will be NULL).
+    We count webpage_result directly, which is always correct for LEFT JOIN.
+    """
     conn = sqlite3.connect(db_path)
     try:
         cur = conn.cursor()
@@ -588,11 +612,11 @@ def main() -> None:
     )
 
     # Post-processing (applied at merge)
-    parser.add_argument("--target-size", type=int, default=300_000)
+    parser.add_argument("--target-size", type=int, default=1_000_000)
     parser.add_argument(
         "--max-per-cik",
         type=int,
-        default=50,
+        default=100,
         help="Max blocks kept per CIK across all filings",
     )
     parser.add_argument("--seed", type=int, default=42)
@@ -605,13 +629,13 @@ def main() -> None:
     parser.add_argument("--no-debug-cols", dest="debug_cols", action="store_false")
 
     # Filter parameters
-    parser.add_argument("--per-accession", type=int, default=7)
-    parser.add_argument("--min-chars", type=int, default=60)
+    parser.add_argument("--per-accession", type=int, default=10)
+    parser.add_argument("--min-chars", type=int, default=40)
     parser.add_argument("--max-chars", type=int, default=2000)
-    parser.add_argument("--min-alpha-ratio", type=float, default=0.60)
-    parser.add_argument("--max-digit-ratio", type=float, default=0.15)
+    parser.add_argument("--min-alpha-ratio", type=float, default=0.50)
+    parser.add_argument("--max-digit-ratio", type=float, default=0.40)
     parser.add_argument("--max-upper-ratio", type=float, default=0.60)
-    parser.add_argument("--min-avg-line-len", type=int, default=60)
+    parser.add_argument("--min-avg-line-len", type=int, default=50)
     parser.add_argument("--include-tables", action="store_true")
 
     args = parser.parse_args()
@@ -661,10 +685,52 @@ def main() -> None:
     result_queue = Queue(maxsize=args.queue_depth * 4)
     stop_event = threading.Event()
     seen_keys: set = set()
-    counters = {"written": 0, "dropped_dupe": 0}
+    counters = {
+        "filings_read": 0,
+        "written": 0,
+        "dropped_dupe": 0,
+        "chunks": 0,
+    }
 
-    # Progress bar (updated by writer counters)
-    pbar = tqdm(total=total_filings, unit="filing", desc="Processing")
+    # ── Progress bar ─────────────────────────────────────────────────────────
+    pbar = tqdm(
+        total=total_filings,
+        unit="filing",
+        desc="Extracting",
+        dynamic_ncols=True,
+        smoothing=0.05,
+    )
+
+    def _monitor() -> None:
+        """Updates tqdm every 0.5 s from shared counters. Runs as daemon thread."""
+        last = 0
+        while not stop_event.is_set():
+            time.sleep(0.5)
+            current = counters["filings_read"]
+            delta = current - last
+            if delta:
+                pbar.update(delta)
+                last = current
+            pbar.set_postfix(
+                read=f"{counters['filings_read']:,}",
+                kept=f"{counters['written']:,}",
+                dupe=f"{counters['dropped_dupe']:,}",
+                chunks=counters["chunks"],
+                q_in=row_queue.qsize(),
+                q_out=result_queue.qsize(),
+            )
+        # One final postfix update — do NOT force bar to 100%.
+        # If filings_read < total_filings the gap tells you how many
+        # webpage_result rows had parse/join issues and were silently skipped.
+        pbar.set_postfix(
+            read=f"{counters['filings_read']:,}",
+            kept=f"{counters['written']:,}",
+            dupe=f"{counters['dropped_dupe']:,}",
+            chunks=counters["chunks"],
+        )
+
+    monitor = threading.Thread(target=_monitor, daemon=True, name="monitor")
+    monitor.start()
 
     # ── Start reader thread ───────────────────────────────────────────────────
     reader = threading.Thread(
@@ -675,6 +741,7 @@ def main() -> None:
             args.reader_batch,
             args.worker_batch,
             stop_event,
+            counters,
         ),
         daemon=True,
         name="db-reader",
@@ -682,7 +749,6 @@ def main() -> None:
     reader.start()
 
     # ── Start writer thread ───────────────────────────────────────────────────
-    # Writer receives exactly ONE sentinel (from worker_pool)
     writer = threading.Thread(
         target=writer_thread,
         args=(
@@ -693,7 +759,7 @@ def main() -> None:
             counters,
             stop_event,
             1,
-        ),  # 1 sentinel from pool
+        ),
         daemon=True,
         name="chunk-writer",
     )
@@ -714,15 +780,27 @@ def main() -> None:
         log.info("Interrupted — flushing writer...")
         stop_event.set()
     finally:
+        stop_event.set()  # ensure monitor exits
+        monitor.join(timeout=2)
         pbar.close()
 
     reader.join(timeout=10)
     writer.join(timeout=30)
 
+    gap = total_filings - counters["filings_read"]
+    if gap > 0:
+        log.warning(
+            "%d filings in webpage_result were not read (bad JSON or empty documents). "
+            "Check your data — these rows were skipped silently.",
+            gap,
+        )
+
     log.info(
-        "Extraction complete. written=%d  dropped_dupe=%d",
+        "Extraction complete — read=%d  kept=%d  dupe=%d  chunks=%d",
+        counters["filings_read"],
         counters["written"],
         counters["dropped_dupe"],
+        counters["chunks"],
     )
 
     # ── Auto-merge ────────────────────────────────────────────────────────────
