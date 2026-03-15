@@ -1594,7 +1594,6 @@ COVER_PAGE_KEYWORDS = [
     "documents incorporated by reference",
     "shares of common stock outstanding",
     "shares outstanding",
-    "incorporated herein by reference",
     "annual report under section 13",
     "name of small business issuer",
     "title of class",
