@@ -268,7 +268,7 @@ def run_mlm(args: SimpleNamespace) -> None:
     block_size = getattr(args, "block_size", 512)
 
     def tokenize(examples):
-        tokenized = tokenizer(examples["text"], truncation=True, max_length=block_size)
+        tokenized = tokenizer(examples["text"], truncation=True, max_length=block_size, padding=False)
         tokenized["special_tokens_mask"] = tokenized.get("special_tokens_mask", None)
         return tokenized
 
