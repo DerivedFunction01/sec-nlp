@@ -1595,7 +1595,6 @@ COVER_PAGE_KEYWORDS = [
     "shares of common stock outstanding",
     "shares outstanding",
     "incorporated herein by reference",
-    "context indicates otherwise",
     "annual report under section 13",
     "name of small business issuer",
     "title of class",
@@ -1617,10 +1616,6 @@ COVER_PAGE_KEYWORDS = [
     # Index / TOC header lines specific to cover
     "index to report",
     "for the fiscal year ended",
-    # Documents incorporated
-    "report on form 8-k",
-    "form 8-k dated",
-    "item 3 02",  # normalized item references in 8-K line
     "checkbox",
     "check box",
     "check mark",
