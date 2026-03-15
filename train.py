@@ -268,8 +268,13 @@ def run_mlm(args: SimpleNamespace) -> None:
     block_size = getattr(args, "block_size", 512)
 
     def tokenize(examples):
-        tokenized = tokenizer(examples["text"], truncation=True, max_length=block_size, padding=False)
-        tokenized["special_tokens_mask"] = tokenized.get("special_tokens_mask", None)
+        tokenized = tokenizer(
+            examples["text"],
+            truncation=True,
+            max_length=block_size,
+            return_special_tokens_mask=True,
+        )
+
         return tokenized
 
     def group_texts(examples):
