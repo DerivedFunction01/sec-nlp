@@ -1971,12 +1971,6 @@ def drop_table_of_contents(
     # Instead of a separate pre-scan, integrate it into the main loop below.
 
     for idx, block in enumerate(blocks[:max_scan]):
-        if fwd_boundary_idx is not None and idx >= fwd_boundary_idx:
-            if toc_detected:
-                debug_print(f"[drop_toc] fwd boundary hit idx={fwd_boundary_idx}")
-                return blocks[fwd_boundary_idx:], fwd_boundary_idx
-            debug_print("[drop_toc] fwd boundary before TOC detection")
-            return blocks, 0
         normalized = normalize_for_matching(block)
         char_count += len(block)
         if char_count > char_limit:
@@ -1991,6 +1985,20 @@ def drop_table_of_contents(
         late_label_hit = bool(late_item_re.match(stripped))
         matched_late_names = [term for term in norm_late_names if term in normalized]
         late_name_hit = bool(matched_late_names)
+        strong_toc_signal = (
+            "table of contents" in normalized
+            or (is_table and hits >= 2)
+            or hits >= 3
+            or has_toc_dots
+        )
+
+        if fwd_boundary_idx is not None and idx >= fwd_boundary_idx:
+            if toc_detected:
+                debug_print(f"[drop_toc] fwd boundary hit idx={fwd_boundary_idx}")
+                return blocks[fwd_boundary_idx:], fwd_boundary_idx
+            if not strong_toc_signal:
+                debug_print("[drop_toc] fwd boundary before TOC detection")
+                return blocks, 0
 
         # Body anchor and FWD anchor: only valid AFTER toc has been detected
         if toc_detected:
