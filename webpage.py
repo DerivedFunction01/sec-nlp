@@ -158,7 +158,10 @@ _NUM_RE = (
     rf"|(?:-|\$)?\s*{_NUM_BASE_RE}\s*%?)"
 )
 NUM_TOKEN_RE = re.compile(_NUM_RE)
-DATA_LINE_RE = re.compile(rf"(?:{_NUM_RE})(?:[ ]{{3,}}{_NUM_RE}){{2,}}")
+DATA_LINE_RE = re.compile(
+    rf"(?:{_NUM_RE})(?:[ ]{{3,}}{_NUM_RE}){{2,}}"
+    rf"|(?:[A-Za-z]{{3,}}[^\n]*?)(?:[ ]{{3,}}{_NUM_RE}){{2}}"
+)
 
 
 def _is_separator_line(line: str) -> bool:
