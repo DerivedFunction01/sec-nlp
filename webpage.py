@@ -147,11 +147,18 @@ TABLE_HINT_PATTERN = re.compile(
 
 _PLAIN_TABLE_RULES: Dict[str, re.Pattern | Any] = {
     "separator": re.compile(r"^\s*[-=_]{4,}\s*$"),
-    "numeric_token": re.compile(r"[\$%\*]|\b\d+[\.,]?\d*\b"),
     "whitespace_gap": re.compile(r" {3,}"),
     "score_threshold": 0.65,
     "min_lines": 3,
 }
+
+_NUM_BASE_RE = r"(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?"
+_NUM_RE = (
+    rf"(?:\(\s*\$?\s*{_NUM_BASE_RE}\s*%?\s*\)"
+    rf"|(?:-|\$)?\s*{_NUM_BASE_RE}\s*%?)"
+)
+NUM_TOKEN_RE = re.compile(_NUM_RE)
+DATA_LINE_RE = re.compile(rf"(?:{_NUM_RE})(?:[ ]{{3,}}{_NUM_RE}){{2,}}")
 
 
 def _is_separator_line(line: str) -> bool:
@@ -162,9 +169,7 @@ def _is_data_line(line: str) -> bool:
     stripped = line.strip()
     if not stripped:
         return False
-    numeric_hits = len(_PLAIN_TABLE_RULES["numeric_token"].findall(stripped))
-    gap_hits = len(_PLAIN_TABLE_RULES["whitespace_gap"].findall(line))
-    return numeric_hits >= 2 or (numeric_hits >= 1 and gap_hits >= 2)
+    return bool(DATA_LINE_RE.search(line))
 
 
 def _score_block_as_table(lines: List[str]) -> float:
