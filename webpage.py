@@ -1596,6 +1596,20 @@ TOC_DOTS_RE = re.compile(
     re.IGNORECASE
 )
 MAX_TOC_SCAN_CHARS = 25000
+_FWD_CORE = r"forward[- ]looking\s+(?:statements?|information)"
+FWD_PROSE_RE = build_regex(
+    [
+        r"safe\s+harbor",
+        r"cautionary\s+statements",
+        r"words",
+        r"phrases",
+        r"expressions",
+        r"cautioned",
+        r"reliance",
+        _FWD_CORE,
+    ],
+    use_sep=False,
+)
 
 ALPHANUM_RE = re.compile(r"[A-Za-z0-9]")
 _FORM_LABEL_FULL_RE = re.compile(r"^[A-Za-z]-\d+$")
@@ -1634,11 +1648,37 @@ def prefilter_blocks(blocks: List[str]) -> List[str]:
         filtered.append(block)
     return filtered
 
+def find_forward_looking_boundary(
+    blocks: List[str],
+    start_idx: int = 0,
+    scan: int = 120,
+) -> Optional[int]:
+    end = min(len(blocks), start_idx + scan)
+    for idx in range(start_idx, end):
+        block = blocks[idx]
+        stripped = block.strip()
+        if not stripped:
+            continue
+        if re.search(_RE["fwd"], stripped, re.IGNORECASE):
+            return idx
+        if FWD_PROSE_RE.search(block):
+            return idx
+    return None
+
+def _cap_at_fwd_boundary(
+    idx: int,
+    fwd_boundary_idx: Optional[int],
+) -> int:
+    if fwd_boundary_idx is None:
+        return idx
+    return fwd_boundary_idx if idx > fwd_boundary_idx else idx
+
 
 def drop_cover_page(
     blocks: List[str],
     scan: int = 30,
     anchor_limit: int = 80,
+    fwd_boundary_idx: Optional[int] = None,
 ) -> Tuple[List[str], int]:
     cover_end = 0
     for idx, block in enumerate(blocks[:scan]):
@@ -1652,7 +1692,18 @@ def drop_cover_page(
         debug_print("[drop_cover_page] no cover detected")
         return blocks, 0
 
+    if fwd_boundary_idx is not None and fwd_boundary_idx <= cover_end:
+        debug_print(
+            f"[drop_cover_page] fwd boundary caps cover_end at idx={fwd_boundary_idx}"
+        )
+        return blocks[fwd_boundary_idx:], fwd_boundary_idx
+
     for idx in range(cover_end, min(len(blocks), cover_end + anchor_limit)):
+        if fwd_boundary_idx is not None and idx >= fwd_boundary_idx:
+            debug_print(
+                f"[drop_cover_page] fwd boundary hit idx={fwd_boundary_idx}"
+            )
+            return blocks[fwd_boundary_idx:], fwd_boundary_idx
         stripped = blocks[idx].strip()
         if BODY_ANCHOR_RE.match(stripped):
             # Peek ahead: if next non-empty block is a short number or TOC line, skip
@@ -1666,7 +1717,8 @@ def drop_cover_page(
                 )
                 continue
             debug_print(f"[drop_cover_page] body anchor idx={idx}")
-            return blocks[idx:], idx
+            capped_idx = _cap_at_fwd_boundary(idx, fwd_boundary_idx)
+            return blocks[capped_idx:], capped_idx
 
     debug_print(f"[drop_cover_page] dropped cover_end={cover_end} no anchor found")
     return blocks[cover_end:], cover_end
@@ -1696,6 +1748,7 @@ def drop_table_of_contents(
     form_type: FilingFormType = "10-K",
     max_scan: int = 10,
     char_limit: int = MAX_TOC_SCAN_CHARS,
+    fwd_boundary_idx: Optional[int] = None,
 ) -> Tuple[List[str], int]:
     start_idx = 0
     char_count = 0
@@ -1712,6 +1765,14 @@ def drop_table_of_contents(
     # Instead of a separate pre-scan, integrate it into the main loop below.
 
     for idx, block in enumerate(blocks[:max_scan]):
+        if fwd_boundary_idx is not None and idx >= fwd_boundary_idx:
+            if toc_detected:
+                debug_print(
+                    f"[drop_toc] fwd boundary hit idx={fwd_boundary_idx}"
+                )
+                return blocks[fwd_boundary_idx:], fwd_boundary_idx
+            debug_print("[drop_toc] fwd boundary before TOC detection")
+            return blocks, 0
         normalized = normalize_for_matching(block)
         char_count += len(block)
         if char_count > char_limit:
@@ -1729,13 +1790,15 @@ def drop_table_of_contents(
         if toc_detected:
             if BODY_ANCHOR_RE.match(stripped):
                 debug_print(f"[drop_toc] body anchor after TOC idx={idx}")
-                return blocks[idx:], idx
+                capped_idx = _cap_at_fwd_boundary(idx, fwd_boundary_idx)
+                return blocks[capped_idx:], capped_idx
             # Bug 1 fix: FWD fast-path now lives here, gated by toc_detected
             if re.match(_RE["fwd"], stripped, re.IGNORECASE):
                 next_blocks = [b for b in blocks[idx + 1 : idx + 4] if b.strip()]
                 if next_blocks and len(next_blocks[0].strip()) > _TOC_RESIDUE_MAX_LEN:
                     debug_print(f"[drop_toc] FWD anchor after TOC idx={idx}")
-                    return blocks[idx:], idx
+                    capped_idx = _cap_at_fwd_boundary(idx, fwd_boundary_idx)
+                    return blocks[capped_idx:], capped_idx
 
         if _is_toc_line(stripped, late_label_hit, late_name_hit):
             debug_print(
@@ -1772,6 +1835,12 @@ def drop_table_of_contents(
     idx = start_idx
     char_count = 0
     while idx < len(blocks) and char_count <= char_limit:
+        if fwd_boundary_idx is not None and idx >= fwd_boundary_idx:
+            debug_print(
+                f"[drop_toc] residue fwd boundary hit idx={fwd_boundary_idx}"
+            )
+            start_idx = fwd_boundary_idx
+            break
         block = blocks[idx]
         normalized = normalize_for_matching(block)
         char_count += len(block)
@@ -1833,6 +1902,12 @@ def drop_table_of_contents(
         break
 
     # ── Cleanup pass ─────────────────────────────────────────────────────────
+    if fwd_boundary_idx is not None and start_idx >= fwd_boundary_idx:
+        debug_print(
+            f"[drop_toc] cleanup skipped at fwd boundary idx={start_idx}"
+        )
+        return blocks[start_idx:], start_idx
+
     result = blocks[start_idx:]
     clean_start = 0
     for i, block in enumerate(result):
@@ -2845,8 +2920,18 @@ def parse_content(data):
                 continue
 
         document_blocks = prefilter_blocks(document_blocks)
-        document_blocks, cover_dropped = drop_cover_page(document_blocks)
-        document_blocks, toc_start_idx = drop_table_of_contents(document_blocks, form_type=form_type)
+        fwd_boundary_idx = find_forward_looking_boundary(document_blocks)
+        document_blocks, cover_dropped = drop_cover_page(
+            document_blocks,
+            fwd_boundary_idx=fwd_boundary_idx,
+        )
+        if fwd_boundary_idx is not None:
+            fwd_boundary_idx = max(0, fwd_boundary_idx - cover_dropped)
+        document_blocks, toc_start_idx = drop_table_of_contents(
+            document_blocks,
+            form_type=form_type,
+            fwd_boundary_idx=fwd_boundary_idx,
+        )
         document_blocks, header_markers = remove_repeating_markers(document_blocks)
         debug_print(
             f"Dropped {cover_dropped} cover blocks, {toc_start_idx} TOC blocks, {len(header_markers)} repeating markers"
