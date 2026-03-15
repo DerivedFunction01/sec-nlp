@@ -1478,22 +1478,19 @@ COVER_PAGE_KEYWORDS = [
     "state or other jurisdiction",
     "irs employer identification",
     "including area code",
-    "name Of each exchange",
+    "name of each exchange",
     "principal executive offices",
     "aggregate market value",
     "non-affiliates",
     "number of shares outstanding",
     "documents incorporated by reference",
-    "proxy statement",
     "shares of common stock outstanding",
     "shares outstanding",
-    "definitive proxy statement",
     "incorporated herein by reference",
     "context indicates otherwise",
     "annual report under section 13",
     "name of small business issuer",
-    "title of class",
-    "title if class", 
+    "title of class", 
     "issuer s telephone number",
     "issuer's telephone number",
     "securities registered under section 12",
@@ -1516,7 +1513,7 @@ COVER_PAGE_KEYWORDS = [
     "report on form 8-k",
     "form 8-k dated",
     "item 3 02",  # normalized item references in 8-K line
-    "checkbox", "check box", "check mark", "check marks",
+    "checkbox", "check box", "check mark", "check marks", "check one",
 ]
 
 NORMALIZED_COVER_PAGE_KEYWORDS = [
@@ -1683,9 +1680,14 @@ def drop_cover_page(
     cover_end = 0
     for idx, block in enumerate(blocks[:scan]):
         normalized = normalize_for_matching(block)
-        hits = sum(1 for term in NORMALIZED_COVER_PAGE_KEYWORDS if term in normalized)
+        matched_terms = [
+            term for term in NORMALIZED_COVER_PAGE_KEYWORDS if term in normalized
+        ]
+        hits = len(matched_terms)
         if hits >= 1:
-            debug_print(f"[drop_cover_page] cover hit idx={idx} hits={hits}")
+            debug_print(
+                f"[drop_cover_page] cover hit idx={idx} hits={hits} terms={matched_terms}"
+            )
             cover_end = idx + 1
 
     if cover_end == 0:
@@ -1781,10 +1783,12 @@ def drop_table_of_contents(
 
         stripped = block.strip()
         is_table = stripped.upper().startswith("<TABLE")
-        hits = sum(1 for term in norm_toc_kw if term in normalized)
+        matched_toc_terms = [term for term in norm_toc_kw if term in normalized]
+        hits = len(matched_toc_terms)
         has_toc_dots = bool(TOC_DOTS_RE.search(block))
         late_label_hit = bool(late_item_re.match(stripped))
-        late_name_hit = any(term in normalized for term in norm_late_names)
+        matched_late_names = [term for term in norm_late_names if term in normalized]
+        late_name_hit = bool(matched_late_names)
 
         # Body anchor and FWD anchor: only valid AFTER toc has been detected
         if toc_detected:
@@ -1802,21 +1806,26 @@ def drop_table_of_contents(
 
         if _is_toc_line(stripped, late_label_hit, late_name_hit):
             debug_print(
-                f"[drop_toc] late-item noise idx={idx} label={late_label_hit} name={late_name_hit}"
+                "[drop_toc] late-item noise "
+                f"idx={idx} label={late_label_hit} name={late_name_hit} "
+                f"late_names={matched_late_names}"
             )
             toc_detected = True
             start_idx = idx + 1
             continue
 
         if is_table and hits >= 2:
-            debug_print(f"[drop_toc] TOC table idx={idx} hits={hits}")
+            debug_print(
+                f"[drop_toc] TOC table idx={idx} hits={hits} terms={matched_toc_terms}"
+            )
             toc_detected = True
             start_idx = idx + 1
             continue
 
         if "table of contents" in normalized or hits >= 3 or has_toc_dots:
             debug_print(
-                f"[drop_toc] TOC text/dots idx={idx} hits={hits} dots={has_toc_dots}"
+                f"[drop_toc] TOC text/dots idx={idx} hits={hits} "
+                f"dots={has_toc_dots} terms={matched_toc_terms}"
             )
             toc_detected = True
             start_idx = idx + 1
