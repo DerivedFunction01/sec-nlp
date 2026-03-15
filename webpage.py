@@ -216,7 +216,7 @@ def detect_and_wrap_plaintext_tables(
         if hint_bonus:
             score = min(1.0, score + hint_bonus)
         if score >= threshold:
-            output_parts.append(f"<TABLE>\n{stripped}\n</TABLE>")
+            output_parts.append(f"<TABLE>\n\n{stripped}\n</TABLE>")
         else:
             output_parts.append(stripped)
 
