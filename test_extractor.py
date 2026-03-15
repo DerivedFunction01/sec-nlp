@@ -35,7 +35,15 @@ def test_url(url: str):
     print(f"Dropped {len(prefilter_dropped)} structural/noise blocks.")
             
     print("\n" + "="*50 + "\n2. COVER PAGE STAGE\n" + "="*50)
-    post_cover_blocks, cover_dropped_count = webpage.drop_cover_page(prefiltered_blocks)
+    fwd_boundary_idx = webpage.find_forward_looking_boundary(prefiltered_blocks)
+    if fwd_boundary_idx is not None:
+        print(f"⚑ Forward-looking boundary at prefilter idx={fwd_boundary_idx}")
+    post_cover_blocks, cover_dropped_count = webpage.drop_cover_page(
+        prefiltered_blocks,
+        fwd_boundary_idx=fwd_boundary_idx,
+    )
+    if fwd_boundary_idx is not None:
+        fwd_boundary_idx = max(0, fwd_boundary_idx - cover_dropped_count)
     cover_dropped = prefiltered_blocks[:cover_dropped_count]
     print(f"Dropped {cover_dropped_count} blocks as cover page.")
     if cover_dropped:
@@ -44,7 +52,11 @@ def test_url(url: str):
             print(f"  🗑️  {repr(b[:120])}...")
             
     print("\n" + "="*50 + "\n3. TABLE OF CONTENTS STAGE\n" + "="*50)
-    final_blocks, toc_dropped_count = webpage.drop_table_of_contents(post_cover_blocks, form_type=form_type)
+    final_blocks, toc_dropped_count = webpage.drop_table_of_contents(
+        post_cover_blocks,
+        form_type=form_type,
+        fwd_boundary_idx=fwd_boundary_idx,
+    )
     toc_dropped = post_cover_blocks[:toc_dropped_count]
     print(f"Dropped {toc_dropped_count} blocks as TOC.")
     if toc_dropped:
