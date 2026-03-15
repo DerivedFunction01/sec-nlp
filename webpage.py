@@ -1643,9 +1643,11 @@ def drop_cover_page(
         normalized = normalize_for_matching(block)
         hits = sum(1 for term in NORMALIZED_COVER_PAGE_KEYWORDS if term in normalized)
         if hits >= 1:
+            debug_print(f"[drop_cover_page] cover hit idx={idx} hits={hits}")
             cover_end = idx + 1
 
     if cover_end == 0:
+        debug_print("[drop_cover_page] no cover detected")
         return blocks, 0
 
     for idx in range(cover_end, min(len(blocks), cover_end + anchor_limit)):
@@ -1657,11 +1659,35 @@ def drop_cover_page(
                 LONE_NUMBER_RE.match(lookahead[0])
                 or len(lookahead[0]) < 40  # short = likely still cover/TOC
             ):
+                debug_print(
+                    f"[drop_cover_page] anchor skipped idx={idx} lookahead='{lookahead[0][:40]}'"
+                )
                 continue
+            debug_print(f"[drop_cover_page] body anchor idx={idx}")
             return blocks[idx:], idx
 
+    debug_print(f"[drop_cover_page] dropped cover_end={cover_end} no anchor found")
     return blocks[cover_end:], cover_end
 
+
+def _is_toc_line(stripped: str, late_label_hit: bool, late_name_hit: bool) -> bool:
+    """
+    A late-item name/label only counts as a TOC signal if the block looks like
+    a TOC entry — i.e. it is short and contains no prose indicators.
+    Prevents mid-sentence mentions of "financial statements" etc. from
+    falsely triggering TOC detection.
+    """
+    if late_label_hit:
+        # Labels like "Item 8." are unambiguous regardless of length
+        return True
+    if late_name_hit:
+        # Names like "financial statements" only count if the block is short
+        # (a TOC entry) and has no prose words
+        return (
+            len(stripped) <= 120
+            and not _PROSE_INDICATOR_RE.search(stripped)
+        )
+    return False
 
 def drop_table_of_contents(
     blocks: List[str],
@@ -1687,6 +1713,7 @@ def drop_table_of_contents(
         normalized = normalize_for_matching(block)
         char_count += len(block)
         if char_count > char_limit:
+            debug_print(f"[drop_toc] char_limit reached idx={idx}")
             break
 
         stripped = block.strip()
@@ -1699,33 +1726,44 @@ def drop_table_of_contents(
         # Body anchor and FWD anchor: only valid AFTER toc has been detected
         if toc_detected:
             if BODY_ANCHOR_RE.match(stripped):
+                debug_print(f"[drop_toc] body anchor after TOC idx={idx}")
                 return blocks[idx:], idx
             # Bug 1 fix: FWD fast-path now lives here, gated by toc_detected
             if re.match(_RE["fwd"], stripped, re.IGNORECASE):
                 next_blocks = [b for b in blocks[idx + 1 : idx + 4] if b.strip()]
                 if next_blocks and len(next_blocks[0].strip()) > _TOC_RESIDUE_MAX_LEN:
+                    debug_print(f"[drop_toc] FWD anchor after TOC idx={idx}")
                     return blocks[idx:], idx
 
-        if late_label_hit or late_name_hit:
+        if _is_toc_line(stripped, late_label_hit, late_name_hit):
+            debug_print(
+                f"[drop_toc] late-item noise idx={idx} label={late_label_hit} name={late_name_hit}"
+            )
             toc_detected = True
             start_idx = idx + 1
             continue
 
         if is_table and hits >= 2:
+            debug_print(f"[drop_toc] TOC table idx={idx} hits={hits}")
             toc_detected = True
             start_idx = idx + 1
             continue
 
         if "table of contents" in normalized or hits >= 3 or has_toc_dots:
+            debug_print(
+                f"[drop_toc] TOC text/dots idx={idx} hits={hits} dots={has_toc_dots}"
+            )
             toc_detected = True
             start_idx = idx + 1
             continue
 
         if toc_detected:
+            debug_print(f"[drop_toc] exit TOC idx={idx}")
             start_idx = idx
             break
 
     if not toc_detected:
+        debug_print("[drop_toc] no TOC detected")
         return blocks, 0
 
     # ── Second pass: consume remaining TOC residue ───────────────────────────
@@ -1744,41 +1782,51 @@ def drop_table_of_contents(
         early_name_hit = any(term in normalized for term in norm_early_names)
 
         if len(stripped) > 200:
+            debug_print(f"[drop_toc] residue stop long block idx={idx}")
             start_idx = idx
             break
 
         if _PROSE_INDICATOR_RE.search(stripped):
+            debug_print(f"[drop_toc] residue stop prose idx={idx}")
             start_idx = idx
             break
 
         if early_name_hit:
+            debug_print(f"[drop_toc] residue stop early name idx={idx}")
             start_idx = idx
             break
 
         if BODY_ANCHOR_RE.match(stripped):
+            debug_print(f"[drop_toc] residue stop body anchor idx={idx}")
             start_idx = idx
             break
 
         if is_table and hits >= 2:
+            debug_print(f"[drop_toc] residue skip TOC table idx={idx} hits={hits}")
             idx += 1
             continue
 
         if has_toc_dots:
+            debug_print(f"[drop_toc] residue skip dots idx={idx}")
             idx += 1
             continue
 
         if "table of contents" in normalized:
+            debug_print(f"[drop_toc] residue skip TOC text idx={idx}")
             idx += 1
             continue
 
         if SECTION_LABEL_RE.match(stripped):
+            debug_print(f"[drop_toc] residue skip section label idx={idx}")
             idx += 1
             continue
 
-        if (late_label_hit or late_name_hit) and len(stripped) <= 200:
+        if _is_toc_line(stripped, late_label_hit, late_name_hit):
+            debug_print(f"[drop_toc] residue skip late-item idx={idx}")
             idx += 1
             continue
 
+        debug_print(f"[drop_toc] residue exit idx={idx}")
         start_idx = idx
         break
 
@@ -1790,16 +1838,20 @@ def drop_table_of_contents(
         stripped = block.strip()
 
         if len(stripped) > 200:
+            debug_print(f"[drop_toc] cleanup stop long block idx={i}")
             break
 
         if _PROSE_INDICATOR_RE.search(stripped):
+            debug_print(f"[drop_toc] cleanup stop prose idx={i}")
             break
 
         if any(name in normalized for name in norm_early_names):
+            debug_print(f"[drop_toc] cleanup stop early name idx={i}")
             clean_start = i
             break
 
         if BODY_ANCHOR_RE.match(stripped):
+            debug_print(f"[drop_toc] cleanup stop body anchor idx={i}")
             clean_start = i
             break
 
@@ -1808,6 +1860,7 @@ def drop_table_of_contents(
             or SECTION_LABEL_RE.match(stripped)
             or any(name in normalized for name in norm_late_names)
         ):
+            debug_print(f"[drop_toc] cleanup skip label/late idx={i}")
             clean_start = i + 1
             continue
 
