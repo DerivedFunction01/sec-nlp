@@ -210,3 +210,4 @@ unsloth_compiled_cache
 *.db
 *.db-*
 .*.*
+hf_token
