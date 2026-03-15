@@ -51,6 +51,7 @@ DEFAULT_CONFIG = {
     "dataset_path": "training_data.parquet",
     "eval_split_ratio": 0.05,
     "preprocessing_workers": 8,
+    "keep_columns": [],
     # Training
     "num_train_epochs": 3,
     "batch_size": 16,
@@ -77,6 +78,7 @@ TASK_DEFAULTS = {
         "block_size": 512,
         "num_train_epochs": 3,
         "learning_rate": 5e-5,
+        
     },
     "classification": {
         "output_dir": "distilbert-classification",
@@ -189,6 +191,14 @@ def load_and_split(args: SimpleNamespace):
 
     dataset = load_dataset("parquet", data_files=args.dataset_path)["train"]
     logger.info(f"Loaded {len(dataset):,} examples from {args.dataset_path}")
+
+    keep_cols = getattr(args, "keep_columns", None)
+    if keep_cols:
+        keep_set = set(keep_cols)
+        drop_cols = [c for c in dataset.column_names if c not in keep_set]
+        if drop_cols:
+            dataset = dataset.remove_columns(drop_cols)
+            logger.info(f"Dropped columns: {drop_cols}")
 
     eval_dataset = None
     ratio = getattr(args, "eval_split_ratio", 0.05)
