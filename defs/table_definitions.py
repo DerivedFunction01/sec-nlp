@@ -90,7 +90,11 @@ class GenericTable:
             )
 
         return (
-            f"\n\n<TABLE>\n<CAPTION>\n{self.title}</CAPTION>\n\n"
+            (
+                f"\n\n<TABLE>\n<CAPTION>\n{self.title}</CAPTION>\n\n"
+                if self.title
+                else "\n\n<TABLE>\n\n"
+            )
             + "\n".join(all_rows)
             + "\n</TABLE>\n\n"
         )
