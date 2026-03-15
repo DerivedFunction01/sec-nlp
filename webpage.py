@@ -1997,12 +1997,25 @@ def drop_table_of_contents(
             or hits >= 3
             or has_toc_dots
         )
+        is_fwd_hit = bool(
+            re.search(_RE["fwd"], stripped, re.IGNORECASE) or FWD_PROSE_RE.search(block)
+        )
+        is_toc_like = (
+            _is_toc_line(stripped, late_label_hit, late_name_hit)
+            or has_toc_dots
+            or (is_table and hits >= 2)
+            or "table of contents" in normalized
+        )
 
         if fwd_boundary_idx is not None and idx >= fwd_boundary_idx:
             if toc_detected:
                 debug_print(f"[drop_toc] fwd boundary hit idx={fwd_boundary_idx}")
                 return blocks[fwd_boundary_idx:], fwd_boundary_idx
-            if not strong_toc_signal:
+            if idx == fwd_boundary_idx and is_fwd_hit and is_toc_like:
+                debug_print(
+                    f"[drop_toc] fwd boundary overlaps TOC idx={idx} allow_toc=True"
+                )
+            elif not strong_toc_signal:
                 debug_print("[drop_toc] fwd boundary before TOC detection")
                 return blocks, 0
 
