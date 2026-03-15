@@ -944,8 +944,26 @@ CLEANUP_PATTERNS = [
         ),
         r"",
     ),
-    (re.compile(r"</?(?:TEXT|TYPE|SEQUENCE|FILENAME|DESCRIPTION)>", re.IGNORECASE), r""),
+    (
+        re.compile(r"</?(?:TEXT|TYPE|SEQUENCE|FILENAME|DESCRIPTION)>", re.IGNORECASE),
+        r"",
+    ),
+    # Links https or www
+    (
+        re.compile(
+            r"(?:"
+            r'https?://[^\s<>"\'()]+(?<![.,;:!?])'  # standard http/https URLs
+            r'|www\.[^\s<>"\'()]+(?<![.,;:!?])'  # www. without scheme
+            r"|[a-zA-Z0-9\-]+\."  # bare domain
+            r"(?:com|org|net|io|co|uk|edu|gov|me|dev|ai|app)"
+            r'(?:/[^\s<>"\'()]*[^\s<>"\'().,;:!?])?'
+            r")",
+            re.IGNORECASE,
+        ),
+        r"",
+    ),
 ]
+
 
 def extract_content(data: str, asHTML=True) -> str:
     """
@@ -1286,6 +1304,7 @@ def normalize_for_matching(text: str) -> str:
     sanitized = re.sub(r"[^a-z0-9]+", " ", text.lower())
     return SPACE_PATTERN.sub(" ", sanitized).strip()
 
+
 @dataclass
 class ItemDef:
     item: str
@@ -1321,7 +1340,8 @@ FORM_10K_ITEMS: List[ItemDef] = [
         2,
         [
             "quantitative and qualitative",
-            "qualitative and quantitative", "about market risk",
+            "qualitative and quantitative",
+            "about market risk",
         ],
     ),
     ItemDef("item 8", 2, ["financial statements", "supplementary data"]),
@@ -1340,36 +1360,104 @@ FORM_10K_ITEMS: List[ItemDef] = [
 
 FORM_20F_ITEMS: List[ItemDef] = [
     # PART I
-    ItemDef("item 1",  1, ["identity of directors", "senior management", "advisers"], early=True),
-    ItemDef("item 2",  1, ["offer statistics", "expected timetable"], early=True),
-    ItemDef("item 3",  1, ["key information", "risk factors", "capitalization", "selected financial data"], early=True),
-    ItemDef("item 4",  1, ["information on the company", "description of business", "business overview", "organizational structure", "property"], early=True),
+    ItemDef(
+        "item 1",
+        1,
+        ["identity of directors", "senior management", "advisers"],
+        early=True,
+    ),
+    ItemDef("item 2", 1, ["offer statistics", "expected timetable"], early=True),
+    ItemDef(
+        "item 3",
+        1,
+        [
+            "key information",
+            "risk factors",
+            "capitalization",
+            "selected financial data",
+        ],
+        early=True,
+    ),
+    ItemDef(
+        "item 4",
+        1,
+        [
+            "information on the company",
+            "description of business",
+            "business overview",
+            "organizational structure",
+            "property",
+        ],
+        early=True,
+    ),
     ItemDef("item 4a", 1, ["unresolved staff comments"], optional=True, early=True),
-    ItemDef("item 5",  1, ["operating and financial review", "management's discussion", "results of operations", "liquidity and capital resources"], early=True),
-    ItemDef("item 6",  1, ["directors, senior management", "executive compensation", "board practices", "employees", "share ownership"]),
-    ItemDef("item 7",  1, ["major shareholders", "related party transactions"]),
-    ItemDef("item 8",  1, ["financial information", "financial statements", "legal proceedings"]),
-    ItemDef("item 9",  1, ["listing details", "markets", "plan of distribution"]),
-    ItemDef("item 10", 1, ["additional information", "memorandum", "articles of association",
-                            "material contracts", "exchange controls", "taxation", "dividends"]),
+    ItemDef(
+        "item 5",
+        1,
+        [
+            "operating and financial review",
+            "management's discussion",
+            "results of operations",
+            "liquidity and capital resources",
+        ],
+        early=True,
+    ),
+    ItemDef(
+        "item 6",
+        1,
+        [
+            "directors, senior management",
+            "executive compensation",
+            "board practices",
+            "employees",
+            "share ownership",
+        ],
+    ),
+    ItemDef("item 7", 1, ["major shareholders", "related party transactions"]),
+    ItemDef(
+        "item 8",
+        1,
+        ["financial information", "financial statements", "legal proceedings"],
+    ),
+    ItemDef("item 9", 1, ["listing details", "markets", "plan of distribution"]),
+    ItemDef(
+        "item 10",
+        1,
+        [
+            "additional information",
+            "memorandum",
+            "articles of association",
+            "material contracts",
+            "exchange controls",
+            "taxation",
+            "dividends",
+        ],
+    ),
     ItemDef("item 11", 1, ["quantitative and qualitative", "about market risk"]),
-    ItemDef("item 12", 1, ["description of securities", "american depositary shares"], optional=True),
-
+    ItemDef(
+        "item 12",
+        1,
+        ["description of securities", "american depositary shares"],
+        optional=True,
+    ),
     # PART II
     ItemDef("item 13", 2, ["defaults", "dividends", "arrears"]),
     ItemDef("item 14", 2, ["material modifications"]),
     ItemDef("item 15", 2, ["controls and procedures"]),
-    ItemDef("item 16",  2, ["reserved"], optional=True),
+    ItemDef("item 16", 2, ["reserved"], optional=True),
     ItemDef("item 16a", 2, ["audit committee financial expert"]),
     ItemDef("item 16b", 2, ["code of ethics"]),
     ItemDef("item 16c", 2, ["principal accountant fees"]),
     ItemDef("item 16d", 2, ["exemptions from listing standards"]),
     ItemDef("item 16e", 2, ["purchases of equity securities"]),
-    ItemDef("item 16f", 2, ["change in registrant's certifying accountant"], optional=True),
+    ItemDef(
+        "item 16f", 2, ["change in registrant's certifying accountant"], optional=True
+    ),
     ItemDef("item 16g", 2, ["corporate governance"]),
     ItemDef("item 16h", 2, ["mine safety disclosure"], optional=True),
-    ItemDef("item 16i", 2, ["disclosure regarding foreign jurisdictions"], optional=True),
-
+    ItemDef(
+        "item 16i", 2, ["disclosure regarding foreign jurisdictions"], optional=True
+    ),
     # PART III
     ItemDef("item 17", 3, ["financial statements"]),
     ItemDef("item 18", 3, ["financial statements"]),
@@ -1378,17 +1466,32 @@ FORM_20F_ITEMS: List[ItemDef] = [
 
 FORM_40F_ITEMS: List[ItemDef] = [
     # PART I — incorporated by reference from Canadian AIF/MD&A
-    ItemDef("item 1",  1, ["annual information form", "business", "description of business"], early=True),
-    ItemDef("item 2",  1, ["audited annual financial statements", "financial statements"], early=True),
-    ItemDef("item 3",  1, ["management's discussion", "results of operations", "md&a"], early=True),
-
+    ItemDef(
+        "item 1",
+        1,
+        ["annual information form", "business", "description of business"],
+        early=True,
+    ),
+    ItemDef(
+        "item 2",
+        1,
+        ["audited annual financial statements", "financial statements"],
+        early=True,
+    ),
+    ItemDef(
+        "item 3",
+        1,
+        ["management's discussion", "results of operations", "md&a"],
+        early=True,
+    ),
     # PART II
-    ItemDef("item 4",  2, ["unresolved staff comments"], optional=True),
-
+    ItemDef("item 4", 2, ["unresolved staff comments"], optional=True),
     # PART III — boilerplate certifications/governance
-    ItemDef("item 5",  3, ["undertakings"]),
-    ItemDef("item 6",  3, ["consent of independent registered accounting firm", "consent"]),
-    ItemDef("item 7",  3, ["exhibits"]),
+    ItemDef("item 5", 3, ["undertakings"]),
+    ItemDef(
+        "item 6", 3, ["consent of independent registered accounting firm", "consent"]
+    ),
+    ItemDef("item 7", 3, ["exhibits"]),
 ]
 
 FilingFormType = Literal["10-K", "20-F", "40-F"]
@@ -1399,17 +1502,19 @@ _FORM_ITEMS_MAP: dict[FilingFormType, List[ItemDef]] = {
     "40-F": FORM_40F_ITEMS,
 }
 
+
 def get_form_items(form_type: FilingFormType) -> List[ItemDef]:
     return _FORM_ITEMS_MAP.get(form_type, FORM_10K_ITEMS)
+
 
 def build_form_derived(form_type: FilingFormType):
     """Returns all derived lists and regexes for a given form type."""
     items = get_form_items(form_type)
 
-    late_items      = [i.item for i in items if not i.early]
-    late_names      = [n for i in items if not i.early for n in i.names]
-    early_items     = [i.item for i in items if i.early]
-    early_names     = [n for i in items if i.early for n in i.names]
+    late_items = [i.item for i in items if not i.early]
+    late_names = [n for i in items if not i.early for n in i.names]
+    early_items = [i.item for i in items if i.early]
+    early_names = [n for i in items if i.early for n in i.names]
 
     late_parts = {
         "10-K": ["part ii", "part 2", "part iii", "part 3", "part iv", "part 4"],
@@ -1423,22 +1528,25 @@ def build_form_derived(form_type: FilingFormType):
     )
 
     toc_keywords = (
-        early_items + early_names
-        + ["part i", "part 1"] + late_parts
+        early_items
+        + early_names
+        + ["part i", "part 1"]
+        + late_parts
         + ["[reserved]", "(reserved)", "reserved"]
     )
 
     return {
-        "late_items":               late_items,
-        "late_names":               late_names,
-        "early_items":              early_items,
-        "early_names":              early_names,
-        "late_item_re":             late_item_re,
-        "toc_keywords":             toc_keywords,
-        "normalized_toc_keywords":  [normalize_for_matching(t) for t in toc_keywords],
-        "normalized_late_names":    [normalize_for_matching(t) for t in late_names],
-        "normalized_early_names":   [normalize_for_matching(t) for t in early_names],
+        "late_items": late_items,
+        "late_names": late_names,
+        "early_items": early_items,
+        "early_names": early_names,
+        "late_item_re": late_item_re,
+        "toc_keywords": toc_keywords,
+        "normalized_toc_keywords": [normalize_for_matching(t) for t in toc_keywords],
+        "normalized_late_names": [normalize_for_matching(t) for t in late_names],
+        "normalized_early_names": [normalize_for_matching(t) for t in early_names],
     }
+
 
 FORM_DERIVED_CACHE = {ft: build_form_derived(ft) for ft in _FORM_ITEMS_MAP}
 
@@ -1490,7 +1598,7 @@ COVER_PAGE_KEYWORDS = [
     "context indicates otherwise",
     "annual report under section 13",
     "name of small business issuer",
-    "title of class", 
+    "title of class",
     "issuer s telephone number",
     "issuer's telephone number",
     "securities registered under section 12",
@@ -1513,7 +1621,11 @@ COVER_PAGE_KEYWORDS = [
     "report on form 8-k",
     "form 8-k dated",
     "item 3 02",  # normalized item references in 8-K line
-    "checkbox", "check box", "check mark", "check marks", "check one",
+    "checkbox",
+    "check box",
+    "check mark",
+    "check marks",
+    "check one",
 ]
 
 NORMALIZED_COVER_PAGE_KEYWORDS = [
@@ -1538,59 +1650,156 @@ SECTION_LABEL_RE = re.compile(
 
 PROSE_INDICATOR_WORDS = {
     # Linking / state verbs (almost never in headers)
-    "are", "were", "was", "is", "has", "have", "had",
-    "may", "will", "would", "could", "should", "might",
-    "does", "did", "been", "being",
-
+    "are",
+    "were",
+    "was",
+    "is",
+    "has",
+    "have",
+    "had",
+    "may",
+    "will",
+    "would",
+    "could",
+    "should",
+    "might",
+    "does",
+    "did",
+    "been",
+    "being",
     # Conjunctions / concessive openers
-    "although", "however", "whereas", "nevertheless", "notwithstanding",
-    "therefore", "accordingly", "furthermore", "moreover", "consequently",
-    "because", "since", "whether", "unless", "until", "while",
-
+    "although",
+    "however",
+    "whereas",
+    "nevertheless",
+    "notwithstanding",
+    "therefore",
+    "accordingly",
+    "furthermore",
+    "moreover",
+    "consequently",
+    "because",
+    "since",
+    "whether",
+    "unless",
+    "until",
+    "while",
     # Relative / subordinating markers
-    "which", "whose", "whereby", "thereof", "therein", "thereto",
-    "herein", "hereof", "hereunder", "pursuant",
-
+    "which",
+    "whose",
+    "whereby",
+    "thereof",
+    "therein",
+    "thereto",
+    "herein",
+    "hereof",
+    "hereunder",
+    "pursuant",
     # Prepositions that only appear mid-sentence
-    "including", "excluding", "regarding", "relating", "consisting",
-    "resulting", "arising", "following", "preceding",
-
+    "including",
+    "excluding",
+    "regarding",
+    "relating",
+    "consisting",
+    "resulting",
+    "arising",
+    "following",
+    "preceding",
     # Quantifiers / determiners
-    "our", "its", "their", "such", "each", "any", "all", "certain",
-    "various", "other", "additional", "significant",
-
+    "our",
+    "its",
+    "their",
+    "such",
+    "each",
+    "any",
+    "all",
+    "certain",
+    "various",
+    "other",
+    "additional",
+    "significant",
     # Prose-specific verbs
-    "believe", "expect", "anticipate", "estimate", "intend",
-    "continue", "provide", "include", "represent", "require",
-    "result", "occur", "affect", "exceed", "increase", "decrease",
-
+    "believe",
+    "expect",
+    "anticipate",
+    "estimate",
+    "intend",
+    "continue",
+    "provide",
+    "include",
+    "represent",
+    "require",
+    "result",
+    "occur",
+    "affect",
+    "exceed",
+    "increase",
+    "decrease",
     # Forward-looking verbs and phrases
-    "anticipate", "expect", "believe", "estimate", "intend",
-    "project", "forecast", "plan", "seek", "target",
-    "hope", "assume", "predict", "foresee",
-
+    "anticipate",
+    "expect",
+    "believe",
+    "estimate",
+    "intend",
+    "project",
+    "forecast",
+    "plan",
+    "seek",
+    "target",
+    "hope",
+    "assume",
+    "predict",
+    "foresee",
     # Modal + forward-looking combos (the modal is already caught,
     # but these verb stems add specificity)
-    "achieve", "attain", "realize", "deliver", "execute",
-    "grow", "expand", "improve", "reduce", "increase", "decrease",
-    "generate", "maintain", "sustain", "develop", "implement",
-    "complete", "launch", "enter", "pursue", "continue",
-
+    "achieve",
+    "attain",
+    "realize",
+    "deliver",
+    "execute",
+    "grow",
+    "expand",
+    "improve",
+    "reduce",
+    "increase",
+    "decrease",
+    "generate",
+    "maintain",
+    "sustain",
+    "develop",
+    "implement",
+    "complete",
+    "launch",
+    "enter",
+    "pursue",
+    "continue",
     # Hedging language that always accompanies forward-looking statements
-    "approximately", "substantially", "materially", "adversely",
-    "significantly", "potentially", "primarily", "generally",
-    "historically", "currently", "prospectively",
-
+    "approximately",
+    "substantially",
+    "materially",
+    "adversely",
+    "significantly",
+    "potentially",
+    "primarily",
+    "generally",
+    "historically",
+    "currently",
+    "prospectively",
     # Risk / uncertainty markers
-    "uncertainty", "uncertainties",
-    "assumption", "assumptions", "contingent", "dependent",
-    "exposure", "likelihood",
+    "uncertainty",
+    "uncertainties",
+    "assumption",
+    "assumptions",
+    "contingent",
+    "dependent",
+    "exposure",
+    "likelihood",
 }
 
 _PROSE_INDICATOR_RE = build_regex(PROSE_INDICATOR_WORDS)
 TOC_DOTS_RE = re.compile(
     r"(?:\.[\s.]*){4,}|(?:\.[\s.]*){3}\s*(?:\d+(?:-\d+)?|[A-Za-z]{1,3}(?:-?\d+)?)\b",
-    re.IGNORECASE
+    re.IGNORECASE,
 )
 MAX_TOC_SCAN_CHARS = 25000
 _FWD_CORE = r"forward[- ]looking\s+(?:statements?|information)"
@@ -1619,12 +1828,14 @@ FORM_LABEL_RE = re.compile(r"^[A-Za-z]-\d+$")
 
 _RESIDUAL_MIN_LEN = 4  # after stripping, less than this = discard
 
+
 def is_structural_only(text: str) -> bool:
     """True if the block has negligible alphanumeric content after removing punctuation/symbols."""
     residual = ALPHANUM_RE.sub("", text).strip()
     # Collapse whitespace to measure actual content
     residual = SPACE_PATTERN.sub(" ", residual).strip()
     return len(residual) < _RESIDUAL_MIN_LEN
+
 
 def prefilter_blocks(blocks: List[str]) -> List[str]:
     filtered = []
@@ -1645,6 +1856,7 @@ def prefilter_blocks(blocks: List[str]) -> List[str]:
         filtered.append(block)
     return filtered
 
+
 def find_forward_looking_boundary(
     blocks: List[str],
     start_idx: int = 0,
@@ -1661,6 +1873,7 @@ def find_forward_looking_boundary(
         if FWD_PROSE_RE.search(block):
             return idx
     return None
+
 
 def _cap_at_fwd_boundary(
     idx: int,
@@ -1702,9 +1915,7 @@ def drop_cover_page(
 
     for idx in range(cover_end, min(len(blocks), cover_end + anchor_limit)):
         if fwd_boundary_idx is not None and idx >= fwd_boundary_idx:
-            debug_print(
-                f"[drop_cover_page] fwd boundary hit idx={fwd_boundary_idx}"
-            )
+            debug_print(f"[drop_cover_page] fwd boundary hit idx={fwd_boundary_idx}")
             return blocks[fwd_boundary_idx:], fwd_boundary_idx
         stripped = blocks[idx].strip()
         if BODY_ANCHOR_RE.match(stripped):
@@ -1739,11 +1950,9 @@ def _is_toc_line(stripped: str, late_label_hit: bool, late_name_hit: bool) -> bo
     if late_name_hit:
         # Names like "financial statements" only count if the block is short
         # (a TOC entry) and has no prose words
-        return (
-            len(stripped) <= 120
-            and not _PROSE_INDICATOR_RE.search(stripped)
-        )
+        return len(stripped) <= 120 and not _PROSE_INDICATOR_RE.search(stripped)
     return False
+
 
 def drop_table_of_contents(
     blocks: List[str],
@@ -1769,9 +1978,7 @@ def drop_table_of_contents(
     for idx, block in enumerate(blocks[:max_scan]):
         if fwd_boundary_idx is not None and idx >= fwd_boundary_idx:
             if toc_detected:
-                debug_print(
-                    f"[drop_toc] fwd boundary hit idx={fwd_boundary_idx}"
-                )
+                debug_print(f"[drop_toc] fwd boundary hit idx={fwd_boundary_idx}")
                 return blocks[fwd_boundary_idx:], fwd_boundary_idx
             debug_print("[drop_toc] fwd boundary before TOC detection")
             return blocks, 0
@@ -1845,9 +2052,7 @@ def drop_table_of_contents(
     char_count = 0
     while idx < len(blocks) and char_count <= char_limit:
         if fwd_boundary_idx is not None and idx >= fwd_boundary_idx:
-            debug_print(
-                f"[drop_toc] residue fwd boundary hit idx={fwd_boundary_idx}"
-            )
+            debug_print(f"[drop_toc] residue fwd boundary hit idx={fwd_boundary_idx}")
             start_idx = fwd_boundary_idx
             break
         block = blocks[idx]
@@ -1912,9 +2117,7 @@ def drop_table_of_contents(
 
     # ── Cleanup pass ─────────────────────────────────────────────────────────
     if fwd_boundary_idx is not None and start_idx >= fwd_boundary_idx:
-        debug_print(
-            f"[drop_toc] cleanup skipped at fwd boundary idx={start_idx}"
-        )
+        debug_print(f"[drop_toc] cleanup skipped at fwd boundary idx={start_idx}")
         return blocks[start_idx:], start_idx
 
     result = blocks[start_idx:]
