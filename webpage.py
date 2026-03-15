@@ -1966,6 +1966,7 @@ def drop_table_of_contents(
     char_count = 0
     toc_detected = False
     _TOC_RESIDUE_MAX_LEN = 120
+    fwd_boundary_active = fwd_boundary_idx
 
     derived = FORM_DERIVED_CACHE.get(form_type, FORM_DERIVED_CACHE["10-K"])
     norm_toc_kw = derived["normalized_toc_keywords"]
@@ -2007,14 +2008,15 @@ def drop_table_of_contents(
             or "table of contents" in normalized
         )
 
-        if fwd_boundary_idx is not None and idx >= fwd_boundary_idx:
+        if fwd_boundary_active is not None and idx >= fwd_boundary_active:
             if toc_detected:
-                debug_print(f"[drop_toc] fwd boundary hit idx={fwd_boundary_idx}")
-                return blocks[fwd_boundary_idx:], fwd_boundary_idx
-            if idx == fwd_boundary_idx and is_fwd_hit and is_toc_like:
+                debug_print(f"[drop_toc] fwd boundary hit idx={fwd_boundary_active}")
+                return blocks[fwd_boundary_active:], fwd_boundary_active
+            if idx == fwd_boundary_active and is_fwd_hit and is_toc_like:
                 debug_print(
                     f"[drop_toc] fwd boundary overlaps TOC idx={idx} allow_toc=True"
                 )
+                fwd_boundary_active = None
             elif not strong_toc_signal:
                 debug_print("[drop_toc] fwd boundary before TOC detection")
                 return blocks, 0
@@ -2073,9 +2075,11 @@ def drop_table_of_contents(
     idx = start_idx
     char_count = 0
     while idx < len(blocks) and char_count <= char_limit:
-        if fwd_boundary_idx is not None and idx >= fwd_boundary_idx:
-            debug_print(f"[drop_toc] residue fwd boundary hit idx={fwd_boundary_idx}")
-            start_idx = fwd_boundary_idx
+        if fwd_boundary_active is not None and idx >= fwd_boundary_active:
+            debug_print(
+                f"[drop_toc] residue fwd boundary hit idx={fwd_boundary_active}"
+            )
+            start_idx = fwd_boundary_active
             break
         block = blocks[idx]
         normalized = normalize_for_matching(block)
@@ -2138,8 +2142,10 @@ def drop_table_of_contents(
         break
 
     # ── Cleanup pass ─────────────────────────────────────────────────────────
-    if fwd_boundary_idx is not None and start_idx >= fwd_boundary_idx:
-        debug_print(f"[drop_toc] cleanup skipped at fwd boundary idx={start_idx}")
+    if fwd_boundary_active is not None and start_idx >= fwd_boundary_active:
+        debug_print(
+            f"[drop_toc] cleanup skipped at fwd boundary idx={start_idx}"
+        )
         return blocks[start_idx:], start_idx
 
     result = blocks[start_idx:]
