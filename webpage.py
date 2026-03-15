@@ -1523,7 +1523,7 @@ NORMALIZED_COVER_PAGE_KEYWORDS = [
     normalize_for_matching(term) for term in COVER_PAGE_KEYWORDS
 ]
 _RE = {
-    "fwd": r"(?:FORWARD[- ]?LOOKING|(?:CAUTIONARY|SPECIAL|NOTE)[\w\s,]{0,60}?FORWARD[- ]?LOOKING)\s+STATEMENTS?|CAUTIONARY\s+STATEMENTS?",
+    "fwd": r"(?:FORWARD[- ]?LOOKING|(?:CAUTIONARY|SPECIAL|NOTE)[\w\s,]{0,60}?FORWARD[- ]?LOOKING)\s+(?:STATEMENTS?|INFORMATION)|CAUTIONARY\s+STATEMENTS?",
     "part": r"PART\s+(?:[IVX]+|\d+)",
     "part_body": r"PART\s+(?:I|1)\b",
     "item": r"ITEM\s+\d+[\.\s]?",
