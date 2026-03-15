@@ -1625,6 +1625,7 @@ COVER_PAGE_KEYWORDS = [
 NORMALIZED_COVER_PAGE_KEYWORDS = [
     normalize_for_matching(term) for term in COVER_PAGE_KEYWORDS
 ]
+CHECKMARK_RE = re.compile(r"\[\s*[xX]\s*\]|\(\s*[xX]\s*\)|\|\s*[xX]\s*\||\\\s*[xX]\s*\\|/\s*[xX]\s*/")
 _RE = {
     "fwd": r"(?:FORWARD[- ]?LOOKING|(?:CAUTIONARY|SPECIAL|NOTE)[\w\s,]{0,60}?FORWARD[- ]?LOOKING)\s+(?:STATEMENTS?|INFORMATION)|CAUTIONARY\s+STATEMENTS?",
     "part": r"PART\s+(?:[IVX]+|\d+)",
@@ -1891,6 +1892,12 @@ def drop_cover_page(
             term for term in NORMALIZED_COVER_PAGE_KEYWORDS if term in normalized
         ]
         hits = len(matched_terms)
+        
+        checkmarks = CHECKMARK_RE.findall(block)
+        if checkmarks:
+            hits += len(checkmarks)
+            matched_terms.extend(["checkmark"] * len(checkmarks))
+
         if hits >= 1:
             debug_print(
                 f"[drop_cover_page] cover hit idx={idx} hits={hits} terms={matched_terms}"
