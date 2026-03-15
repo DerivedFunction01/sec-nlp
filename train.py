@@ -93,16 +93,6 @@ TASK_DEFAULTS = {
         # Label set — override in task config if needed
         "labels": [
             "O",
-            "NUM_WORKER",
-            "NUM_MONEY",
-            "NUM_LOCATION",
-            "NUM_CONTRACT",
-            "NUM_RATE",
-            "NUM_SHARE",
-            "NUM_DURATION",
-            "NUM_REFERENCE",
-            "NUM_MISC",
-            "YEAR",
         ],
     },
 }
@@ -214,7 +204,6 @@ def load_and_split(args: SimpleNamespace):
 def build_training_args(args: SimpleNamespace, has_eval: bool) -> TrainingArguments:
     return TrainingArguments(
         output_dir=args.output_dir,
-        overwrite_output_dir=True,
         num_train_epochs=args.num_train_epochs,
         per_device_train_batch_size=args.batch_size,
         per_device_eval_batch_size=args.batch_size * 2,
@@ -243,7 +232,7 @@ def build_training_args(args: SimpleNamespace, has_eval: bool) -> TrainingArgume
 
 
 def save_outputs(
-    trainer: Trainer, tokenizer, args: SimpleNamespace, extra: dict = None
+    trainer: Trainer, tokenizer, args: SimpleNamespace, extra: Optional[dict] = None
 ) -> None:
     logger.info(f"Saving model → {args.output_dir}")
     trainer.save_model(args.output_dir)
