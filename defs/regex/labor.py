@@ -348,6 +348,6 @@ WORKER_COUNT_REGEX = build_regex(
         rf"{personnel_event}\s+{non_numeric_gap}(\d+)",
         rf"(\d+)\s+{non_numeric_gap}{worker_term_pattern}",
         rf"{worker_term_pattern}\s+{non_numeric_gap}(\d+)",
-        rf"(\d+)\s+(?:(?:are|were)\s+)?{to_build_alternation(COVERAGE_VERBS)}",
+        rf"(\d+)\s+(?:(?:are|were|is|was)\s+)?{to_build_alternation(COVERAGE_VERBS)}",
     ]
 )
