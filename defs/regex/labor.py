@@ -218,7 +218,7 @@ OCCUPATION_GROUP_TERMS = {
         r"bartenders?",
         r"cashiers?",
     ],
-    OccupationGroup.MEDIA: [r"actors?", r"writers?"],
+    OccupationGroup.MEDIA: [r"actors?", r"writers?", r"directors?", r"producers?", r"composers?", r"filmmakers?"],
     OccupationGroup.OTHER: [
         r"technicians?",
         r"operators?",
