@@ -77,24 +77,31 @@ _EXHIBIT_FRAGMENT = build_alternation(EXHIBIT_NOUNS)
 
 # Matches: ASC 842-10-25-1, SFAS 133, ASU 2016-13, EITF 00-19, FIN 48,
 #          "Guidance No. 123", "Opinion No. 45-B"
+_NUM_ID = r"(?:[A-Z]-)?\d+(?:[\.\-]\d+)*"
+_PAREN_SUFFIX = r"(?:\s*\([A-Za-z0-9]+\))*"
+_RANGE_CONNECTOR = r"(?:,?\s*(?:and|or|&)|,|to|through)"
+
 _STANDARD_ID_PATTERN = (
     rf"(?:{_STANDARDS_FRAGMENT}|{_GUIDANCE_FRAGMENT})"
     rf"(?:\s+(?:{_STANDARDS_FRAGMENT}|{_GUIDANCE_FRAGMENT}))*"  # e.g. FASB ASC, FASB Statement
     r"(?:\s+Issue)?"
     r"(?:\s+No\.?)?"
-    r"\s*\d+(?:[\.\-]\d+)*"
+    rf"\s*{_NUM_ID}"
     r"[A-Z]?"
+    rf"{_PAREN_SUFFIX}"
 )
 
 # Matches: Exhibit 10.2, Note 5, Schedule A-3, Page 10, p. 5, pp. 20-25
 _EXHIBIT_PATTERN = (
     rf"(?:{_EXHIBIT_FRAGMENT})"
     r"(?:\s*No\.?)?"
-    r"\s*\d(?:[\d\.\-]*\d)?"
+    rf"\s*{_NUM_ID}"
     r"[A-Z]?"
+    rf"{_PAREN_SUFFIX}"
     r"(?:"
-    r"\s*(?:,?\s*(?:and|or|&)|,|to|through)\s*"
-    r"\d(?:[\d\.\-]*\d)?[A-Z]?"
+    rf"\s*{_RANGE_CONNECTOR}\s*"
+    rf"{_NUM_ID}[A-Z]?"
+    rf"{_PAREN_SUFFIX}"
     r")*"
 )
 
