@@ -1,7 +1,7 @@
 from __future__ import annotations
 from enum import Enum
 import re
-from defs.regex_lib import build_alternation, build_compound, build_regex
+from defs.regex_lib import build_alternation, build_compound, build_regex, to_build_alternation
 
 
 # =============================================================================
@@ -149,6 +149,7 @@ GENERIC_WORKER_TERMS: set[str] = {
     r"labo(?:u)?rers?",
     r"staff",
     r"personnel",
+    r"members?"
 }
 
 WORKER_TYPES: set[str] = {
@@ -299,7 +300,7 @@ WORKER_POOL: dict[WorkerTier, list[str] | dict[str, list[str]]] = {
 # =============================================================================
 
 # Unambiguously personnel-related — safe to use standalone
-PERSONNEL_EVENT_TERMS_SAFE: set[str] = {
+PERSONNEL_EVENT_TERMS: set[str] = {
     r"furlough(?:s|ed|ing)?",
     r"hir(?:es?|ed|ing)",
     r"fir(?:es?|ed|ing)",
@@ -333,3 +334,20 @@ PERSONNEL_EVENT_TERMS_CONTEXT: set[str] = {
     r"retention",
     r"recall(?:s|ed|ing)?",
 }
+
+COVERAGE_VERBS = {r"unionized", r"covered", r"subject\s+to", r"under", r"affiliated"}
+
+# Gap that avoids consuming numbers (words must start with non-digit)
+non_numeric_gap = r"(?:[^\W\d][\w\.-]*\s+){0,3}"
+personnel_event = to_build_alternation(PERSONNEL_EVENT_TERMS)
+
+worker_term_pattern = to_build_alternation(WORKER_TERMS)
+
+WORKER_COUNT_REGEX = build_regex(
+    [
+        rf"{personnel_event}\s+{non_numeric_gap}(\d+)",
+        rf"(\d+)\s+{non_numeric_gap}{worker_term_pattern}",
+        rf"{worker_term_pattern}\s+{non_numeric_gap}(\d+)",
+        rf"(\d+)\s+(?:(?:are|were)\s+)?{to_build_alternation(COVERAGE_VERBS)}",
+    ]
+)
