@@ -86,7 +86,6 @@ UNITS_LENGTH = [
     "feet",
     "ft",
     "meters",
-    "m",
     "miles",
     "mi",
     "kilometers",
