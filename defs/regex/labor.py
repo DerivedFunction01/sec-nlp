@@ -359,6 +359,40 @@ _COPULA_NUMBER_REGEX = re.compile(
     re.IGNORECASE,
 )
 
+_DEPT_TERMS = build_alternation(
+    [
+        r"sales",
+        r"engineering",
+        r"manufacturing",
+        r"operations?",
+        r"production",
+        r"marketing",
+        r"research",
+        r"development",
+        r"r&d",
+        r"finance",
+        r"accounting",
+        r"technology",
+        r"it",
+        r"hr",
+        r"human\s+resources",
+        r"legal",
+        r"administration",
+        r"customer\s+services?",
+        r"support",
+        r"procurement",
+        r"supply\s+chains?",
+        r"logistics",
+        r"quality",
+        r"compliance",
+        r"security",
+    ]
+)
+_DEPT_IN_REGEX = re.compile(
+    rf"\b({NUMBER_PATTERN_STR})\s+(?:(?:are|were|is|was)\s+)?(?:in|within|across)\s+({_DEPT_TERMS})\b",
+    re.IGNORECASE,
+)
+
 WORKER_COUNT_REGEX = build_regex(
     [
         rf"{personnel_event}\s+{non_numeric_gap}({NUMBER_RANGE_STR})",
@@ -398,6 +432,10 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
     if is_labor_copula_sentence(text):
         for m in _COPULA_NUMBER_REGEX.finditer(text):
+            spans.append((m.start(1), m.end(1), LABELS.LABOR.value))
+
+    if _WORKER_CONTEXT_REGEX.search(text):
+        for m in _DEPT_IN_REGEX.finditer(text):
             spans.append((m.start(1), m.end(1), LABELS.LABOR.value))
 
     return spans
