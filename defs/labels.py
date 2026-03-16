@@ -3,8 +3,8 @@ from enum import Enum
 class LABELS(Enum):
     # --- Counts ---
     LABOR = "LABOR"  # employee counts, union members, hires/fires, job cuts
-    LOCATION_COUNT = "LOCATION_COUNT"  # stores, facilities, regions, offices, markets
-    ENTITY_COUNT =  "ENTITY_COUNT"  # products, customers, segments, companies, unions, debts
+    LOCATION_COUNT = "LOCATION_COUNT"  # facilities + geographic coverage (stores, regions, offices)
+    ENTITY_COUNT =  "ENTITY_COUNT"  # products, customers, segments, companies, unions, debts, markets
     SHARE = "SHARE"  # shares, stock units, equity counts
 
     # --- Quantities ---
@@ -27,4 +27,3 @@ class LABELS(Enum):
     BULLET = "BULLET"  # 1. First, (2) Second, 3) Third
     NOISE = "NOISE"  # standalone artifacts with no semantic value
     PROPER_NUM = "PROPER_NUM"  # 3M, 7-Eleven, Fortune 500, B-52, COVID-19, 401(k), Zero Corp, Local 50, proposition 50
-
