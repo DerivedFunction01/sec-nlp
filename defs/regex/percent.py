@@ -57,7 +57,9 @@ PCT_RATE_CORE = [
     "currency",
     "treasury",
     "variable",
-    "floating"
+    "floating",
+    "unionization",
+    "coverage"
 ]
 
 PCT_RATE_SUFFIX = [
