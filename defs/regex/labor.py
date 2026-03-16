@@ -314,6 +314,8 @@ PERSONNEL_EVENT_TERMS_SAFE: set[str] = {
     r"headcount\s+reductions?",
     r"job\s+cuts?",
     r"downsiz(?:es?|ed|ing)",
+    r"employ(?:ed|s|ing)",
+    r"headcount",
 }
 
 # Ambiguous — require nearby personnel context to be meaningful
