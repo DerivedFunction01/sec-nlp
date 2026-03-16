@@ -1,18 +1,8 @@
 from __future__ import annotations
 from enum import Enum
-from defs.regex_lib import build_compound
-
-
-# =============================================================================
-# TIERS & ENUMS
-# =============================================================================
-
-
-class LocationTier(Enum):
-    PHYSICAL = "physical"  # facilities, offices, warehouses, plants
-    GEO = "geo"  # countries, regions, states, cities
-    ADDRESS_UNIT = "address_unit"  # floors, suites, units, buildings
-
+import re
+from defs.regex_lib import build_compound, NUMBER_PATTERN_STR, build_alternation
+from defs.labels import LABELS
 
 # =============================================================================
 # LOCATION TERMS
@@ -23,7 +13,7 @@ PHYSICAL_LOCATION_TERMS: set[str] = {
     # Facilities
     r"facilit(?:y|ies)",
     r"plants?",
-    r"factories|factory",
+    r"factor(?:y|ies)",
     r"warehouses?",
     r"laborator(?:y|ies)",
     r"labs?",
@@ -67,7 +57,7 @@ GEO_LOCATION_TERMS: set[str] = {
     r"territor(?:ies|y)",
     r"regions?",
     r"districts?",
-    r"counties|county",
+    r"count(?:y|ies)",
     r"parishes?",
     r"prefectures?",
     # Municipal
@@ -96,3 +86,27 @@ LOCATION_TERMS: set[str] = (
 PHYSICAL_COMPOUNDS: set[str] = {
     build_compound([r"distribution", r"fulfillment", r"data", r"call", r"manufacturing"], r"centers?"),
 }
+
+
+def extract_spans(text: str) -> list[tuple[int, int, str]]:
+    """
+    Extract LOCATION_COUNT spans from text using location-specific rules.
+    Returns (start, end, label) tuples.
+    """
+    if not text:
+        return []
+
+    terms = list(LOCATION_TERMS | PHYSICAL_COMPOUNDS)
+    if not terms:
+        return []
+
+    term_pattern = build_alternation(terms)
+    regex = re.compile(
+        rf"\b({NUMBER_PATTERN_STR})\s+(?:{term_pattern})\b", re.IGNORECASE
+    )
+
+    spans: list[tuple[int, int, str]] = []
+    for m in regex.finditer(text):
+        spans.append((m.start(), m.end(), LABELS.LOCATION_COUNT.value))
+
+    return spans
