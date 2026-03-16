@@ -1,7 +1,9 @@
 from __future__ import annotations
 from enum import Enum
 import re
+from defs.labels import LABELS
 from defs.regex_lib import (
+    NUMBER_PATTERN_STR,
     NUMBER_RANGE_STR,
     build_alternation,
     build_compound,
@@ -350,6 +352,12 @@ non_numeric_gap = r"(?:[^\W\d][\w\.-]*\s+){0,3}"
 personnel_event = to_build_alternation(PERSONNEL_EVENT_TERMS)
 
 worker_term_pattern = to_build_alternation(WORKER_TERMS)
+_WORKER_CONTEXT_REGEX = build_regex(WORKER_TERMS)
+
+_COPULA_NUMBER_REGEX = re.compile(
+    rf"\b({NUMBER_PATTERN_STR})\s+(?:are|were|is|was)\b",
+    re.IGNORECASE,
+)
 
 WORKER_COUNT_REGEX = build_regex(
     [
@@ -359,3 +367,37 @@ WORKER_COUNT_REGEX = build_regex(
         rf"({NUMBER_RANGE_STR})\s+(?:(?:are|were|is|was)\s+)?{to_build_alternation(COVERAGE_VERBS)}",
     ]
 )
+
+
+def is_labor_copula_sentence(sentence: str) -> bool:
+    """
+    Returns True if sentence has a copula-number pattern and a worker term
+    somewhere in the same sentence.
+    Example: "of which 1000 are in China" -> True if sentence includes
+    "employees/workers/etc".
+    """
+    if not sentence:
+        return False
+    if not _COPULA_NUMBER_REGEX.search(sentence):
+        return False
+    return bool(_WORKER_CONTEXT_REGEX.search(sentence))
+
+
+def extract_spans(text: str) -> list[tuple[int, int, str]]:
+    """
+    Extract LABOR spans from text using labor-specific rules.
+    Returns (start, end, label) tuples.
+    """
+    if not text:
+        return []
+
+    spans: list[tuple[int, int, str]] = []
+
+    for m in WORKER_COUNT_REGEX.finditer(text):
+        spans.append((m.start(), m.end(), LABELS.LABOR.value))
+
+    if is_labor_copula_sentence(text):
+        for m in _COPULA_NUMBER_REGEX.finditer(text):
+            spans.append((m.start(1), m.end(1), LABELS.LABOR.value))
+
+    return spans

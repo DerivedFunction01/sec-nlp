@@ -1,5 +1,6 @@
 import re
 from defs.regex_lib import build_alternation, build_regex
+from defs.labels import LABELS
 
 # --- ACCOUNTING STANDARD ISSUERS ---
 STANDARDS_TERMS = [
@@ -93,10 +94,14 @@ _STANDARD_ID_PATTERN = (
 
 # Matches: 10(a), b(9), 3(b)(2) with no required spaces
 _SHORT_PAREN_REF = (
-    r"(?:\d{1,2}[A-Za-z]?\([A-Za-z0-9]+\)(?:\([A-Za-z0-9]+\))*)"
-    r"|(?:[A-Za-z]\(\d{1,2}\)(?:\(\d{1,2}\))*)"
-    r"|(?:[A-Za-z]{1,3}\d{0,2}\([A-Za-z0-9]+\)(?:\([A-Za-z0-9]+\))*)"
+    r"(?:\d+[A-Za-z]?\([A-Za-z0-9]+\)(?:\([A-Za-z0-9]+\))*)"
+    r"|(?:[A-Za-z]\(\d+\)(?:\(\d+\))*)"
+    r"|(?:[A-Za-z]{1,3}\d*\([A-Za-z0-9]+\)(?:\([A-Za-z0-9]+\))*)"
 )
+
+# EX-123, EX-123.134, EX-123.ABC, EX-10.1 through EX-10.5
+_EXHIBIT_PREFIX_CORE = r"EX-\d+(?:\.(?:\d+|[A-Za-z]{1,5}))?"
+_EXHIBIT_PREFIX_PATTERN = rf"{_EXHIBIT_PREFIX_CORE}(?:\s*{_RANGE_CONNECTOR}\s*{_EXHIBIT_PREFIX_CORE})?"
 
 # Matches: Exhibit 10.2, Note 5, Schedule A-3, Page 10, p. 5, pp. 20-25
 _EXHIBIT_PATTERN = (
@@ -114,6 +119,15 @@ _EXHIBIT_PATTERN = (
 
 # --- COMBINED REFERENCE PATTERN ---
 REFERENCE_PATTERN = re.compile(
-    rf"\b(?:{_STANDARD_ID_PATTERN}|{_EXHIBIT_PATTERN}|{_SHORT_PAREN_REF})",
+    rf"\b(?:{_STANDARD_ID_PATTERN}|{_EXHIBIT_PATTERN}|{_SHORT_PAREN_REF}|{_EXHIBIT_PREFIX_PATTERN})",
     re.IGNORECASE,
 )
+
+def extract_spans(text: str) -> list[tuple[int, int, str]]:
+    """
+    Extract REFERENCE spans from text using reference-specific rules.
+    Returns (start, end, label) tuples.
+    """
+    if not text:
+        return []
+    return [(m.start(), m.end(), LABELS.REFERENCE.value) for m in REFERENCE_PATTERN.finditer(text)]
