@@ -3,7 +3,6 @@ import csv
 import difflib
 from pathlib import Path
 from typing import Optional
-
 from defs.regex_lib import YEAR_REGEX, build_alternation, build_regex
 
 COMPANY_TOKEN = "the Company"
@@ -343,6 +342,107 @@ class NumberNormalizer:
             numeric_firm_cleaner = NumericFirmCleaner()
         protected = numeric_firm_cleaner.clean_numeric_names(text)
         return self.normalize(protected)
+
+
+class CompanyNameReplacer:
+    """
+    Replace the current company's name with COMPANY_TOKEN. Supports lookup by CIK.
+    """
+
+    name_suffixes = [
+        r"inc\.?",
+        r"corp\.?",
+        r"corporation",
+        r"l\.?l\.?c\.?",
+        r"co\.?",
+        r"company",
+        r"ltd\.?",
+        r"limited",
+        r"p\.?l\.?c\.?",
+        r"s\.?a\.?",
+        r"group",
+        r"holdings?",
+        r"trust",
+        r"assoc\.?",
+        r"association",
+    ]
+
+    num_words = NumberNormalizer.num_words
+
+    def __init__(self, cik_path: str = "data/cik_names.parquet"):
+        self.cik_path = Path(cik_path)
+        self._cik_to_name: Optional[dict[str, str]] = None
+        self.name_suffix_pattern = re.compile(
+            r"\s+" + build_alternation(self.name_suffixes) + r"\.?$", re.IGNORECASE
+        )
+
+    def _load_cik_names(self) -> None:
+        if self._cik_to_name is not None:
+            return
+        if not self.cik_path.exists():
+            self._cik_to_name = {}
+            return
+        import pandas as pd  # type: ignore
+        df = pd.read_parquet(self.cik_path)
+
+        if "cik" not in df.columns or "name" not in df.columns:
+            self._cik_to_name = {}
+            return
+
+        mapping = {}
+        for _, row in df.iterrows():
+            cik = str(row["cik"]).strip()
+            name = str(row["name"]).strip()
+            if cik and name:
+                mapping[cik] = name
+        self._cik_to_name = mapping
+
+    def normalize_company_name(self, name: str) -> str:
+        if not name:
+            return ""
+        name = name.strip()
+        prev_name = None
+        while name != prev_name:
+            prev_name = name
+            candidate = self.name_suffix_pattern.sub("", name).strip()
+
+            tokens = candidate.split()
+            if len(tokens) == 1:
+                token = tokens[0].lower()
+                if token.isdigit() or token in self.num_words:
+                    return name
+
+            name = candidate
+        return name
+
+    def _resolve_company_name(self, company_name: Optional[str], cik: Optional[str]) -> str:
+        if company_name:
+            return company_name
+        if not cik:
+            return ""
+        self._load_cik_names()
+        if not self._cik_to_name:
+            return ""
+        return self._cik_to_name.get(str(cik).strip(), "")
+
+    def replace(self, text: str, company_name: Optional[str] = None, cik: Optional[str] = None) -> str:
+        if not text:
+            return ""
+
+        name = self._resolve_company_name(company_name, cik)
+        if not name:
+            return text
+
+        core_name = self.normalize_company_name(name)
+        if len(core_name) < 3:
+            return text
+
+        escaped_name = re.escape(core_name)
+        suffix_regex = r"(?:\s+(?:" + "|".join(self.name_suffixes) + r")\.?)*"
+        company_regex = re.compile(
+            rf"\b{escaped_name}{suffix_regex}(?:\b|(?<=\.))", re.IGNORECASE
+        )
+        return company_regex.sub(COMPANY_TOKEN, text)
 
 
 class NumericFirmCleaner:
