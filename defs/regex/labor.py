@@ -9,6 +9,7 @@ from defs.regex_lib import (
     build_compound,
     build_regex,
     to_build_alternation,
+    SENTENCE_SPLIT_PATTERN,
 )
 
 
@@ -393,6 +394,9 @@ _DEPT_IN_REGEX = re.compile(
     re.IGNORECASE,
 )
 
+# Heuristic: treat large counts as labor without requiring local worker context.
+_LABOR_CONTEXT_THRESHOLD = 1000
+
 WORKER_COUNT_REGEX = build_regex(
     [
         rf"{personnel_event}\s+{non_numeric_gap}({NUMBER_RANGE_STR})",
@@ -427,15 +431,59 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
     spans: list[tuple[int, int, str]] = []
 
-    for m in WORKER_COUNT_REGEX.finditer(text):
-        spans.append((m.start(), m.end(), LABELS.LABOR.value))
+    def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
+        out: list[tuple[int, int, str]] = []
+        start = 0
+        for m in SENTENCE_SPLIT_PATTERN.finditer(src):
+            end = m.end()
+            chunk = src[start:end]
+            if chunk.strip():
+                out.append((start, end, chunk))
+            start = end
+        tail = src[start:]
+        if tail.strip():
+            out.append((start, len(src), tail))
+        return out
 
-    if is_labor_copula_sentence(text):
-        for m in _COPULA_NUMBER_REGEX.finditer(text):
-            spans.append((m.start(1), m.end(1), LABELS.LABOR.value))
+    def _number_value(num_text: str) -> int:
+        if not num_text:
+            return 0
+        # If a range, take the first number as a proxy
+        first = re.split(r"[-–—]|\\bto\\b", num_text, maxsplit=1)[0]
+        try:
+            return int(float(first.replace(",", "")))
+        except ValueError:
+            return 0
 
-    if _WORKER_CONTEXT_REGEX.search(text):
-        for m in _DEPT_IN_REGEX.finditer(text):
-            spans.append((m.start(1), m.end(1), LABELS.LABOR.value))
+    for sent_start, _, sentence in _iter_sentences(text):
+        # Strong patterns always apply
+        for m in WORKER_COUNT_REGEX.finditer(sentence):
+            spans.append(
+                (sent_start + m.start(), sent_start + m.end(), LABELS.LABOR.value)
+            )
+
+        has_worker_context = bool(_WORKER_CONTEXT_REGEX.search(sentence))
+
+        for m in _COPULA_NUMBER_REGEX.finditer(sentence):
+            num_val = _number_value(m.group(1))
+            if has_worker_context or num_val >= _LABOR_CONTEXT_THRESHOLD:
+                spans.append(
+                    (
+                        sent_start + m.start(1),
+                        sent_start + m.end(1),
+                        LABELS.LABOR.value,
+                    )
+                )
+
+        for m in _DEPT_IN_REGEX.finditer(sentence):
+            num_val = _number_value(m.group(1))
+            if has_worker_context or num_val >= _LABOR_CONTEXT_THRESHOLD:
+                spans.append(
+                    (
+                        sent_start + m.start(1),
+                        sent_start + m.end(1),
+                        LABELS.LABOR.value,
+                    )
+                )
 
     return spans
