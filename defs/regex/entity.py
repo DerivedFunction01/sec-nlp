@@ -5,7 +5,7 @@ ORGANIZATIONAL_TERMS = {
     r"subsidiar(?:y|ies)",
     r"affiliates?",
     r"airlines?",
-    r"unions?",
+    r"unions",
     r"partnerships?",
     r"ventures?",
     r"competitors?",
@@ -28,6 +28,14 @@ PRODUCT_TERMS = {
     r"contracts?",
     r"agreements?",
     r"permits?",
+    r"deliver(?:y|ies)",
+    r"orders?",
+    r"suppl(?:y|ies)",
+    r"invoices?",
+    r"shipments?",
+    r"receipts?",
+    r"inventor(?:y|ies)",
+    r"purchases?",
 }
 
 # --- Ambiguous: context decides ---
