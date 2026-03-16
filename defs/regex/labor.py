@@ -475,9 +475,8 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
                     )
                 )
 
-        for m in _DEPT_IN_REGEX.finditer(sentence):
-            num_val = _number_value(m.group(1))
-            if has_worker_context or num_val >= _LABOR_CONTEXT_THRESHOLD:
+        if has_worker_context:
+            for m in _DEPT_IN_REGEX.finditer(sentence):
                 spans.append(
                     (
                         sent_start + m.start(1),
