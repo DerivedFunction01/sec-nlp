@@ -91,6 +91,13 @@ _STANDARD_ID_PATTERN = (
     rf"{_PAREN_SUFFIX}"
 )
 
+# Matches: 10(a), b(9), 3(b)(2) with no required spaces
+_SHORT_PAREN_REF = (
+    r"(?:\d{1,2}[A-Za-z]?\([A-Za-z0-9]+\)(?:\([A-Za-z0-9]+\))*)"
+    r"|(?:[A-Za-z]\(\d{1,2}\)(?:\(\d{1,2}\))*)"
+    r"|(?:[A-Za-z]{1,3}\d{0,2}\([A-Za-z0-9]+\)(?:\([A-Za-z0-9]+\))*)"
+)
+
 # Matches: Exhibit 10.2, Note 5, Schedule A-3, Page 10, p. 5, pp. 20-25
 _EXHIBIT_PATTERN = (
     rf"(?:{_EXHIBIT_FRAGMENT})"
@@ -107,6 +114,6 @@ _EXHIBIT_PATTERN = (
 
 # --- COMBINED REFERENCE PATTERN ---
 REFERENCE_PATTERN = re.compile(
-    rf"\b(?:{_STANDARD_ID_PATTERN}|{_EXHIBIT_PATTERN})",
+    rf"\b(?:{_STANDARD_ID_PATTERN}|{_EXHIBIT_PATTERN}|{_SHORT_PAREN_REF})",
     re.IGNORECASE,
 )
