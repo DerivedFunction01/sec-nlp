@@ -357,10 +357,15 @@ personnel_event = to_build_alternation(PERSONNEL_EVENT_TERMS)
 worker_term_pattern = to_build_alternation(WORKER_TERMS)
 _WORKER_CONTEXT_REGEX = build_regex(WORKER_TERMS)
 
+_LABOR_CONTEXT_REGEX = build_regex(
+    list(WORKER_TERMS | PERSONNEL_EVENT_TERMS )
+)
+
 _COPULA_NUMBER_REGEX = re.compile(
     rf"\b({NUMBER_PATTERN_STR})\s+(?:are|were|is|was)\b",
     re.IGNORECASE,
 )
+_NUMBER_REGEX = re.compile(rf"\b({NUMBER_PATTERN_STR})\b")
 
 _DEPT_TERMS = build_alternation(
     [
@@ -432,6 +437,14 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
         return []
 
     spans: list[tuple[int, int, str]] = []
+    span_set: set[tuple[int, int, str]] = set()
+
+    def _add_span(start: int, end: int) -> None:
+        item = (start, end, LABELS.LABOR.value)
+        if item in span_set:
+            return
+        span_set.add(item)
+        spans.append(item)
 
     def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
         out: list[tuple[int, int, str]] = []
@@ -460,31 +473,24 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
     for sent_start, _, sentence in _iter_sentences(text):
         # Strong patterns always apply
         for m in WORKER_COUNT_REGEX.finditer(sentence):
-            spans.append(
-                (sent_start + m.start(), sent_start + m.end(), LABELS.LABOR.value)
-            )
+            _add_span(sent_start + m.start(), sent_start + m.end())
 
         has_worker_context = bool(_WORKER_CONTEXT_REGEX.search(sentence))
 
         for m in _COPULA_NUMBER_REGEX.finditer(sentence):
             num_val = _number_value(m.group(1))
             if has_worker_context or num_val >= _LABOR_CONTEXT_THRESHOLD:
-                spans.append(
-                    (
-                        sent_start + m.start(1),
-                        sent_start + m.end(1),
-                        LABELS.LABOR.value,
-                    )
-                )
+                _add_span(sent_start + m.start(1), sent_start + m.end(1))
 
         if has_worker_context:
             for m in _DEPT_IN_REGEX.finditer(sentence):
-                spans.append(
-                    (
-                        sent_start + m.start(1),
-                        sent_start + m.end(1),
-                        LABELS.LABOR.value,
-                    )
-                )
+                _add_span(sent_start + m.start(1), sent_start + m.end(1))
+
+        # If sentence is labor-heavy, tag large standalone numbers
+        if _LABOR_CONTEXT_REGEX.search(sentence):
+            for m in _NUMBER_REGEX.finditer(sentence):
+                num_val = _number_value(m.group(1))
+                if num_val >= _LABOR_CONTEXT_THRESHOLD:
+                    _add_span(sent_start + m.start(1), sent_start + m.end(1))
 
     return spans
