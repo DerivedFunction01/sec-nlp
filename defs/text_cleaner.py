@@ -1,7 +1,12 @@
 import re
+import csv
+import difflib
+from pathlib import Path
+from typing import Optional
 
 from defs.regex_lib import YEAR_REGEX, build_alternation, build_regex
 
+COMPANY_TOKEN = "the Company"
 
 SPACE_PATTERN = re.compile(r"\s+")
 PUNCT_SPACE_PATTERN = re.compile(r"\s+([,\.;\:\!\?])")
@@ -324,3 +329,110 @@ class NumberNormalizer:
         text = YEAR_REGEX.sub(r"<YEAR:\1>", text)
 
         return clean_spaces_and_punctuation(text)
+
+    def normalize_preserve_numeric_firms(
+        self, text: str, numeric_firm_cleaner: Optional["NumericFirmCleaner"] = None
+    ) -> str:
+        """
+        Normalize numbers while preserving numeric firm names by replacing them
+        with COMPANY_TOKEN before number conversion.
+        """
+        if not text:
+            return ""
+        if numeric_firm_cleaner is None:
+            numeric_firm_cleaner = NumericFirmCleaner()
+        protected = numeric_firm_cleaner.clean_numeric_names(text)
+        return self.normalize(protected)
+
+
+class NumericFirmCleaner:
+    """
+    Replaces numeric firm names (e.g., "Seven Eleven", "3M") with COMPANY_TOKEN
+    so they aren't converted to numbers during normalization.
+    """
+
+    def __init__(self):
+        self.candidate_pattern = re.compile(
+            r"\b[A-Z1-9][\w\-\']*(?:\s+(?:&|and|of|the|[A-Z][\w\-\']+))*\b"
+        )
+        self.numeric_firms_regex = None
+        self._numeric_firm_list = []
+        self._load_numeric_firms()
+
+    def _load_numeric_firms(self) -> None:
+        file_path = Path("data/numeric_firm_names.csv")
+        if not file_path.exists():
+            return
+
+        numeric_names = set()
+        numeric_list = []
+
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    name = row.get("core_name")
+                    if not name:
+                        continue
+                    name = name.strip()
+                    if len(name) < 3:
+                        continue
+
+                    clean_name = re.sub(r"[^\w\s]", "", name)
+                    tokens = clean_name.split()
+                    prefixes = {name}
+                    if len(tokens) > 2:
+                        parts = name.split()
+                        for i in range(2, len(parts)):
+                            prefix = " ".join(parts[:i])
+                            prefix_lower = prefix.lower()
+                            if prefix_lower.endswith((" of", " and", " &", " for")):
+                                continue
+                            prefixes.add(prefix)
+
+                    for p in prefixes:
+                        numeric_names.add(p)
+                        numeric_list.append(p)
+        except Exception:
+            return
+
+        self._numeric_firm_list = numeric_list
+        if numeric_names:
+            sorted_names = sorted(list(numeric_names), key=len, reverse=True)
+            self.numeric_firms_regex = re.compile(
+                r"\b(?:" + "|".join(sorted_names) + r")\b", re.IGNORECASE
+            )
+
+    def clean_numeric_names(self, text: str) -> str:
+        if not text:
+            return ""
+
+        if self.numeric_firms_regex:
+            def repl(m):
+                val = m.group(0)
+                if val[0].isupper() or val[0].isdigit():
+                    return COMPANY_TOKEN
+                return val
+            text = self.numeric_firms_regex.sub(repl, text)
+
+        if self._numeric_firm_list:
+            matches = list(self.candidate_pattern.finditer(text))
+            replacements = []
+
+            for m in matches:
+                candidate = m.group(0)
+                if len(candidate) < 2:
+                    continue
+
+                cand_lower = candidate.lower()
+                for firm_name in self._numeric_firm_list:
+                    firm_lower = firm_name.lower()
+                    ratio = difflib.SequenceMatcher(None, cand_lower, firm_lower).ratio()
+                    if ratio >= 0.85:
+                        replacements.append(m.span())
+                        break
+
+            for start, end in sorted(replacements, reverse=True):
+                text = text[:start] + COMPANY_TOKEN + text[end:]
+
+        return text
