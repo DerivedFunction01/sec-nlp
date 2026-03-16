@@ -233,6 +233,7 @@ OCCUPATION_GROUP_TERMS = {
         r"instructors?",
         r"custodians?",
         r"janitors?",
+        r"miners?",
     ],
 }
 
