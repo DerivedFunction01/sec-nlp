@@ -24,6 +24,5 @@ class LABELS(Enum):
     ADDRESS = "ADDRESS"  # 123 Main St, Suite 200, zip codes, phone numbers
 
     # --- Discard ---
-    BULLET = "BULLET"  # 1. First, (2) Second, 3) Third
-    NOISE = "NOISE"  # standalone artifacts with no semantic value
+    NOISE = "NOISE"  # standalone artifacts with no semantic value, bullets, etc
     PROPER_NUM = "PROPER_NUM"  # 3M, 7-Eleven, Fortune 500, B-52, COVID-19, 401(k), Zero Corp, Local 50, proposition 50
