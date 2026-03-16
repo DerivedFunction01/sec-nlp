@@ -33,6 +33,9 @@ class NumberNormalizer:
     Minimal numeric normalization without stripping content.
     Focuses on converting word-number phrases and normalizing numeric formats.
     """
+    def __init__(self, numeric_firm_cleaner: Optional["NumericFirmCleaner"] = None):
+        self.numeric_firm_cleaner = numeric_firm_cleaner or NumericFirmCleaner()
+
     num_words = {
         "zero": 0,
         "one": 1,
@@ -297,6 +300,10 @@ class NumberNormalizer:
         if not text:
             return ""
 
+        # Preserve numeric firm names before any number conversion
+        if self.numeric_firm_cleaner:
+            text = self.numeric_firm_cleaner.clean_numeric_names(text)
+
         # Hyphenated fractions like "three-fourths"
         text = self.hyphenated_fraction_pattern.sub(
             self._convert_hyphenated_fraction, text
@@ -329,19 +336,6 @@ class NumberNormalizer:
 
         return clean_spaces_and_punctuation(text)
 
-    def normalize_preserve_numeric_firms(
-        self, text: str, numeric_firm_cleaner: Optional["NumericFirmCleaner"] = None
-    ) -> str:
-        """
-        Normalize numbers while preserving numeric firm names by replacing them
-        with COMPANY_TOKEN before number conversion.
-        """
-        if not text:
-            return ""
-        if numeric_firm_cleaner is None:
-            numeric_firm_cleaner = NumericFirmCleaner()
-        protected = numeric_firm_cleaner.clean_numeric_names(text)
-        return self.normalize(protected)
 
 
 class CompanyNameReplacer:

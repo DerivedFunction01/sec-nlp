@@ -167,3 +167,8 @@ SENTENCE_SPLIT_PATTERN2 = re.compile(
 )
 
 YEAR_REGEX = re.compile(r"\b(19\d{2}|20\d{2})\b")
+
+# Reusable range fragments for numeric regexes
+NUMBER_PATTERN_STR = r"\d+(?:\.\d+)?"
+RANGE_SEPARATOR_STR = r"(?:-|–|—|to|and)"
+NUMBER_RANGE_STR = rf"{NUMBER_PATTERN_STR}(?:\s*{RANGE_SEPARATOR_STR}\s*{NUMBER_PATTERN_STR})?"

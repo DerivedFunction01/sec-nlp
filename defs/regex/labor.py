@@ -1,7 +1,13 @@
 from __future__ import annotations
 from enum import Enum
 import re
-from defs.regex_lib import build_alternation, build_compound, build_regex, to_build_alternation
+from defs.regex_lib import (
+    NUMBER_RANGE_STR,
+    build_alternation,
+    build_compound,
+    build_regex,
+    to_build_alternation,
+)
 
 
 # =============================================================================
@@ -88,6 +94,7 @@ INDUSTRY_PREFIX_TERMS: dict[IndustryGroup, list[str]] = {
         r"healthcare",
         r"pharmaceutical",
         r"telecommunications",
+        r"communication",
         r"service",
     ],
     IndustryGroup.NATURAL: [
@@ -345,9 +352,9 @@ worker_term_pattern = to_build_alternation(WORKER_TERMS)
 
 WORKER_COUNT_REGEX = build_regex(
     [
-        rf"{personnel_event}\s+{non_numeric_gap}(\d+)",
-        rf"(\d+)\s+{non_numeric_gap}{worker_term_pattern}",
-        rf"{worker_term_pattern}\s+{non_numeric_gap}(\d+)",
-        rf"(\d+)\s+(?:(?:are|were|is|was)\s+)?{to_build_alternation(COVERAGE_VERBS)}",
+        rf"{personnel_event}\s+{non_numeric_gap}({NUMBER_RANGE_STR})",
+        rf"({NUMBER_RANGE_STR})\s+{non_numeric_gap}{worker_term_pattern}",
+        rf"{worker_term_pattern}\s+{non_numeric_gap}({NUMBER_RANGE_STR})",
+        rf"({NUMBER_RANGE_STR})\s+(?:(?:are|were|is|was)\s+)?{to_build_alternation(COVERAGE_VERBS)}",
     ]
 )
