@@ -1,6 +1,7 @@
 from __future__ import annotations
 import re
 from defs.regex_lib import build_alternation
+from defs.labels import LABELS
 
 
 # =============================================================================
@@ -194,3 +195,31 @@ def match_phone(text: str) -> list[tuple[str, str]]:
         for m in pattern.finditer(text):
             results.append((country, m.group(0)))
     return results
+
+
+def extract_spans(text: str) -> list[tuple[int, int, str]]:
+    """
+    Extract ADDRESS spans from text using address-specific rules.
+    Returns (start, end, label) tuples.
+    """
+    if not text:
+        return []
+
+    spans: list[tuple[int, int, str]] = []
+
+    for m in STREET_ADDRESS_RE.finditer(text):
+        spans.append((m.start(), m.end(), LABELS.ADDRESS.value))
+
+    for m in UNIT_RE.finditer(text):
+        spans.append((m.start(), m.end(), LABELS.ADDRESS.value))
+
+    for m in ADDRESS_COMPONENT_RE.finditer(text):
+        spans.append((m.start(), m.end(), LABELS.ADDRESS.value))
+
+    for m in ZIP_CODE_RE.finditer(text):
+        spans.append((m.start(), m.end(), LABELS.ADDRESS.value))
+
+    for m in PHONE_NUMBER_RE.finditer(text):
+        spans.append((m.start(), m.end(), LABELS.ADDRESS.value))
+
+    return spans
