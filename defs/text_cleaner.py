@@ -1,0 +1,326 @@
+import re
+
+from defs.regex_lib import YEAR_REGEX, build_alternation, build_regex
+
+
+SPACE_PATTERN = re.compile(r"\s+")
+PUNCT_SPACE_PATTERN = re.compile(r"\s+([,\.;\:\!\?])")
+DOUBLE_PUNCT_PATTERN = re.compile(r"([,\.;\:\!\?])\1+")
+MISSING_SPACE_PATTERN = re.compile(r"(?:(?<!\b[A-Z])\.|[,;\:\!\?])(?=[a-zA-Z])")
+HANGING_APOSTROPHE_PATTERN = re.compile(r"\s+'(s|re|ve|t|m|ll|d)\b", re.IGNORECASE)
+
+
+def clean_spaces_and_punctuation(text: str) -> str:
+    """
+    Normalizes whitespace and cleans up punctuation.
+    """
+    if not text:
+        return ""
+    text = SPACE_PATTERN.sub(" ", text).strip()
+    text = PUNCT_SPACE_PATTERN.sub(r"\1", text)
+    text = DOUBLE_PUNCT_PATTERN.sub(r"\1", text)
+    text = MISSING_SPACE_PATTERN.sub(r"\g<0> ", text)
+    text = HANGING_APOSTROPHE_PATTERN.sub(r"'\1", text)
+    return text
+
+
+class NumberNormalizer:
+    """
+    Minimal numeric normalization without stripping content.
+    Focuses on converting word-number phrases and normalizing numeric formats.
+    """
+    num_words = {
+        "zero": 0,
+        "one": 1,
+        "two": 2,
+        "three": 3,
+        "four": 4,
+        "five": 5,
+        "six": 6,
+        "seven": 7,
+        "eight": 8,
+        "nine": 9,
+        "ten": 10,
+        "eleven": 11,
+        "twelve": 12,
+        "thirteen": 13,
+        "fourteen": 14,
+        "fifteen": 15,
+        "sixteen": 16,
+        "seventeen": 17,
+        "eighteen": 18,
+        "nineteen": 19,
+        "twenty": 20,
+        "thirty": 30,
+        "forty": 40,
+        "fifty": 50,
+        "sixty": 60,
+        "seventy": 70,
+        "eighty": 80,
+        "ninety": 90,
+    }
+    multipliers = {
+        "dozen": 12,
+        "hundred": 100,
+        "thousand": 1_000,
+        "million": 1_000_000,
+        "billion": 1_000_000_000,
+        "trillion": 1_000_000_000_000,
+    }
+    fractions = {
+        "half": 0.5,
+        "halves": 0.5,
+        "quarter": 0.25,
+        "quarters": 0.25,
+        "third": 1 / 3,
+        "thirds": 1 / 3,
+        "fourth": 0.25,
+        "fourths": 0.25,
+        "fifth": 0.2,
+        "fifths": 0.2,
+        "sixth": 1 / 6,
+        "sixths": 1 / 6,
+        "seventh": 1 / 7,
+        "sevenths": 1 / 7,
+        "eighth": 1 / 8,
+        "eighths": 1 / 8,
+        "ninth": 1 / 9,
+        "ninths": 1 / 9,
+        "tenth": 0.1,
+        "tenths": 0.1,
+    }
+
+    _all_words = (
+        list(num_words.keys()) + list(multipliers.keys()) + list(fractions.keys())
+    )
+    _word_pattern = build_alternation([re.escape(w) for w in _all_words])
+    number_phrase_pattern = re.compile(
+        rf"\b{_word_pattern}(?:[\s-]+{_word_pattern})*\b", re.IGNORECASE
+    )
+    qualitative_patterns = [
+        (
+            re.compile(
+                rf"\ba\s+few\s+(?={build_alternation(list(multipliers.keys()))})",
+                re.IGNORECASE,
+            ),
+            "three ",
+        ),
+        (
+            re.compile(
+                rf"\bhalf\s+(?:of\s+)?(?:a\s+)?(?={build_alternation(list(multipliers.keys()))})",
+                re.IGNORECASE,
+            ),
+            "0.5 ",
+        ),
+        (
+            re.compile(
+                rf"\ba\+quarter\s+(?:of\s+)?(?:a\s+)?(?={build_alternation(list(multipliers.keys()))})",
+                re.IGNORECASE,
+            ),
+            "0.25 ",
+        ),
+        (
+            re.compile(
+                rf"\bthree\+quarters\s+(?:of\s+)?(?:a\s+)?(?={build_alternation(list(multipliers.keys()))})",
+                re.IGNORECASE,
+            ),
+            "0.75 ",
+        ),
+        (
+            re.compile(
+                rf"\ba\s+(?={build_alternation(list(multipliers.keys()))}|(?:quarter|third|fifth|sixth)\s+of)",
+                re.IGNORECASE,
+            ),
+            "one ",
+        ),
+    ]
+    comma_pattern = re.compile(r"(?<=\d),(?=\d{3})")
+    parenthetical_duplicate_number_pattern = re.compile(
+        r"\b(?P<left>\d+(?:\.\d+)?)\s*\(\s*(?P<right>\d+(?:\.\d+)?)\s*\)"
+    )
+    scale_map = {
+        "dozen": 12,
+        "hundred": 100,
+        "thousand": 1_000,
+        "million": 1_000_000,
+        "billion": 1_000_000_000,
+        "trillion": 1_000_000_000_000,
+    }
+    scale_pattern = re.compile(
+        rf"\b(\d+(?:\.\d+)?)\s+({'|'.join(scale_map.keys())})\b", re.IGNORECASE
+    )
+    _fraction_words = "|".join(
+        list(fractions.keys())
+        + [w[:-3] for w in fractions.keys() if w.endswith("ths")]
+    )
+    _num_words_str = "|".join(num_words.keys())
+    hyphenated_fraction_pattern = re.compile(
+        rf"\b({_num_words_str})-({_fraction_words}s?)\b", re.IGNORECASE
+    )
+    fraction_qualifiers = {
+        "approx",
+        "approx.",
+        "approximately",
+        "roughly",
+        "nearly",
+        "about",
+        "around",
+        "almost",
+    }
+    percent_pattern = re.compile(r"\bper[- ]?cent\b", re.IGNORECASE)
+    percent_space_pattern = re.compile(r"(\d)\s+%", re.IGNORECASE)
+    percent_range_pattern = re.compile(
+        r"\b(\d+(?:\.\d+)?)\s*%?\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)\s*%",
+        re.IGNORECASE,
+    )
+
+    zip_code_pattern = re.compile(r"\b\d{5}(?:-\d{4})?\b")
+    def _convert_hyphenated_fraction(self, match):
+        num_word = match.group(1).lower()
+        frac_word = match.group(2).lower()
+        if num_word not in self.num_words:
+            return match.group(0)
+        numerator = self.num_words[num_word]
+
+        if frac_word not in self.fractions:
+            frac_base = frac_word.rstrip("s")
+            if frac_base not in self.fractions:
+                return match.group(0)
+            denominator = self.fractions[frac_base]
+        else:
+            denominator = self.fractions[frac_word]
+
+        result = numerator * denominator
+        return f"{result * 100:g}%"
+
+    def _scale_replacer(self, match):
+        try:
+            number = float(match.group(1))
+            multiplier = self.scale_map.get(match.group(2).lower(), 1)
+            value = number * multiplier
+            if value.is_integer():
+                return f"{int(value)}"
+            return f"{value}"
+        except ValueError:
+            return match.group(0)
+
+    def _parse_number_phrase(self, match):
+        text = match.group(0)
+        clean_text = text.lower().replace("-", " ")
+        words = clean_text.split()
+
+        if all(w in self.multipliers for w in words):
+            return text
+
+        has_number = any(w in self.num_words for w in words)
+        has_qualifier = any(w in self.fraction_qualifiers for w in words)
+        has_fraction = any(w in self.fractions for w in words)
+        if has_fraction and not has_number and not has_qualifier:
+            is_safe = True
+            for w in words:
+                if w not in ["half"]:
+                    is_safe = False
+                    break
+            if not is_safe:
+                return text
+
+        if len(words) >= 2:
+            for i in range(len(words) - 1):
+                word = words[i]
+                next_word = words[i + 1]
+                if word in self.num_words:
+                    if next_word.endswith("ths"):
+                        base = next_word[:-3]
+                        if base in self.fractions:
+                            num = self.num_words[word]
+                            frac = self.fractions[base]
+                            result = num * frac
+                            return f"{result * 100:g}%"
+                    elif next_word == "halves":
+                        num = self.num_words[word]
+                        result = num * 0.5
+                        return f"{result * 100:g}%"
+
+        total_value = 0
+        current_chunk = 0
+        is_fraction = False
+        fraction_value = 0.0
+
+        for word in words:
+            if word in self.num_words:
+                current_chunk += self.num_words[word]
+            elif word in self.multipliers:
+                mult = self.multipliers[word]
+                if mult < 1000:
+                    current_chunk = (current_chunk if current_chunk else 1) * mult
+                else:
+                    total_value += (current_chunk if current_chunk else 1) * mult
+                    current_chunk = 0
+            elif word in self.fractions:
+                if current_chunk > 0:
+                    fraction_value += current_chunk * self.fractions[word]
+                    current_chunk = 0
+                    is_fraction = True
+                elif word in ["half"]:
+                    fraction_value += self.fractions[word]
+                    is_fraction = True
+
+        if is_fraction:
+            final_val = total_value + fraction_value
+            if final_val == 0:
+                return text
+            return f"{final_val * 100:g}%"
+
+        total_value += current_chunk
+        if total_value == 0 and "zero" not in clean_text:
+            return text
+        return str(total_value)
+
+    def _collapse_parenthetical_duplicate_numbers(self, text: str) -> str:
+        def repl(match: re.Match) -> str:
+            left = match.group("left")
+            right = match.group("right")
+            try:
+                if float(left) == float(right):
+                    return left
+            except ValueError:
+                return match.group(0)
+            return match.group(0)
+
+        return self.parenthetical_duplicate_number_pattern.sub(repl, text)
+
+    def normalize(self, text: str) -> str:
+        if not text:
+            return ""
+
+        # Hyphenated fractions like "three-fourths"
+        text = self.hyphenated_fraction_pattern.sub(
+            self._convert_hyphenated_fraction, text
+        )
+
+        # Qualitative replacements
+        for pattern, replacement in self.qualitative_patterns:
+            text = pattern.sub(replacement, text)
+
+        # Word-number phrases
+        text = self.number_phrase_pattern.sub(self._parse_number_phrase, text)
+
+        # Commas in numbers
+        text = self.comma_pattern.sub("", text)
+
+        # Scale expansion (e.g., 2 million -> 2000000)
+        text = self.scale_pattern.sub(self._scale_replacer, text)
+
+        # Collapse duplicates like "15 (15)"
+        text = self._collapse_parenthetical_duplicate_numbers(text)
+
+        # Percent normalization
+        text = self.percent_pattern.sub("%", text)
+        text = self.percent_range_pattern.sub(r"\1% to \2%", text)
+        text = self.percent_space_pattern.sub(r"\1%", text)
+
+        # Tag years and zip codes for disambiguation
+        text = self.zip_code_pattern.sub(r"<ZIP:\g<0>>", text)
+        text = YEAR_REGEX.sub(r"<YEAR:\1>", text)
+
+        return clean_spaces_and_punctuation(text)
