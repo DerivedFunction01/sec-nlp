@@ -1,6 +1,6 @@
 import re
 
-from defs.regex_lib import to_build_alternation, build_regex
+from defs.regex_lib import closest_distance_in_segment, to_build_alternation, build_regex, SENTENCE_SPLIT_PATTERN
 from defs.labels import LABELS
 
 PCT_CHANGE_TERMS = [
@@ -166,43 +166,60 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
     spans: list[tuple[int, int, str]] = []
 
-    def _closest_distance(start: int, end: int, matches: list[re.Match]) -> int | None:
-        if not matches:
-            return None
-        best = None
-        for m in matches:
-            if m.end() <= start:
-                dist = start - m.end()
-            elif m.start() >= end:
-                dist = m.start() - end
-            else:
-                dist = 0
-            if best is None or dist < best:
-                best = dist
-        return best
+    def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
+        out: list[tuple[int, int, str]] = []
+        start = 0
+        for m in SENTENCE_SPLIT_PATTERN.finditer(src):
+            end = m.end()
+            chunk = src[start:end]
+            if chunk.strip():
+                out.append((start, end, chunk))
+            start = end
+        tail = src[start:]
+        if tail.strip():
+            out.append((start, len(src), tail))
+        return out
 
-    def _label_for_span(start: int, end: int) -> str:
-        # Find nearest change/rate term and label based on distance
-        max_distance = 200
-        change_matches = list(PCT_CHANGE_RE.finditer(text))
-        rate_matches = list(PCT_RATE_RE.finditer(text))
 
-        change_dist = _closest_distance(start, end, change_matches)
-        rate_dist = _closest_distance(start, end, rate_matches)
+    def _label_for_span(start: int, end: int, sentence: str) -> str:
+        change_matches = list(PCT_CHANGE_RE.finditer(sentence))
+        rate_matches = list(PCT_RATE_RE.finditer(sentence))
 
-        if change_dist is not None and change_dist <= max_distance:
+        change_dist = closest_distance_in_segment(sentence, start, end, change_matches)
+        rate_dist = closest_distance_in_segment(sentence, start, end, rate_matches)
+
+        if change_dist is not None:
             return LABELS.PCT_CHANGE.value
-        if rate_dist is not None and rate_dist <= max_distance:
+        if rate_dist is not None:
             return LABELS.PCT_RATE.value
         return LABELS.PCT_OTHER.value
 
-    for m in PCT_RANGE.finditer(text):
-        spans.append((m.start(), m.end(), _label_for_span(m.start(), m.end())))
+    for sent_start, _, sentence in _iter_sentences(text):
+        for m in PCT_RANGE.finditer(sentence):
+            spans.append(
+                (
+                    sent_start + m.start(),
+                    sent_start + m.end(),
+                    _label_for_span(m.start(), m.end(), sentence),
+                )
+            )
 
-    for m in PCT_OF_PATTERN.finditer(text):
-        spans.append((m.start(1), m.end(1), _label_for_span(m.start(1), m.end(1))))
+        for m in PCT_OF_PATTERN.finditer(sentence):
+            spans.append(
+                (
+                    sent_start + m.start(1),
+                    sent_start + m.end(1),
+                    _label_for_span(m.start(1), m.end(1), sentence),
+                )
+            )
 
-    for m in PCT_REGEX.finditer(text):
-        spans.append((m.start(), m.end(), _label_for_span(m.start(), m.end())))
+        for m in PCT_REGEX.finditer(sentence):
+            spans.append(
+                (
+                    sent_start + m.start(),
+                    sent_start + m.end(),
+                    _label_for_span(m.start(), m.end(), sentence),
+                )
+            )
 
     return spans

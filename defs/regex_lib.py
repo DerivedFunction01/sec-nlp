@@ -115,6 +115,40 @@ def plural(string: str | Enum) -> str:
     return string.removesuffix("?")
 
 
+def span_distance(
+    start: int, end: int, other_start: int, other_end: int
+) -> int:
+    """
+    Distance between two spans. Returns 0 if overlapping or touching.
+    """
+    if other_end <= start:
+        return start - other_end
+    if other_start >= end:
+        return other_start - end
+    return 0
+
+
+def closest_distance(
+    start: int, end: int, matches: list[re.Match] | list[tuple[int, int]]
+) -> Optional[int]:
+    """
+    Returns the closest distance from (start, end) to any match/span.
+    Accepts a list of re.Match objects or (start, end) tuples.
+    """
+    if not matches:
+        return None
+    best: Optional[int] = None
+    for m in matches:
+        if isinstance(m, tuple):
+            s, e = m
+        else:
+            s, e = m.start(), m.end()
+        dist = span_distance(start, end, s, e)
+        if best is None or dist < best:
+            best = dist
+    return best
+
+
 SENTENCE_SPLIT_PATTERN = re.compile(
     r"(?<=[.!?])"  # Positive lookbehind for punctuation
     # 1. Protect Initials (e.g., "John H. Smith") -> Capital + Dot
@@ -172,3 +206,50 @@ YEAR_REGEX = re.compile(r"\b(19\d{2}|20\d{2})\b")
 NUMBER_PATTERN_STR = r"\d+(?:\.\d+)?"
 RANGE_SEPARATOR_STR = r"(?:-|–|—|to|and|of|out\s+of)"
 NUMBER_RANGE_STR = rf"{NUMBER_PATTERN_STR}(?:\s*{RANGE_SEPARATOR_STR}\s*{NUMBER_PATTERN_STR})?"
+
+SEGMENT_DELIMITER_REGEX = re.compile(
+    r"(?<!\d)[:;](?!\d)|\b(?:while|although|whereas|but|however|except|aside|apart|yet|compar(ed?|ing|ison)|exclud(?:ing|es?)|other\s+than)\b|(?:,)(?!(?:\s+or))",
+    re.IGNORECASE,
+)
+
+def segment_bounds(
+    text: str, start: int, end: int
+) -> tuple[int, int]:
+    """
+    Returns (seg_start, seg_end) bounds around a span, split by delimiters.
+    """
+    seg_start = 0
+    seg_end = len(text)
+
+    for m in SEGMENT_DELIMITER_REGEX.finditer(text):
+        if m.end() <= start:
+            seg_start = m.end()
+            continue
+        if m.start() >= end:
+            seg_end = m.start()
+            break
+    return seg_start, seg_end
+
+
+def closest_distance_in_segment(
+    text: str,
+    start: int,
+    end: int,
+    matches: list[re.Match] | list[tuple[int, int]],
+) -> Optional[int]:
+    """
+    Closest distance restricted to the segment containing (start, end).
+    Prevents crossing clause delimiters in compound sentences.
+    """
+    if not matches:
+        return None
+    seg_start, seg_end = segment_bounds(text, start, end)
+    filtered: list[tuple[int, int]] = []
+    for m in matches:
+        if isinstance(m, tuple):
+            s, e = m
+        else:
+            s, e = m.start(), m.end()
+        if s >= seg_start and e <= seg_end:
+            filtered.append((s, e))
+    return closest_distance(start, end, filtered)
