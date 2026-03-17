@@ -260,8 +260,8 @@ PRONOUN_TERMS: list[str] = [r"whom?", r"them"]  # 50 of them, 50 of whom
 
 PRONOUN_REGEX = re.compile(
     rf"\b(?:"
-    rf"({NUMBER_RANGE_STR})\s+of\s+(?:{PRONOUN_TERMS})"
-    rf"|of\s+(?:{PRONOUN_TERMS})\s+({NUMBER_RANGE_STR})"
+    rf"({NUMBER_RANGE_STR})\s+of\s+(?:{'|'.join(PRONOUN_TERMS)})"
+    rf"|of\s+(?:{'|'.join(PRONOUN_TERMS)})\s+({NUMBER_RANGE_STR})"
     rf")\b",
     re.IGNORECASE,
 )
@@ -364,10 +364,6 @@ personnel_event = to_build_alternation(PERSONNEL_EVENT_TERMS)
 worker_term_pattern = to_build_alternation(WORKER_TERMS)
 _WORKER_CONTEXT_REGEX = build_regex(WORKER_TERMS)
 
-_LABOR_CONTEXT_REGEX = build_regex(
-    list(WORKER_TERMS | PERSONNEL_EVENT_TERMS )
-)
-
 _COPULA_NUMBER_REGEX = re.compile(
     rf"\b({NUMBER_PATTERN_STR})\s+(?:are|were|is|was)\b",
     re.IGNORECASE,
@@ -421,6 +417,150 @@ WORKER_COUNT_REGEX = build_regex(
     ]
 )
 
+
+# =============================================================================
+# UNION / LABOR CONTEXT
+# =============================================================================
+
+class _CORE(Enum):
+    UNION = r"union(?:i(?:z|s)ed|i(?:z|s)ation|s)?"
+    UNIONIZE = r"unioni(?:z|s)(?:ation|ed)"
+    ATWILL = r"at[- ]will"
+    NONUNION = r"(?:non|un|not)[- ]?union(?:i(?:z|s)ed|s)?"
+    REUNIONIZE = r"re[- ]?unioni(?:z|s)(?:ations?|ed?)"
+    COLLECTIVE = r"collectives?"
+    BARGAIN = r"bargain(?:ing|s)?"
+    NEGOTIATE = r"negotiat(?:e|es|ed|ing|ions?)?"
+    LABOR = r"labo(?:u)?rs?"
+    TRADE = r"trades?"
+    ORGANIZED = r"organized?"
+    FEDERATION = r"(?:con)?federations?"
+    GUILD = r"guilds?"
+    AMALGAMATED = r"amalgamated"
+    BROTHERHOOD = r"brotherhoods?"
+    ASSOCIATION = r"associations?"
+    ALLIANCE = r"alliances?"
+    SOCIETY = r"societ(?:y|ies)"
+    UNITED = r"united"
+    ORDER = r"order\s+of"
+    WORKS_COUNCIL = r"works\s+councils?"
+    CO_DET = r"co[- ]?determination"
+
+
+class _DISRUPT(Enum):
+    STRIKE = r"strikes?"
+    DISPUTE = r"disputes?"
+    STOPPAGE = r"(?:work\s+)?stoppages?"
+    DISAGREEMENT = r"disagreements?"
+    DISRUPT = r"disruptions?"
+    SLOWDOWN = r"slow[- ]?downs?"
+    OUT = build_compound([r"walk", r"sick", r"lock"], r"outs?")
+
+
+_GAP = r"(?:'s?)?(?:\s+(?:of|the|for|&|[\'\w-]*)){0,3}\s+"
+
+_SUFFIX_AGREEMENTS = [
+    r"agreements?",
+    r"contracts?",
+    r"arrangements?",
+    r"memberships?",
+    r"representations?",
+]
+_SUFFIX_ORGS = [r"organizations?"]
+
+_UNION_TERMS = [
+    _CORE.UNION,
+    _CORE.FEDERATION,
+    _CORE.GUILD,
+    _CORE.AMALGAMATED,
+    _CORE.BROTHERHOOD,
+    _CORE.ASSOCIATION,
+    _CORE.ALLIANCE,
+    _CORE.SOCIETY,
+    _CORE.UNITED,
+    _CORE.ORDER,
+]
+
+
+# --- Collective bargaining ---
+COLLECTIVE_BARGAIN = build_alternation(
+    [
+        build_compound(
+            [_CORE.COLLECTIVE, _CORE.LABOR, _CORE.UNION],
+            [_CORE.BARGAIN, _CORE.LABOR, _CORE.NEGOTIATE],
+            sep_prefix=r"[\s-]+",
+        ),
+        build_compound(
+            [_CORE.BARGAIN, _CORE.UNION], _SUFFIX_AGREEMENTS, sep_prefix=r"[\s-]+"
+        ),
+        build_compound([_CORE.COLLECTIVE], [r"agreements?"], sep_prefix=r"[\s-]+"),
+        build_compound([_CORE.BARGAIN], [r"units?"], sep_prefix=r"[\s-]+"),
+        build_compound([r"industry(?:[- ]wide)?"], [_CORE.BARGAIN]),
+    ]
+)
+
+# --- Union presence phrases ---
+_UNION_PHRASES = [
+    COLLECTIVE_BARGAIN,
+    build_compound([_CORE.LABOR, _CORE.TRADE], _CORE.UNION, sep_prefix=r"[\s-]+"),
+    _CORE.UNION.value,
+    _CORE.REUNIONIZE.value,
+    build_compound(
+        [_CORE.LABOR], _SUFFIX_AGREEMENTS + _SUFFIX_ORGS, sep_prefix=r"[\s-]+"
+    ),
+    build_compound([_CORE.ORGANIZED], [_CORE.LABOR], sep_prefix=r"[\s-]+"),
+    _CORE.NONUNION.value,
+]
+
+# --- Dynamic union name pattern (no FX, no title capture) ---
+_DYNAMIC_UNION_CORE = build_alternation(
+    [
+        build_compound(_UNION_TERMS, WORKER_TERMS, sep_prefix=_GAP),
+        build_compound(WORKER_TERMS, _UNION_TERMS, sep_prefix=_GAP),
+        build_compound(_UNION_TERMS, _CORE.UNION.value, sep_prefix=_GAP),
+    ]
+)
+
+# --- Works councils / co-determination ---
+_WORKS_TERMS = [_CORE.WORKS_COUNCIL, r"ewc", _CORE.CO_DET]
+
+# --- Disruption / risk ---
+_RISK_PHRASES = [
+    build_compound(
+        [_CORE.UNION, _CORE.REUNIONIZE, _CORE.BARGAIN, _CORE.LABOR],
+        [
+            _DISRUPT.DISPUTE,
+            r"campaigns?",
+            _DISRUPT.DISAGREEMENT,
+            _CORE.NEGOTIATE,
+            r"drives?",
+            r"efforts?",
+            r"elections?",
+            _DISRUPT.STRIKE,
+            _DISRUPT.STOPPAGE,
+            _DISRUPT.DISRUPT,
+            _DISRUPT.SLOWDOWN,
+            _DISRUPT.OUT,
+        ],
+    ),
+    build_compound([_CORE.BARGAIN], [_DISRUPT.DISPUTE, _DISRUPT.DISAGREEMENT]),
+]
+
+# --- Non-union / exclusions ---
+_NON_UNION_PHRASES = [
+    _CORE.NONUNION.value,
+    _CORE.ATWILL.value,
+]
+
+# Extend existing _LABOR_CONTEXT_REGEX to include union signals
+_LABOR_CONTEXT_REGEX = build_regex(
+    list(WORKER_TERMS | PERSONNEL_EVENT_TERMS)
+    + _UNION_PHRASES
+    + _NON_UNION_PHRASES
+    + _RISK_PHRASES
+    + _WORKS_TERMS
+    + [_DYNAMIC_UNION_CORE]
+)
 
 def is_labor_copula_sentence(sentence: str) -> bool:
     """
@@ -493,6 +633,12 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
         if has_worker_context:
             for m in _DEPT_IN_REGEX.finditer(sentence):
                 _add_span(sent_start + m.start(1), sent_start + m.end(1))
+            
+            for m in PRONOUN_REGEX.finditer(sentence):
+                if m.group(1):
+                    _add_span(sent_start + m.start(1), sent_start + m.end(1))
+                elif m.group(2):
+                    _add_span(sent_start + m.start(2), sent_start + m.end(2))
 
         # If sentence is labor-heavy, tag large standalone numbers
         if _LABOR_CONTEXT_REGEX.search(sentence):
