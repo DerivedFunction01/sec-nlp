@@ -50,7 +50,7 @@ _ENTITY_TERMS = list(ORGANIZATIONAL_TERMS | PRODUCT_TERMS | AMBIGUOUS_TERMS)
 _ENTITY_TERM_PATTERN = build_alternation(_ENTITY_TERMS)
 _GENERIC_WORKER_PATTERN = build_alternation(list(GENERIC_WORKER_TERMS))
 
-_ENTITY_GAP = r"(?:[^\W\d][\w\.-]*\s+){0,3}"
+_ENTITY_GAP = r"(?:[^\W\d][\w\.-]*\s+){0,1}"
 ENTITY_COUNT_REGEX = re.compile(
     rf"\b({NUMBER_PATTERN_STR})\s+{_ENTITY_GAP}"
     rf"(?:{_ENTITY_TERM_PATTERN})"
