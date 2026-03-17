@@ -102,15 +102,6 @@ PCT_OF_DETERMINERS = [
     r"her",
 ]
 
-PCT_OF_POSSESSIVES = [
-    r"company(?:'s)?",
-    r"registrant(?:'s)?",
-    r"subsidiar(?:y|ies)(?:'s)?",
-    r"corporation(?:'s)?",
-    r"consolidated",
-    r"[\w]+(?:'s|s')",  # any possessive noun
-]
-
 PCT_OF_MODIFIERS = [
     r"total",
     r"overall",
@@ -130,12 +121,10 @@ PCT_OF_MODIFIERS = [
 ]
 
 _DET = rf"(?:{to_build_alternation(PCT_OF_DETERMINERS)})\s+"
-_POSS = rf"(?:{to_build_alternation(PCT_OF_POSSESSIVES)})"
 _MOD = rf"(?:[A-Za-z][\w-]*(?:'s|s')?\s+)"
 
 _PCT_OF_CHAIN = (
     rf"{_DET}{{1,4}}"  # 1-3 determiners: "of the", "of each of the"
-    rf"(?:{_POSS}\s+)?"  # optional possessive
     rf"{_MOD}{{0,3}}"  # up to 3 modifier words
 )
 
