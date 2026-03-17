@@ -258,6 +258,13 @@ WORKER_TERMS: set[str] = OCCUPATION_TERMS | INDUSTRY_WORKER_TERMS | GENERIC_WORK
 
 PRONOUN_TERMS: list[str] = [r"whom?", r"them"]  # 50 of them, 50 of whom
 
+PRONOUN_REGEX = re.compile(
+    rf"\b(?:"
+    rf"({NUMBER_RANGE_STR})\s+of\s+(?:{PRONOUN_TERMS})"
+    rf"|of\s+(?:{PRONOUN_TERMS})\s+({NUMBER_RANGE_STR})"
+    rf")\b",
+    re.IGNORECASE,
+)
 
 # =============================================================================
 # WORKER POOL (for NER augmentation / substitution)
@@ -400,6 +407,7 @@ _DEPT_IN_REGEX = re.compile(
     rf"\b({NUMBER_PATTERN_STR})\s+(?:(?:are|were|is|was)\s+)?(?:in|within|across)\s+({_DEPT_TERMS})\b",
     re.IGNORECASE,
 )
+
 
 # Heuristic: treat large counts as labor without requiring local worker context.
 _LABOR_CONTEXT_THRESHOLD = 1000
