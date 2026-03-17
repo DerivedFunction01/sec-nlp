@@ -116,7 +116,6 @@ PCT_OF_MODIFIERS = [
     r"issued",
     r"voting",
     r"common",
-    r"19\d{2}|20\d{2}",  # year as modifier
     r"[A-Z][a-z]+(?:ese|ish|an|ch)?",  # nationality/proper adj: Japanese, American
 ]
 
