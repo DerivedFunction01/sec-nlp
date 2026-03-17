@@ -11,10 +11,6 @@ ORGANIZATIONAL_TERMS = {
     r"affiliates?",
     r"airlines?",
     r"unions",
-    build_compound(
-        [r"labo(?:u)?r", r"trade"],
-        [r"unions", r"contracts", r"agreements"]
-    ),
     r"partnerships?",
     r"ventures?",
     r"competitors?",
@@ -69,7 +65,11 @@ _ENTITY_FILLER = build_alternation(
         r"strategic",
         r"major",
         r"minor",
-        r"third[-\s]party"
+        r"third[-\s]party",
+        r"trade",
+        r"labo(?:u)r",
+        r"union",
+        r"(?:collective\s+)?bargaining",
     ]
 )
 _ENTITY_FILLER_GAP = rf"(?:{_ENTITY_FILLER}\s+){{0,2}}"
@@ -78,6 +78,19 @@ ENTITY_COUNT_REGEX = re.compile(
     rf"\b({NUMBER_PATTERN_STR})\s+{_ENTITY_FILLER_GAP}{_ENTITY_GAP}"
     rf"(?:{_ENTITY_TERM_PATTERN})"
     rf"(?!\s+(?:{_GENERIC_WORKER_PATTERN})\b)\b",
+    re.IGNORECASE,
+)
+
+# Standalone counts like "5 CBAs"
+_STANDALONE_TERMS = [
+    r"cba(?:s)?",
+    r"nda(?:s)?",
+    r"mou(?:s)?",
+]
+
+_STANDALONE_PATTERN = build_alternation(_STANDALONE_TERMS)
+ENTITY_STANDALONE_REGEX = re.compile(
+    rf"\b({NUMBER_PATTERN_STR})\s+(?:{_STANDALONE_PATTERN})\b",
     re.IGNORECASE,
 )
 
@@ -92,6 +105,8 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
     spans: list[tuple[int, int, str]] = []
     for m in ENTITY_COUNT_REGEX.finditer(text):
+        spans.append((m.start(), m.end(), LABELS.ENTITY_COUNT.value))
+    for m in ENTITY_STANDALONE_REGEX.finditer(text):
         spans.append((m.start(), m.end(), LABELS.ENTITY_COUNT.value))
 
     return spans
