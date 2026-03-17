@@ -13,7 +13,7 @@ ORGANIZATIONAL_TERMS = {
     r"unions",
     build_compound(
         [r"labo(?:u)?r", r"trade"],
-        r"unions"
+        [r"unions", r"contracts", r"agreements"]
     ),
     r"partnerships?",
     r"ventures?",
@@ -54,9 +54,28 @@ _ENTITY_TERMS = list(ORGANIZATIONAL_TERMS | PRODUCT_TERMS | AMBIGUOUS_TERMS)
 _ENTITY_TERM_PATTERN = build_alternation(_ENTITY_TERMS)
 _GENERIC_WORKER_PATTERN = build_alternation(list(GENERIC_WORKER_TERMS))
 
+_ENTITY_FILLER = build_alternation(
+    [
+        r"independent",
+        r"international",
+        r"national",
+        r"dependent",
+        r"domestic",
+        r"foreign",
+        r"global",
+        r"regional",
+        r"local",
+        r"affiliate",
+        r"strategic",
+        r"major",
+        r"minor",
+        r"third[-\s]party"
+    ]
+)
+_ENTITY_FILLER_GAP = rf"(?:{_ENTITY_FILLER}\s+){{0,2}}"
 _ENTITY_GAP = r"(?:[^\W\d][\w\.-]*\s+){0,1}"
 ENTITY_COUNT_REGEX = re.compile(
-    rf"\b({NUMBER_PATTERN_STR})\s+{_ENTITY_GAP}"
+    rf"\b({NUMBER_PATTERN_STR})\s+{_ENTITY_FILLER_GAP}{_ENTITY_GAP}"
     rf"(?:{_ENTITY_TERM_PATTERN})"
     rf"(?!\s+(?:{_GENERIC_WORKER_PATTERN})\b)\b",
     re.IGNORECASE,
