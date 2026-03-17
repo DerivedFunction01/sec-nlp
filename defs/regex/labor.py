@@ -383,6 +383,7 @@ _COPULA_NUMBER_REGEX = re.compile(
     rf"\b({NUMBER_PATTERN_STR})\s+(?:are|were|is|was)\b",
     re.IGNORECASE,
 )
+
 _NUMBER_REGEX = re.compile(rf"\b({NUMBER_PATTERN_STR})\b")
 
 _DEPT_TERMS = build_alternation(
