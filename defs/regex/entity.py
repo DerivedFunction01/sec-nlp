@@ -1,7 +1,7 @@
 import re
 from defs.regex_lib import NUMBER_PATTERN_STR, build_alternation, build_compound
 from defs.labels import LABELS
-from defs.regex.labor import GENERIC_WORKER_TERMS
+from defs.regex.labor import GENERIC_WORKER_TERMS, WORKER_TERMS
 
 # Unambiguously ENTITY_COUNT
 ORGANIZATIONAL_TERMS = {
@@ -95,6 +95,15 @@ ENTITY_STANDALONE_REGEX = re.compile(
     re.IGNORECASE,
 )
 
+# Bargaining units (treat as ENTITY_COUNT, not labor)
+_BU_WORKER_PATTERN = build_alternation(list(WORKER_TERMS))
+_BU_WORKER_PHRASE = r"(?:[^\W\d][\w-]{3,}\s+){0,1}" rf"(?:{_BU_WORKER_PATTERN})(?:['’]s?)?"
+BARGAINING_UNIT_COUNT_REGEX = re.compile(
+    rf"\b({NUMBER_PATTERN_STR})\s+(?:{_BU_WORKER_PHRASE}\s+)?"
+    rf"(?:collective\s+)?bargaining\s+units?\b",
+    re.IGNORECASE,
+)
+
 
 def extract_spans(text: str) -> list[tuple[int, int, str]]:
     """
@@ -108,6 +117,8 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
     for m in ENTITY_COUNT_REGEX.finditer(text):
         spans.append((m.start(), m.end(), LABELS.ENTITY_COUNT.value))
     for m in ENTITY_STANDALONE_REGEX.finditer(text):
+        spans.append((m.start(), m.end(), LABELS.ENTITY_COUNT.value))
+    for m in BARGAINING_UNIT_COUNT_REGEX.finditer(text):
         spans.append((m.start(), m.end(), LABELS.ENTITY_COUNT.value))
 
     return spans
