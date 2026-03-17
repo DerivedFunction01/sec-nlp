@@ -393,6 +393,8 @@ _DEPT_TERMS = build_alternation(
         r"manufacturing",
         r"operations?",
         r"production",
+        r"design",
+        r"product\s+(?:development|design)",
         r"marketing",
         r"research",
         r"development",
