@@ -1,5 +1,5 @@
 import re
-from defs.regex_lib import NUMBER_PATTERN_STR, build_alternation
+from defs.regex_lib import NUMBER_PATTERN_STR, build_alternation, build_compound
 from defs.labels import LABELS
 from defs.regex.labor import GENERIC_WORKER_TERMS
 
@@ -11,6 +11,10 @@ ORGANIZATIONAL_TERMS = {
     r"affiliates?",
     r"airlines?",
     r"unions",
+    build_compound(
+        [r"labo(?:u)?r", r"trade"],
+        r"unions"
+    ),
     r"partnerships?",
     r"ventures?",
     r"competitors?",
