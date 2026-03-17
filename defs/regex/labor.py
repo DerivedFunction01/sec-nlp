@@ -88,6 +88,10 @@ INDUSTRY_PREFIX_TERMS: dict[IndustryGroup, list[str]] = {
         r"port",
         r"warehouse",
         r"postal",
+        r"airline",
+        r"airport",
+        r"air line",
+        r"flight"
     ],
     IndustryGroup.SERVICE: [
         r"retail",
@@ -159,7 +163,10 @@ GENERIC_WORKER_TERMS: set[str] = {
     r"labo(?:u)?rers?",
     r"staff",
     r"personnel",
-    r"members?"
+    r"members?",
+    r"labo(?:u)?r\s+force",
+    r"associates?",
+    r"work\s+force",
 }
 
 WORKER_TYPES: set[str] = {
@@ -191,7 +198,8 @@ OCCUPATION_GROUP_TERMS = {
     OccupationGroup.AVIATION: [
         r"pilots?",
         r"flight\s+attendants?",
-        r"air\s+traffic\s+controllers",
+        r"air\s*line\s+attendents?",
+        r"air\s+traffic\s+controllers?",
     ],
     OccupationGroup.TRANSPORT: [
         r"drivers?",
@@ -229,7 +237,14 @@ OCCUPATION_GROUP_TERMS = {
         r"bartenders?",
         r"cashiers?",
     ],
-    OccupationGroup.MEDIA: [r"actors?", r"writers?", r"directors?", r"producers?", r"composers?", r"filmmakers?"],
+    OccupationGroup.MEDIA: [
+        r"actors?",
+        r"writers?",
+        r"directors?",
+        r"producers?",
+        r"composers?",
+        r"filmmakers?",
+    ],
     OccupationGroup.OTHER: [
         r"technicians?",
         r"operators?",
