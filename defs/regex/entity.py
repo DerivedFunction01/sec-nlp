@@ -86,6 +86,7 @@ _STANDALONE_TERMS = [
     r"cba(?:s)?",
     r"nda(?:s)?",
     r"mou(?:s)?",
+    r"(?:collective\s+)?bargaining\s+units",
 ]
 
 _STANDALONE_PATTERN = build_alternation(_STANDALONE_TERMS)
