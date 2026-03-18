@@ -1,24 +1,25 @@
+from __future__ import annotations
 import re
 from typing import List, Dict, Optional, Set, Tuple
 from defs.regex_lib import build_regex
 from defs.region_regex import MAJOR_CURRENCIES
 
 # --- BASIC REGEX PATTERNS ---
-CAPTION_REGEX = re.compile(
+CAPTION_RE = re.compile(
     r"<caption[^>]*>(.*?)(?=\n\s*\n|\n\s*<S>|\n\s*[-=]{3,}|\Z)",
     re.IGNORECASE | re.DOTALL,
 )
-TABLE_TAG_REGEX = re.compile(r"<TABLE.*?>", re.DOTALL | re.IGNORECASE)
-S_MARKER_REGEX = re.compile(r"<S>")
-C_MARKER_REGEX = re.compile(r"<C>")
-HTML_TAG_REGEX = re.compile(r"<[^>]+>")
-WHITESPACE_REGEX = re.compile(r"\s+")
-NUMERIC_PATTERN = re.compile(r"^-?\d+(?:\.\d+)?$")
+TABLE_TAG_RE = re.compile(r"<TABLE.*?>", re.DOTALL | re.IGNORECASE)
+S_MARKER_RE = re.compile(r"<S>")
+C_MARKER_RE = re.compile(r"<C>")
+HTML_TAG_RE = re.compile(r"<[^>]+>")
+WHITESPACE_RE = re.compile(r"\s+")
+NUMERIC_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 NUMERIC_WITH_SYMBOLS = re.compile(r"[$€£¥₹%\(\)\-,]")
-PERCENT_HEADER_REGEX = re.compile(r"\b(?:%|percent(?:age)?)\b", re.IGNORECASE)
+PERCENT_HEADER_RE = re.compile(r"\b(?:%|percent(?:age)?)\b", re.IGNORECASE)
 
 # safe patterns for years in tables
-YEAR_REGEX = build_regex([r"(?:\d{1,2}/)+(\d{2,4})", r"(19[8-9]\d|20\d{2})"])
+YEAR_RE = build_regex([r"(?:\d{1,2}/)+(\d{2,4})", r"(19[8-9]\d|20\d{2})"])
 TABLE_TOK = "TABLE_"
 # Header detection
 LAST_HEADER_PATTERN = build_regex([
@@ -46,26 +47,26 @@ LAST_HEADER_PATTERN = build_regex([
 )
 
 # Multipliers
-THOUSAND_REGEX = re.compile(
+THOUSAND_RE = re.compile(
     r"(?:in|dollars\s+in)\s+thousands|\(000(?:['\s]s)?\)", re.IGNORECASE
 )
-MILLION_REGEX = re.compile(
+MILLION_RE = re.compile(
     r"(?:in|dollars\s+in)\s+millions|\(000(?:,000)?(?:['\s]s)?\)", re.IGNORECASE
 )
-BILLION_REGEX = re.compile(r"(?:in|dollars\s+in)\s+billions", re.IGNORECASE)
-UNIT_REGEX = re.compile(
+BILLION_RE = re.compile(r"(?:in|dollars\s+in)\s+billions", re.IGNORECASE)
+UNIT_RE = re.compile(
     r"(?i)\s*(?:thousands?|millions?|billions?|trillions?)", re.IGNORECASE
 )
 
 # Symbol cleaning
-DOLLAR_SPACE_REGEX = re.compile(r"(\$)\s+")
-OPEN_PAREN_SPACE_REGEX = re.compile(r"\(\s+")
-CLOSE_PAREN_SPACE_REGEX = re.compile(r"\s+\)")
-PERCENT_SPACE_REGEX = re.compile(r"\s+%")
-COMMA_SPACE_REGEX = re.compile(r",\s+")
+DOLLAR_SPACE_RE = re.compile(r"(\$)\s+")
+OPEN_PAREN_SPACE_RE = re.compile(r"\(\s+")
+CLOSE_PAREN_SPACE_RE = re.compile(r"\s+\)")
+PERCENT_SPACE_RE = re.compile(r"\s+%")
+COMMA_SPACE_RE = re.compile(r",\s+")
 
 # Paragraph detection
-TABLE_OF_CONTENTS_REGEX = re.compile(r"\.{3,}")
+TABLE_OF_CONTENTS_RE = re.compile(r"\.{3,}")
 PARAGRAPH_THRESHOLD = 250
 
 
@@ -95,7 +96,7 @@ class SimpleTableProcessor:
 
         # Extract data
         self.data, self.col_map, self.col_headers = self._extract_data_driven(
-            CAPTION_REGEX.sub("", table_text)
+            CAPTION_RE.sub("", table_text)
         )
 
         self.invalid_table = len(self.data) == 0
@@ -107,10 +108,10 @@ class SimpleTableProcessor:
 
     def _extract_caption(self, text: str) -> str:
         """Extract caption from <caption> tags"""
-        match = CAPTION_REGEX.search(text)
+        match = CAPTION_RE.search(text)
         if match:
             caption_text = match.group(1).strip()
-            caption_text = WHITESPACE_REGEX.sub(" ", caption_text)
+            caption_text = WHITESPACE_RE.sub(" ", caption_text)
             return caption_text
         return ""
 
@@ -143,11 +144,11 @@ class SimpleTableProcessor:
         """Detect thousand/million/billion multipliers"""
         if not text:
             return None
-        if BILLION_REGEX.search(text):
+        if BILLION_RE.search(text):
             return 1_000_000_000.0
-        if MILLION_REGEX.search(text):
+        if MILLION_RE.search(text):
             return 1_000_000.0
-        if THOUSAND_REGEX.search(text):
+        if THOUSAND_RE.search(text):
             return 1_000.0
         return None
 
@@ -156,8 +157,8 @@ class SimpleTableProcessor:
         Repair table by relocating <S> marker to actual header row.
         Scores lines by header keyword count.
         """
-        table_text = CAPTION_REGEX.sub("", self.raw_text)
-        table_text = TABLE_TAG_REGEX.sub("", table_text)
+        table_text = CAPTION_RE.sub("", self.raw_text)
+        table_text = TABLE_TAG_RE.sub("", table_text)
         table_text = table_text.expandtabs(8)
         lines = table_text.split("\n")
 
@@ -165,7 +166,7 @@ class SimpleTableProcessor:
         old_marker_idx = None
         old_marker_line = None
         for i, line in enumerate(lines):
-            if S_MARKER_REGEX.search(line):
+            if S_MARKER_RE.search(line):
                 old_marker_idx = i
                 old_marker_line = line
                 break
@@ -203,7 +204,7 @@ class SimpleTableProcessor:
 
             # Re-extract with corrected table
             corrected_data, corrected_col_map, corrected_col_headers = (
-                self._extract_data_driven(CAPTION_REGEX.sub("", corrected_table))
+                self._extract_data_driven(CAPTION_RE.sub("", corrected_table))
             )
 
             if corrected_data:
@@ -222,7 +223,7 @@ class SimpleTableProcessor:
         3. Merge sparse columns
         4. Clean and repair rows
         """
-        table_text = TABLE_TAG_REGEX.sub("", table_text)
+        table_text = TABLE_TAG_RE.sub("", table_text)
         table_text = table_text.expandtabs(8)
         lines = table_text.split("\n")
 
@@ -230,7 +231,7 @@ class SimpleTableProcessor:
         marker_line = None
         marker_line_idx = 0
         for i, line in enumerate(lines):
-            if S_MARKER_REGEX.search(line):
+            if S_MARKER_RE.search(line):
                 marker_line = line
                 marker_line_idx = i
                 break
@@ -239,7 +240,7 @@ class SimpleTableProcessor:
             return [], {}, {}
 
         # Parse column boundaries from <C> positions
-        c_positions = [m.start() for m in C_MARKER_REGEX.finditer(marker_line)]
+        c_positions = [m.start() for m in C_MARKER_RE.finditer(marker_line)]
         if not c_positions:
             return [], {}, {}
 
@@ -286,7 +287,7 @@ class SimpleTableProcessor:
                     if start < len(line)
                     else ""
                 )
-                cell = HTML_TAG_REGEX.sub("", cell)
+                cell = HTML_TAG_RE.sub("", cell)
                 row_cells.append(cell)
             if any(row_cells):
                 raw_rows.append(row_cells)
@@ -524,11 +525,11 @@ class SimpleTableProcessor:
             if not cell:
                 cleaned_row.append("")
                 continue
-            c = DOLLAR_SPACE_REGEX.sub(r"\1", cell)
-            c = OPEN_PAREN_SPACE_REGEX.sub("(", c)
-            c = CLOSE_PAREN_SPACE_REGEX.sub(")", c)
-            c = PERCENT_SPACE_REGEX.sub("%", c)
-            c = COMMA_SPACE_REGEX.sub(",", c)
+            c = DOLLAR_SPACE_RE.sub(r"\1", cell)
+            c = OPEN_PAREN_SPACE_RE.sub("(", c)
+            c = CLOSE_PAREN_SPACE_RE.sub(")", c)
+            c = PERCENT_SPACE_RE.sub("%", c)
+            c = COMMA_SPACE_RE.sub(",", c)
             cleaned_row.append(c)
 
         # Merge adjacent cells
@@ -593,7 +594,7 @@ class SimpleTableProcessor:
 
                 if first_content_idx > 0:
                     val = row[first_content_idx]
-                    if not self._is_numeric(val) and not YEAR_REGEX.match(val):
+                    if not self._is_numeric(val) and not YEAR_RE.match(val):
                         row[0] = val
                         row[first_content_idx] = ""
 
@@ -696,7 +697,7 @@ class SimpleTableProcessor:
         if not self.data:
             return False
 
-        if TABLE_OF_CONTENTS_REGEX.search(
+        if TABLE_OF_CONTENTS_RE.search(
             "\n".join(" ".join(row) for row in self.data)
         ):
             return True
@@ -710,8 +711,8 @@ class SimpleTableProcessor:
     def _is_numeric(self, val: str) -> bool:
         """Check if value is numeric"""
         clean = NUMERIC_WITH_SYMBOLS.sub("", val).strip()
-        clean = UNIT_REGEX.sub("", clean)
-        return bool(NUMERIC_PATTERN.match(clean))
+        clean = UNIT_RE.sub("", clean)
+        return bool(NUMERIC_RE.match(clean))
 
     def _detect_primitive_type(self, sample_cells: List[str]) -> Optional[str]:
         """
@@ -733,7 +734,7 @@ class SimpleTableProcessor:
                 continue
 
             # Check for date (YYYY or MM/DD/YYYY pattern)
-            if YEAR_REGEX.search(cell):
+            if YEAR_RE.search(cell):
                 date_count += 1
             # Check for percentage
             elif "%" in cell:
@@ -783,7 +784,7 @@ class SimpleTableProcessor:
     def _is_percentage_header(self, header_text: str) -> bool:
         if not header_text:
             return False
-        return bool(PERCENT_HEADER_REGEX.search(header_text))
+        return bool(PERCENT_HEADER_RE.search(header_text))
 
     def _normalize_percentage_columns(
         self,
@@ -846,7 +847,7 @@ class SimpleTableProcessor:
 
             if header:
                 extracted_years = []
-                matches = YEAR_REGEX.findall(header)
+                matches = YEAR_RE.findall(header)
                 
                 for m in matches:
                     # Handle tuple from regex groups
@@ -902,7 +903,7 @@ class SimpleTableProcessor:
             
             if other_cells_empty and first_cell:
                 # Check if first cell is a year
-                matches = YEAR_REGEX.findall(first_cell)
+                matches = YEAR_RE.findall(first_cell)
                 valid_years_found = []
                 for m in matches:
                     groups = m if isinstance(m, tuple) else [m]
@@ -930,10 +931,10 @@ class SimpleTableProcessor:
         """Return table metadata"""
         caption_year = None
         if self.caption:
-            matches = YEAR_REGEX.findall(self.caption)
+            matches = YEAR_RE.findall(self.caption)
             years = []
             for m in matches:
-                # Handle regex groups from YEAR_REGEX (tuples)
+                # Handle regex groups from YEAR_RE (tuples)
                 if isinstance(m, tuple):
                     for g in m:
                         if g:

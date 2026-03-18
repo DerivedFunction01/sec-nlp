@@ -41,7 +41,7 @@ _NUM_WITH_SCALE = rf"(?:{_NUM})(?:\s*{_SCALE})?"
 
 # Examples matched:
 #   $5, €2.5m, USD 10, 10 USD, 10 dollars, US dollars 10, British pounds 5
-MONEY_PATTERN = re.compile(
+MONEY_RE = re.compile(
     rf"(?:"
     # Negative with minus sign: -$10, -USD 10
     rf"-\s*(?:{_SYMBOLS})\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
@@ -67,16 +67,16 @@ MONEY_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-PRICE_OF_PATTERN = re.compile(
-    rf"\bprice\s+of\s+(?:the\s+)?(?P<money>{MONEY_PATTERN.pattern})",
+PRICE_OF_RE = re.compile(
+    rf"\bprice\s+of\s+(?:the\s+)?(?P<money>{MONEY_RE.pattern})",
     re.IGNORECASE,
 )
-PRICE_PER_PATTERN = re.compile(
-    rf"\b(?P<money>{MONEY_PATTERN.pattern})\s+per\s+(?P<unit>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*){{0,2}})",
+PRICE_PER_RE = re.compile(
+    rf"\b(?P<money>{MONEY_RE.pattern})\s+per\s+(?P<unit>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*){{0,2}})",
     re.IGNORECASE,
 )
-PRICE_SLASH_PATTERN = re.compile(
-    rf"\b(?P<money>{MONEY_PATTERN.pattern})\s*/\s*(?P<unit>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*){{0,2}})",
+PRICE_SLASH_RE = re.compile(
+    rf"\b(?P<money>{MONEY_RE.pattern})\s*/\s*(?P<unit>[A-Za-z][\w-]*(?:\s+[A-Za-z][\w-]*){{0,2}})",
     re.IGNORECASE,
 )
 
@@ -91,18 +91,18 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
     spans: list[tuple[int, int, str]] = []
 
-    for m in MONEY_PATTERN.finditer(text):
+    for m in MONEY_RE.finditer(text):
         spans.append((m.start(), m.end(), LABELS.MONEY.value))
 
-    for m in PRICE_OF_PATTERN.finditer(text):
+    for m in PRICE_OF_RE.finditer(text):
         money_span = m.span("money")
         spans.append((money_span[0], money_span[1], LABELS.MONEY.value))
 
-    for m in PRICE_PER_PATTERN.finditer(text):
+    for m in PRICE_PER_RE.finditer(text):
         money_span = m.span("money")
         spans.append((money_span[0], money_span[1], LABELS.MONEY.value))
 
-    for m in PRICE_SLASH_PATTERN.finditer(text):
+    for m in PRICE_SLASH_RE.finditer(text):
         money_span = m.span("money")
         spans.append((money_span[0], money_span[1], LABELS.MONEY.value))
 

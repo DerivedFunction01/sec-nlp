@@ -149,7 +149,7 @@ def closest_distance(
     return best
 
 
-SENTENCE_SPLIT_PATTERN = re.compile(
+SENTENCE_SPLIT_RE = re.compile(
     r"(?<=[.!?])"  # Positive lookbehind for punctuation
     # 1. Protect Initials (e.g., "John H. Smith") -> Capital + Dot
     r"(?<!\b[A-Z]\.)"
@@ -175,7 +175,7 @@ SENTENCE_SPLIT_PATTERN = re.compile(
 )
 
 
-SENTENCE_SPLIT_PATTERN2 = re.compile(
+SENTENCE_SPLIT_RE2 = re.compile(
     r"(?<=[.!?])"  # Positive lookbehind for punctuation
     # 1. Protect Initials (e.g., "John H. Smith") -> Capital + Dot
     r"(?<!\b[A-Z]\.)"
@@ -200,14 +200,14 @@ SENTENCE_SPLIT_PATTERN2 = re.compile(
     r"\s+(?=[A-Z0-9_<])"  # Must be followed by Whitespace + Uppercase <-- issue: doesn't consider tags
 )
 
-YEAR_REGEX = re.compile(r"\b(19\d{2}|20\d{2})\b")
+YEAR_RE = re.compile(r"\b(19\d{2}|20\d{2})\b")
 
 # Reusable range fragments for numeric regexes
 NUMBER_PATTERN_STR = r"\d+(?:\.\d+)?"
 RANGE_SEPARATOR_STR = r"(?:-|–|—|to|and|of|out\s+of)"
 NUMBER_RANGE_STR = rf"{NUMBER_PATTERN_STR}(?:\s*{RANGE_SEPARATOR_STR}\s*{NUMBER_PATTERN_STR})?"
 
-SEGMENT_DELIMITER_REGEX = re.compile(
+SEGMENT_DELIMITER_RE = re.compile(
     r"(?<!\d)[:;](?!\d)|\b(?:while|although|whereas|but|however|except|aside|apart|yet|compar(ed?|ing|ison)|exclud(?:ing|es?)|other\s+than)\b|(?:,)(?!(?:\s+or))",
     re.IGNORECASE,
 )
@@ -221,7 +221,7 @@ def segment_bounds(
     seg_start = 0
     seg_end = len(text)
 
-    for m in SEGMENT_DELIMITER_REGEX.finditer(text):
+    for m in SEGMENT_DELIMITER_RE.finditer(text):
         if m.end() <= start:
             seg_start = m.end()
             continue

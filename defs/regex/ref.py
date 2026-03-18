@@ -1,5 +1,6 @@
+from __future__ import annotations
 import re
-from defs.regex_lib import build_alternation, build_regex
+from defs.regex_lib import build_alternation
 from defs.labels import LABELS
 
 # --- ACCOUNTING STANDARD ISSUERS ---
@@ -118,7 +119,7 @@ _EXHIBIT_PATTERN = (
 )
 
 # --- COMBINED REFERENCE PATTERN ---
-REFERENCE_PATTERN = re.compile(
+REFERENCE_RE = re.compile(
     rf"\b(?:{_STANDARD_ID_PATTERN}|{_EXHIBIT_PATTERN}|{_SHORT_PAREN_REF}|{_EXHIBIT_PREFIX_PATTERN})",
     re.IGNORECASE,
 )
@@ -130,4 +131,4 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
     """
     if not text:
         return []
-    return [(m.start(), m.end(), LABELS.REFERENCE.value) for m in REFERENCE_PATTERN.finditer(text)]
+    return [(m.start(), m.end(), LABELS.REFERENCE.value) for m in REFERENCE_RE.finditer(text)]

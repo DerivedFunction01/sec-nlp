@@ -1,7 +1,7 @@
+from __future__ import annotations
 import re
-
 from defs.labels import LABELS
-from defs.regex_lib import YEAR_REGEX, build_alternation, NUMBER_RANGE_STR
+from defs.regex_lib import YEAR_RE, build_alternation, NUMBER_RANGE_STR
 
 # =============================================================================
 # FRAGMENT STRINGS
@@ -77,7 +77,7 @@ SLASH_DATE = re.compile(
 
 YEAR_RANGE = re.compile(rf"\b({_YEAR_STR})-(\d{{2}})\b")
 
-DATE_YEAR = YEAR_REGEX
+DATE_YEAR = YEAR_RE
 
 # =============================================================================
 # FISCAL / QUARTER PATTERNS

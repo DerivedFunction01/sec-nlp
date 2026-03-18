@@ -9,7 +9,7 @@ from defs.regex_lib import (
     build_compound,
     build_regex,
     to_build_alternation,
-    SENTENCE_SPLIT_PATTERN,
+    SENTENCE_SPLIT_RE,
 )
 
 
@@ -273,7 +273,7 @@ WORKER_TERMS: set[str] = OCCUPATION_TERMS | INDUSTRY_WORKER_TERMS | GENERIC_WORK
 
 PRONOUN_TERMS: list[str] = [r"whom?", r"them"]  # 50 of them, 50 of whom
 
-PRONOUN_REGEX = re.compile(
+PRONOUN_RE = re.compile(
     rf"\b(?:"
     rf"({NUMBER_RANGE_STR})\s+of\s+(?:{'|'.join(PRONOUN_TERMS)})"
     rf"|of\s+(?:{'|'.join(PRONOUN_TERMS)})\s+({NUMBER_RANGE_STR})"
@@ -377,14 +377,14 @@ non_numeric_gap = r"(?:[^\W\d][\w\.-]*\s+){0,3}"
 personnel_event = to_build_alternation(PERSONNEL_EVENT_TERMS)
 
 worker_term_pattern = to_build_alternation(WORKER_TERMS)
-_WORKER_CONTEXT_REGEX = build_regex(WORKER_TERMS)
+_WORKER_CONTEXT_RE = build_regex(WORKER_TERMS)
 
-_COPULA_NUMBER_REGEX = re.compile(
+_COPULA_NUMBER_RE = re.compile(
     rf"\b({NUMBER_PATTERN_STR})\s+(?:are|were|is|was)\b",
     re.IGNORECASE,
 )
 
-_NUMBER_REGEX = re.compile(rf"\b({NUMBER_PATTERN_STR})\b")
+_NUMBER_RE = re.compile(rf"\b({NUMBER_PATTERN_STR})\b")
 
 _DEPT_TERMS = build_alternation(
     [
@@ -417,7 +417,7 @@ _DEPT_TERMS = build_alternation(
         r"security",
     ]
 )
-_DEPT_IN_REGEX = re.compile(
+_DEPT_IN_RE = re.compile(
     rf"\b({NUMBER_PATTERN_STR})\s+(?:(?:are|were|is|was)\s+)?(?:in|within|across)\s+({_DEPT_TERMS})\b",
     re.IGNORECASE,
 )
@@ -426,7 +426,7 @@ _DEPT_IN_REGEX = re.compile(
 # Heuristic: treat large counts as labor without requiring local worker context.
 _LABOR_CONTEXT_THRESHOLD = 1000
 
-WORKER_COUNT_REGEX = build_regex(
+WORKER_COUNT_RE = build_regex(
     [
         rf"{personnel_event}\s+{non_numeric_gap}({NUMBER_RANGE_STR})",
         rf"({NUMBER_RANGE_STR})\s+{non_numeric_gap}{worker_term_pattern}",
@@ -435,7 +435,7 @@ WORKER_COUNT_REGEX = build_regex(
     ]
 )
 
-_WORKER_NOUN_REGEX = build_regex(
+_WORKER_NOUN_RE = build_regex(
     [
         rf"({NUMBER_RANGE_STR})\s+{non_numeric_gap}{worker_term_pattern}",
         rf"{worker_term_pattern}\s+{non_numeric_gap}({NUMBER_RANGE_STR})",
@@ -576,8 +576,8 @@ _NON_UNION_PHRASES = [
     _CORE.ATWILL.value,
 ]
 
-# Extend existing _LABOR_CONTEXT_REGEX to include union signals
-_LABOR_CONTEXT_REGEX = build_regex(
+# Extend existing _LABOR_CONTEXT_RE to include union signals
+_LABOR_CONTEXT_RE = build_regex(
     list(WORKER_TERMS | PERSONNEL_EVENT_TERMS)
     + _UNION_PHRASES
     + _NON_UNION_PHRASES
@@ -595,9 +595,9 @@ def is_labor_copula_sentence(sentence: str) -> bool:
     """
     if not sentence:
         return False
-    if not _COPULA_NUMBER_REGEX.search(sentence):
+    if not _COPULA_NUMBER_RE.search(sentence):
         return False
-    return bool(_WORKER_CONTEXT_REGEX.search(sentence))
+    return bool(_WORKER_CONTEXT_RE.search(sentence))
 
 
 def extract_spans(text: str) -> list[tuple[int, int, str]]:
@@ -627,7 +627,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
     def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
         out: list[tuple[int, int, str]] = []
         start = 0
-        for m in SENTENCE_SPLIT_PATTERN.finditer(src):
+        for m in SENTENCE_SPLIT_RE.finditer(src):
             end = m.end()
             chunk = src[start:end]
             if chunk.strip():
@@ -650,13 +650,13 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
     for sent_start, _, sentence in _iter_sentences(text):
         # Prefer noun spans like "1,200 employees"
-        for m in _WORKER_NOUN_REGEX.finditer(sentence):
+        for m in _WORKER_NOUN_RE.finditer(sentence):
             _add_span(sent_start + m.start(), sent_start + m.end())
 
         # Strong patterns always apply
-        for m in WORKER_COUNT_REGEX.finditer(sentence):
+        for m in WORKER_COUNT_RE.finditer(sentence):
             match_text = m.group(0)
-            has_worker_noun = bool(_WORKER_CONTEXT_REGEX.search(match_text))
+            has_worker_noun = bool(_WORKER_CONTEXT_RE.search(match_text))
             if has_worker_noun:
                 _add_span(sent_start + m.start(), sent_start + m.end())
                 continue
@@ -671,26 +671,26 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
             else:
                 _add_span(sent_start + m.start(), sent_start + m.end())
 
-        has_worker_context = bool(_WORKER_CONTEXT_REGEX.search(sentence))
+        has_worker_context = bool(_WORKER_CONTEXT_RE.search(sentence))
 
-        for m in _COPULA_NUMBER_REGEX.finditer(sentence):
+        for m in _COPULA_NUMBER_RE.finditer(sentence):
             num_val = _number_value(m.group(1))
             if has_worker_context or num_val >= _LABOR_CONTEXT_THRESHOLD:
                 _add_span(sent_start + m.start(1), sent_start + m.end(1))
 
         if has_worker_context:
-            for m in _DEPT_IN_REGEX.finditer(sentence):
+            for m in _DEPT_IN_RE.finditer(sentence):
                 _add_span(sent_start + m.start(1), sent_start + m.end(1))
             
-            for m in PRONOUN_REGEX.finditer(sentence):
+            for m in PRONOUN_RE.finditer(sentence):
                 if m.group(1):
                     _add_span(sent_start + m.start(1), sent_start + m.end(1))
                 elif m.group(2):
                     _add_span(sent_start + m.start(2), sent_start + m.end(2))
 
         # If sentence is labor-heavy, tag large standalone numbers
-        if _LABOR_CONTEXT_REGEX.search(sentence):
-            for m in _NUMBER_REGEX.finditer(sentence):
+        if _LABOR_CONTEXT_RE.search(sentence):
+            for m in _NUMBER_RE.finditer(sentence):
                 num_val = _number_value(m.group(1))
                 if num_val >= _LABOR_CONTEXT_THRESHOLD:
                     _add_span(sent_start + m.start(1), sent_start + m.end(1))

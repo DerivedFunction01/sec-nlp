@@ -1,6 +1,6 @@
 import re
 
-from defs.regex_lib import closest_distance_in_segment, to_build_alternation, build_regex, SENTENCE_SPLIT_PATTERN
+from defs.regex_lib import closest_distance_in_segment, to_build_alternation, build_regex, SENTENCE_SPLIT_RE
 from defs.labels import LABELS
 
 PCT_CHANGE_TERMS = [
@@ -101,7 +101,7 @@ PCT = [
     r"per[- ]cent(?:age)?(?:\s+(?:rates?|points?))?",
 ]
 
-PCT_REGEX = build_regex(PCT)
+PCT_RE = build_regex(PCT)
 PCT_SPACE = re.compile(r"(\d)\s+%", re.IGNORECASE)
 PCT_RANGE = re.compile(
     rf"\b(\d+(?:\.\d+)?)\s*%?\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)\s*(?:%|{to_build_alternation(PCT)})",
@@ -147,7 +147,7 @@ _PCT_OF_CHAIN = (
     rf"{_MOD}{{0,3}}"  # up to 3 modifier words
 )
 
-PCT_OF_PATTERN = re.compile(
+PCT_OF_RE = re.compile(
     rf"\b(\d+(?:\.\d+)?(?:%|{to_build_alternation(PCT)})\s+{_PCT_OF_CHAIN}([A-Za-z][\w-]+))\b",
     re.IGNORECASE,
 )
@@ -169,7 +169,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
     def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
         out: list[tuple[int, int, str]] = []
         start = 0
-        for m in SENTENCE_SPLIT_PATTERN.finditer(src):
+        for m in SENTENCE_SPLIT_RE.finditer(src):
             end = m.end()
             chunk = src[start:end]
             if chunk.strip():
@@ -204,7 +204,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
                 )
             )
 
-        for m in PCT_OF_PATTERN.finditer(sentence):
+        for m in PCT_OF_RE.finditer(sentence):
             spans.append(
                 (
                     sent_start + m.start(1),
@@ -213,7 +213,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
                 )
             )
 
-        for m in PCT_REGEX.finditer(sentence):
+        for m in PCT_RE.finditer(sentence):
             spans.append(
                 (
                     sent_start + m.start(),

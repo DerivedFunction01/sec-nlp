@@ -1,7 +1,6 @@
-# proper_num.py
+from __future__ import annotations
 import re
 import pandas as pd
-from pathlib import Path
 from defs.regex_lib import build_alternation
 from defs.labels import LABELS
 

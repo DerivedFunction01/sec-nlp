@@ -1,5 +1,4 @@
 from __future__ import annotations
-from enum import Enum
 import re
 from defs.regex_lib import build_compound, NUMBER_PATTERN_STR, build_alternation
 from defs.labels import LABELS
@@ -90,7 +89,7 @@ PHYSICAL_COMPOUNDS: set[str] = {
 
 _LOCATION_TERMS = list(LOCATION_TERMS | PHYSICAL_COMPOUNDS)
 _LOCATION_TERM_PATTERN = build_alternation(_LOCATION_TERMS)
-LOCATION_COUNT_REGEX = re.compile(
+LOCATION_COUNT_RE = re.compile(
     rf"\b({NUMBER_PATTERN_STR})\s+(?:{_LOCATION_TERM_PATTERN})\b", re.IGNORECASE
 )
 
@@ -104,7 +103,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
         return []
 
     spans: list[tuple[int, int, str]] = []
-    for m in LOCATION_COUNT_REGEX.finditer(text):
+    for m in LOCATION_COUNT_RE.finditer(text):
         spans.append((m.start(), m.end(), LABELS.LOCATION_COUNT.value))
 
     return spans

@@ -3,15 +3,15 @@ import csv
 import difflib
 from pathlib import Path
 from typing import Optional
-from defs.regex_lib import YEAR_REGEX, build_alternation, build_regex
+from defs.regex_lib import YEAR_RE, build_alternation, build_regex
 
 COMPANY_TOKEN = "the Company"
 
-SPACE_PATTERN = re.compile(r"\s+")
-PUNCT_SPACE_PATTERN = re.compile(r"\s+([,\.;\:\!\?])")
-DOUBLE_PUNCT_PATTERN = re.compile(r"([,\.;\:\!\?])\1+")
-MISSING_SPACE_PATTERN = re.compile(r"(?:(?<!\b[A-Z])\.|[,;\:\!\?])(?=[a-zA-Z])")
-HANGING_APOSTROPHE_PATTERN = re.compile(r"\s+'(s|re|ve|t|m|ll|d)\b", re.IGNORECASE)
+SPACE_RE = re.compile(r"\s+")
+PUNCT_SPACE_RE = re.compile(r"\s+([,\.;\:\!\?])")
+DOUBLE_PUNCT_RE = re.compile(r"([,\.;\:\!\?])\1+")
+MISSING_SPACE_RE = re.compile(r"(?:(?<!\b[A-Z])\.|[,;\:\!\?])(?=[a-zA-Z])")
+HANGING_APOSTROPHE_RE = re.compile(r"\s+'(s|re|ve|t|m|ll|d)\b", re.IGNORECASE)
 
 
 def clean_spaces_and_punctuation(text: str) -> str:
@@ -20,11 +20,11 @@ def clean_spaces_and_punctuation(text: str) -> str:
     """
     if not text:
         return ""
-    text = SPACE_PATTERN.sub(" ", text).strip()
-    text = PUNCT_SPACE_PATTERN.sub(r"\1", text)
-    text = DOUBLE_PUNCT_PATTERN.sub(r"\1", text)
-    text = MISSING_SPACE_PATTERN.sub(r"\g<0> ", text)
-    text = HANGING_APOSTROPHE_PATTERN.sub(r"'\1", text)
+    text = SPACE_RE.sub(" ", text).strip()
+    text = PUNCT_SPACE_RE.sub(r"\1", text)
+    text = DOUBLE_PUNCT_RE.sub(r"\1", text)
+    text = MISSING_SPACE_RE.sub(r"\g<0> ", text)
+    text = HANGING_APOSTROPHE_RE.sub(r"'\1", text)
     return text
 
 
@@ -332,7 +332,7 @@ class NumberNormalizer:
 
         # Tag years and zip codes for disambiguation
         text = self.zip_code_pattern.sub(r"<ZIP:\g<0>>", text)
-        text = YEAR_REGEX.sub(r"<YEAR:\1>", text)
+        text = YEAR_RE.sub(r"<YEAR:\1>", text)
 
         return clean_spaces_and_punctuation(text)
 

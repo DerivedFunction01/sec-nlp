@@ -7,7 +7,7 @@ from defs.regex_lib import (
     build_regex,
     build_compound,
     to_build_alternation,
-    SENTENCE_SPLIT_PATTERN,
+    SENTENCE_SPLIT_RE,
     closest_distance_in_segment,
 )
 
@@ -153,9 +153,9 @@ EQUITY_CONTEXT_TERMS: list[str] = (
     _EQUITY_COMP_CONTEXT + _EQUITY_COMPONENT_CONTEXT + _EQUITY_STRUCTURE_CONTEXT
 )
 
-_EQUITY_CONTEXT_REGEX = build_regex(EQUITY_CONTEXT_TERMS)
-_UNAMBIGUOUS_REGEX = build_regex(_UNAMBIGUOUS_SHARE_TERMS)
-_PARAGRAPH_RELIABLE_REGEX = build_regex(_PARAGRAPH_RELIABLE_TERMS)
+_EQUITY_CONTEXT_RE = build_regex(EQUITY_CONTEXT_TERMS)
+_UNAMBIGUOUS_RE = build_regex(_UNAMBIGUOUS_SHARE_TERMS)
+_PARAGRAPH_RELIABLE_RE = build_regex(_PARAGRAPH_RELIABLE_TERMS)
 
 # =============================================================================
 # SHARE COUNT PATTERNS
@@ -168,7 +168,7 @@ _PARAGRAPH_RELIABLE_REGEX = build_regex(_PARAGRAPH_RELIABLE_TERMS)
 _non_numeric_gap = r"(?:[^\W\d][\w\.-]*\s+){0,3}"
 _share_alt = to_build_alternation(SHARE_TERMS)
 
-SHARE_COUNT_REGEX = build_regex(
+SHARE_COUNT_RE = build_regex(
     [
         rf"({NUMBER_RANGE_STR})\s+{_non_numeric_gap}(?:{_share_alt})",
         rf"(?:{_share_alt})\s+{_non_numeric_gap}({NUMBER_RANGE_STR})",
@@ -184,7 +184,7 @@ SHARE_COUNT_REGEX = build_regex(
 def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
     out: list[tuple[int, int, str]] = []
     start = 0
-    for m in SENTENCE_SPLIT_PATTERN.finditer(src):
+    for m in SENTENCE_SPLIT_RE.finditer(src):
         end = m.end()
         chunk = src[start:end]
         if chunk.strip():
@@ -235,7 +235,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
     # Pre-compute paragraph equity context
     para_equity: list[tuple[int, int, bool]] = [
-        (ps, pe, bool(_EQUITY_CONTEXT_REGEX.search(para)))
+        (ps, pe, bool(_EQUITY_CONTEXT_RE.search(para)))
         for ps, pe, para in _iter_paragraphs(text)
     ]
 
@@ -249,17 +249,17 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
         if not _para_has_equity(sent_start):
             continue
 
-        has_sentence_equity = bool(_EQUITY_CONTEXT_REGEX.search(sentence))
+        has_sentence_equity = bool(_EQUITY_CONTEXT_RE.search(sentence))
 
-        for m in SHARE_COUNT_REGEX.finditer(sentence):
+        for m in SHARE_COUNT_RE.finditer(sentence):
             if m.group(1):
                 num_start, num_end = m.start(1), m.end(1)
             else:
                 num_start, num_end = m.start(2), m.end(2)
 
             match_text = m.group(0)
-            is_unambiguous = bool(_UNAMBIGUOUS_REGEX.search(match_text))
-            is_para_reliable = bool(_PARAGRAPH_RELIABLE_REGEX.search(match_text))
+            is_unambiguous = bool(_UNAMBIGUOUS_RE.search(match_text))
+            is_para_reliable = bool(_PARAGRAPH_RELIABLE_RE.search(match_text))
 
             if is_unambiguous or is_para_reliable:
                 # Paragraph equity already confirmed — tag directly
@@ -267,7 +267,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
             else:
                 # Remaining ambiguous terms need clause-level equity context
                 if has_sentence_equity:
-                    eq_matches = list(_EQUITY_CONTEXT_REGEX.finditer(sentence))
+                    eq_matches = list(_EQUITY_CONTEXT_RE.finditer(sentence))
                     dist = closest_distance_in_segment(
                         sentence, num_start, num_end, eq_matches
                     )

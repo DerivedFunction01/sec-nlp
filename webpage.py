@@ -132,8 +132,8 @@ FILING_TYPES = {
 }
 
 
-TABLE_SPLIT_PATTERN = re.compile(r"(<TABLE>.*?</TABLE>)", re.DOTALL | re.IGNORECASE)
-TABLE_HINT_PATTERN = re.compile(
+TABLE_SPLIT_RE = re.compile(r"(<TABLE>.*?</TABLE>)", re.DOTALL | re.IGNORECASE)
+TABLE_HINT_RE = re.compile(
     rf"\b(?:{build_alternation([
         "table",
         "summary",
@@ -202,7 +202,7 @@ def detect_and_wrap_plaintext_tables(
     threshold: float = _PLAIN_TABLE_RULES["score_threshold"],  # type: ignore
     hint_bonus: float = 0.0,
 ) -> str:
-    paragraphs = PARAGRAPH_SPLIT_PATTERN.split(text)
+    paragraphs = PARAGRAPH_SPLIT_RE.split(text)
     output_parts = []
 
     for para in paragraphs:
@@ -236,7 +236,7 @@ def _process_plaintext_chunk(part: str) -> List[str]:
     if TABLE_HINT_PATTERN.search(part):
         hint_bonus = 0.1
     text = detect_and_wrap_plaintext_tables(part, hint_bonus=hint_bonus)
-    segments = TABLE_SPLIT_PATTERN.split(text)
+    segments = TABLE_SPLIT_RE.split(text)
     processed = []
 
     for idx, segment in enumerate(segments):
@@ -245,7 +245,7 @@ def _process_plaintext_chunk(part: str) -> List[str]:
             continue
 
         chunk = UNDERLINE_RE.sub("\n\n", segment)
-        paragraphs = PARAGRAPH_SPLIT_PATTERN.split(chunk)
+        paragraphs = PARAGRAPH_SPLIT_RE.split(chunk)
         cleaned = [
             WRAPPED_LINE_PATTERN.sub(" ", p).strip() for p in paragraphs if p.strip()
         ]
@@ -257,22 +257,22 @@ def _process_plaintext_chunk(part: str) -> List[str]:
 # Initialize RegionMatcher to access location regexes for home-country detection
 REGION_MATCHER = RegionMatcher()
 # Pattern to find single newlines that are not preceded or followed by another newline (i.e., wrapped lines)
-WRAPPED_LINE_PATTERN = re.compile(r"(?<!\n)[ \t]*\n[ \t]*(?!\n)")
-PARAGRAPH_SPLIT_PATTERN = re.compile(r"\n\s*\n")
-SPACE_PATTERN = re.compile(r"\s+")
-DOC_PATTERN = re.compile(r"<document>\s*(.*?)\s*</document>", re.DOTALL | re.IGNORECASE)
-HTML_REGEX = re.compile(r"<html", re.IGNORECASE)
-XML_REGEX = re.compile(r"xml", re.IGNORECASE)
+WRAPPED_LINE_RE = re.compile(r"(?<!\n)[ \t]*\n[ \t]*(?!\n)")
+PARAGRAPH_SPLIT_RE = re.compile(r"\n\s*\n")
+SPACE_RE = re.compile(r"\s+")
+DOC_RE = re.compile(r"<document>\s*(.*?)\s*</document>", re.DOTALL | re.IGNORECASE)
+HTML_RE = re.compile(r"<html", re.IGNORECASE)
+XML_RE = re.compile(r"xml", re.IGNORECASE)
 
 # ============================================================================
 # Common patterns for all document types
 # ============================================================================
 
-ANNUAL_REPORT_PATTERN = re.compile(
+ANNUAL_REPORT_RE = re.compile(
     r"ANNUAL\s+REPORT\s+PURSUANT\s+TO\s+SECTION\s+13\s+OR\s+15\s*\(d\)",
     re.IGNORECASE | re.MULTILINE,
 )
-FISCAL_YEAR_PATTERN = re.compile(
+FISCAL_YEAR_RE = re.compile(
     r"(?:For\s+the\s+fiscal\s+)?year\s+ended(?:\:)?\s+([A-Za-z]+\s+\d{1,2},?\s+\d{4})",
     re.IGNORECASE | re.MULTILINE,
 )
@@ -1089,7 +1089,7 @@ def extract_content(data: str, asHTML=True) -> str:
 
     else:
         # Plain text processing: keep existing tables separate and run the ASCII detector on the rest
-        parts = TABLE_SPLIT_PATTERN.split(data)
+        parts = TABLE_SPLIT_RE.split(data)
         processed_parts = []
         for idx, part in enumerate(parts):
             if idx % 2 == 1:
@@ -2265,7 +2265,7 @@ def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> Li
 
     merged_blocks: List[str] = []
 
-    for part in TABLE_SPLIT_PATTERN.split(text):
+    for part in TABLE_SPLIT_RE.split(text):
         if not part.strip():
             continue
         stripped_part = part.strip()
@@ -2275,7 +2275,7 @@ def filter_paragraphs_loose(text: str, company_name: Optional[str] = None) -> Li
                 merged_blocks.append(stripped_part)
             continue
 
-        for para in PARAGRAPH_SPLIT_PATTERN.split(part):
+        for para in PARAGRAPH_SPLIT_RE.split(part):
             cleaned = para.strip()
             if not cleaned or is_discardable(cleaned):
                 continue
@@ -3063,13 +3063,13 @@ def parse_multi_document_content(raw_text: str) -> List[str]:
                 )
                 return
 
-        is_html = bool(HTML_REGEX.search(doc_content))
+        is_html = bool(HTML_RE.search(doc_content))
 
         try:
             if is_html:
                 debug_print(f"  📄 Document {index_label}: Parsing as HTML")
                 content = extract_content(doc_content, asHTML=True)
-            elif XML_REGEX.search(doc_content):
+            elif XML_RE.search(doc_content):
                 debug_print(f"  📄 Document {index_label}: Is XML, skipping")
                 return
             else:
@@ -3083,7 +3083,7 @@ def parse_multi_document_content(raw_text: str) -> List[str]:
 
     # Use finditer to avoid creating a list of all document strings in memory at once
     # This significantly reduces memory usage for large text files
-    doc_iterator = DOC_PATTERN.finditer(raw_text)
+    doc_iterator = DOC_RE.finditer(raw_text)
     found_docs = False
 
     for i, match in enumerate(doc_iterator):

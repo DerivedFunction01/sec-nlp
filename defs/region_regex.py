@@ -1,5 +1,4 @@
-"""Lite replacement for the region matcher that loads pre-exported location data."""
-
+from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
