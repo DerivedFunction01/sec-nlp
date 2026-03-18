@@ -126,6 +126,14 @@ _EQUITY_COMP_CONTEXT: list[str] = [
     r"NEOs?",
     r"board\s+of\s+directors?",
     r"compensation\s+committees?",
+    r"employees?\s+(?:stock|share|equity)",  # "employee stock/share/equity"
+    r"(?:stock|share|equity)\s+compensation",  # "stock/equity compensation"
+    r"(?:stock|share|equity)\s+(?:based|based[- ]compensation)",  # "stock-based compensation"
+    r"employee\s+benefit\s+plans?",
+    r"executive\s+compensations?",
+    r"(?:long[- ]term|short[- ]term)\s+incentive",  # LTIP/STIP
+    r"(?:equity|stock)\s+awards?",
+    r"compensation\s+expense",  # almost always stock-based in this context
 ]
 _EQUITY_COMPONENT_CONTEXT: list[str] = [
     r"(?:preferred|common|treasury|outstanding|restricted|capital|equity)\s+(?:stocks?|shares?)",
