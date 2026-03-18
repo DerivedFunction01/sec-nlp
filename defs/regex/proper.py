@@ -47,6 +47,23 @@ _EQ_INDEX_BRANDS = [
     "SMI",
     "ASX",
     "TSX",
+    "Hang Seng",
+    "KOSPI",
+    "Nifty",
+    "Sensex",
+    "Bovespa",
+    "IPC",
+    "MOEX",
+    "RTSI",
+    "SET",
+    "STI",
+    "KLCI",
+    "PSEi",
+    "JCI",
+    "VN-Index",
+    "TASI",
+    "EGX",
+    "JSE",
 ]
 
 _EQ_INDEX_DESCRIPTORS = [
