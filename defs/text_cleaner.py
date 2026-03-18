@@ -180,6 +180,7 @@ class NumberNormalizer:
         r"\b(\d+(?:\.\d+)?)\s*%?\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)\s*%",
         re.IGNORECASE,
     )
+    leading_decimal_pattern = re.compile(r"(?:(?<=^)|(?<=\s))\.(\d+)\b")
 
     zip_code_pattern = re.compile(r"\b\d{5}(?:-\d{4})?\b")
     def _convert_hyphenated_fraction(self, match):
@@ -324,6 +325,9 @@ class NumberNormalizer:
 
         # Collapse duplicates like "15 (15)"
         text = self._collapse_parenthetical_duplicate_numbers(text)
+
+        # Leading decimals like ".25" -> "0.25"
+        text = self.leading_decimal_pattern.sub(r"0.\1", text)
 
         # Percent normalization
         text = self.percent_pattern.sub("%", text)
