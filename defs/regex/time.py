@@ -65,7 +65,15 @@ DATE_DM = re.compile(
     re.IGNORECASE,
 )
 
-SLASH_DATE = re.compile(r"\b(?:\d{1,2}/)+\d{2,4}\b")
+SLASH_DATE = re.compile(
+    r"\b"
+    r"(?:"
+    r"\d{1,2}/\d{1,2}/\d{4}"  # 12/31/2001 only
+    r"|"
+    r"\d{1,2}/\d{4}"  # 12/2001 only
+    r")"
+    r"\b",
+)
 
 YEAR_RANGE = re.compile(rf"\b({_YEAR_STR})-(\d{{2}})\b")
 
