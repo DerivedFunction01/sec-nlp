@@ -3,6 +3,7 @@ import re
 import pandas as pd
 from pathlib import Path
 from defs.regex_lib import build_alternation
+from defs.labels import LABELS
 
 
 # =============================================================================
@@ -105,3 +106,13 @@ PROPER_NUM_RE = re.compile(
     build_alternation(_all_patterns, sort_longest_first=True),
     re.IGNORECASE,
 )
+
+
+def extract_spans(text: str) -> list[tuple[int, int, str]]:
+    """
+    Extract PROPER_NUM spans from text.
+    Returns (start, end, label) tuples.
+    """
+    if not text:
+        return []
+    return [(m.start(), m.end(), LABELS.PROPER_NUM.value) for m in PROPER_NUM_RE.finditer(text)]
