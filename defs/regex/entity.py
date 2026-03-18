@@ -46,7 +46,44 @@ AMBIGUOUS_TERMS = {
     r"portfolios?",
 }
 
-_ENTITY_TERMS = list(ORGANIZATIONAL_TERMS | PRODUCT_TERMS | AMBIGUOUS_TERMS)
+GENERIC_COUNT_NOUNS = {
+    r"pieces?",
+    r"parts?",
+    r"components?",
+    r"elements?",
+    r"slots?",
+    r"seats?",
+    r"positions?",
+    r"spaces?",
+    r"trips?",
+    r"visits?",
+    r"calls?",
+    r"transactions?",
+    r"orders?",
+    r"shipments?",
+    r"deliveries?",
+    r"packages?",
+    r"containers?",
+    r"loads?",
+    r"sheets?",
+    r"coils?",
+    r"bundles?",
+    r"pallets?",
+    r"sacks?",
+    r"bales?",
+    r"heads?",
+    r"carats?",
+    r"ingots?",
+    r"bars?",
+    r"items?",
+    r"units?",
+    r"basis\s+points",
+    r"bps",
+    r"lots?",
+    r"tranches?",
+}
+
+_ENTITY_TERMS = list(ORGANIZATIONAL_TERMS | PRODUCT_TERMS | AMBIGUOUS_TERMS | GENERIC_COUNT_NOUNS)
 _ENTITY_TERM_PATTERN = build_alternation(_ENTITY_TERMS)
 _GENERIC_WORKER_PATTERN = build_alternation(list(GENERIC_WORKER_TERMS))
 

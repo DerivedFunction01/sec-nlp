@@ -31,9 +31,10 @@ SI_UNITS: dict[str, dict] = {
         "name": "metre",
         "aliases": ["meter"],
         "abbrev": "m",
-        "prefixes": ["kilo", "hecto", "centi", "milli"],
+        "prefixes": ["kilo", "hecto", "centi"],
         "derive_area": True,  # generates square metre, km2, etc.
         "derive_volume": True,  # generates cubic metre, m3, etc.
+        "suppress_base_abbrev": True,  # bare "m" is too ambiguous in 10-K context
     },
     "mass": {
         "name": "gram",
@@ -41,25 +42,34 @@ SI_UNITS: dict[str, dict] = {
         "abbrev": "g",
         "prefixes": ["kilo", "mega", "milli"],
         "extra": ["tonne", "tonnes", "metric ton", "metric tons"],
+        "suppress_base_abbrev": True,
     },
     "temperature": {
         "name": "celsius",
         "aliases": [],
         "abbrev": "°C",
         "prefixes": [],
-        "extra": ["kelvin", "degrees celsius", "degrees kelvin", "centigrade", "degree centigrade"],
+        "extra": [
+            "kelvin",
+            "degrees celsius",
+            "degrees kelvin",
+            "centigrade",
+            "degree centigrade",
+        ],
     },
     "volume": {
         "name": "litre",
         "aliases": ["liter"],
         "abbrev": "L",
         "prefixes": ["kilo", "mega", "giga", "milli", "hecto"],
+        "suppress_base_abbrev": True,
     },
     "energy": {
         "name": "joule",
         "aliases": [],
         "abbrev": "J",
         "prefixes": ["kilo", "mega", "giga"],
+        "suppress_base_abbrev": True,
     },
     "power": {
         "name": "watt",
@@ -67,6 +77,7 @@ SI_UNITS: dict[str, dict] = {
         "abbrev": "W",
         "prefixes": ["kilo", "mega", "giga"],
         "compounds": [("hour", "h")],  # kilowatt-hour -> kWh
+        "suppress_base_abbrev": True,
     },
     "pressure": {
         "name": "pascal",
@@ -79,18 +90,21 @@ SI_UNITS: dict[str, dict] = {
         "aliases": ["amp"],
         "abbrev": "A",
         "prefixes": ["kilo", "milli"],
+        "suppress_base_abbrev": True,
     },
     "voltage": {
         "name": "volt",
         "aliases": [],
         "abbrev": "V",
         "prefixes": ["kilo", "mega", "milli"],
+        "suppress_base_abbrev": True,
     },
     "data": {
         "name": "byte",
         "aliases": ["bit"],
         "abbrev": "B",
         "prefixes": ["kilo", "mega", "giga", "tera", "peta"],
+        "suppress_base_abbrev": True,
     },
 }
 
@@ -102,11 +116,11 @@ SI_UNITS: dict[str, dict] = {
 IMPERIAL_UNITS: dict[str, dict] = {
     "length": {
         "units": [
-            {"name": "inch", "plural": "inches", "abbrev": "in"},
+            # {"name": "inch", "plural": "inches", "abbrev": "in"},
             {"name": "foot", "plural": "feet", "abbrev": "ft"},
             {"name": "yard", "plural": "yards", "abbrev": "yd"},
             {"name": "mile", "plural": "miles", "abbrev": "mi"},
-            {"name": "nautical mile", "plural": "nautical miles", "abbrev": "nm"},
+            # {"name": "nautical mile", "plural": "nautical miles", "abbrev": "nm"},
         ],
         "derive_area": True,
         "derive_volume": True,
@@ -154,6 +168,7 @@ IMPERIAL_UNITS: dict[str, dict] = {
         "units": [
             {"name": "acre", "plural": "acres", "abbrev": None},
             {"name": "hectare", "plural": "hectares", "abbrev": "ha"},
+            {"name": "square inch", "plural": "square inches", "abbrev": "in2", "extra": ["sq in"]},
         ],
     },
     "energy": {
@@ -225,7 +240,7 @@ def _build_si_terms(config: dict) -> list[str]:
     # Base forms
     for n in [name] + aliases:
         terms += [n, f"{n}s"]
-    if abbrev:
+    if abbrev and not config.get("suppress_base_abbrev"):
         terms.append(abbrev)
 
     # Prefixed forms
@@ -335,48 +350,7 @@ def build_all_units() -> tuple[dict[str, list[str]], list[str]]:
 UNITS_BY_DIMENSION, UNITS_FLAT = build_all_units()
 
 
-# =============================================================================
-# GENERIC COUNTS / FINANCIAL
-# =============================================================================
-
-UNITS_GENERIC: list[str] = [
-    "pieces",
-    "parts",
-    "components",
-    "elements",
-    "slots",
-    "seats",
-    "positions",
-    "spaces",
-    "trips",
-    "visits",
-    "calls",
-    "transactions",
-    "orders",
-    "shipments",
-    "deliveries",
-    "packages",
-    "containers",
-    "loads",
-    "sheets",
-    "coils",
-    "bundles",
-    "pallets",
-    "sacks",
-    "bales",
-    "heads",
-    "carats",
-    "ingots",
-    "bars",
-    "items",
-    "units",
-    "basis points",
-    "bps",
-    "lots",
-    "tranches",
-]
-
-UNITS: list[str] = UNITS_FLAT + UNITS_GENERIC
+UNITS: list[str] = UNITS_FLAT
 
 _UNIT_PATTERN = build_alternation(UNITS)
 QUANTITY_REGEX = re.compile(
