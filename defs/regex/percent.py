@@ -21,8 +21,20 @@ PCT_CHANGE_TERMS = [
     r"deteriorat(?:es?|ed|ing|ion)",
     "uptick",
     "downtick",
+    r"up",
+    r"down",
 ]
 
+PCT_CHANGE_POST_TERMS = [
+    r"more",
+    r"less",
+    r"higher",
+    r"greater",
+    r"lower",
+    r"smaller",
+    r"fewer",    
+    r"larger",    
+]
 PCT_RATE_MODIFIERS = [
     r"(?:in)?effective",
     r"nominal",
@@ -163,6 +175,12 @@ PCT_NUMERIC_RE = re.compile(
     re.IGNORECASE,
 )
 
+_PCT_CHANGE_POST_ALT = to_build_alternation(PCT_CHANGE_POST_TERMS)
+PCT_CHANGE_POST_RE = re.compile(
+    rf"(?<!\w)({_PCT_NUM})\s*(?:%|{_PCT_ALT})\s+(?:{_PCT_CHANGE_POST_ALT})(?!\w)",
+    re.IGNORECASE,
+)
+
 def extract_spans(text: str) -> list[tuple[int, int, str]]:
     """
     Extract PERCENT spans from text.
@@ -190,12 +208,14 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
     def _label_for_span(start: int, end: int, sentence: str) -> str:
         change_matches = list(PCT_CHANGE_RE.finditer(sentence))
+        post_matches = list(PCT_CHANGE_POST_RE.finditer(sentence))
         rate_matches = list(PCT_RATE_RE.finditer(sentence))
 
         change_dist = closest_distance_in_segment(sentence, start, end, change_matches)
+        post_dist = closest_distance_in_segment(sentence, start, end, post_matches)
         rate_dist = closest_distance_in_segment(sentence, start, end, rate_matches)
 
-        if change_dist is not None:
+        if change_dist is not None or post_dist is not None:
             return LABELS.PCT_CHANGE.value
         if rate_dist is not None:
             return LABELS.PCT_RATE.value
