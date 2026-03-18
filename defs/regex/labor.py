@@ -435,6 +435,12 @@ WORKER_COUNT_REGEX = build_regex(
     ]
 )
 
+_WORKER_NOUN_REGEX = build_regex(
+    [
+        rf"({NUMBER_RANGE_STR})\s+{non_numeric_gap}{worker_term_pattern}",
+        rf"{worker_term_pattern}\s+{non_numeric_gap}({NUMBER_RANGE_STR})",
+    ]
+)
 
 # =============================================================================
 # UNION / LABOR CONTEXT
@@ -612,6 +618,12 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
         span_set.add(item)
         spans.append(item)
 
+    def _overlaps_existing(start: int, end: int) -> bool:
+        for s, e, _ in spans:
+            if not (end <= s or start >= e):
+                return True
+        return False
+
     def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
         out: list[tuple[int, int, str]] = []
         start = 0
@@ -637,9 +649,27 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
             return 0
 
     for sent_start, _, sentence in _iter_sentences(text):
+        # Prefer noun spans like "1,200 employees"
+        for m in _WORKER_NOUN_REGEX.finditer(sentence):
+            _add_span(sent_start + m.start(), sent_start + m.end())
+
         # Strong patterns always apply
         for m in WORKER_COUNT_REGEX.finditer(sentence):
-            _add_span(sent_start + m.start(), sent_start + m.end())
+            match_text = m.group(0)
+            has_worker_noun = bool(_WORKER_CONTEXT_REGEX.search(match_text))
+            if has_worker_noun:
+                _add_span(sent_start + m.start(), sent_start + m.end())
+                continue
+
+            # If a noun span already exists in this sentence, skip verb-only match
+            if _overlaps_existing(sent_start + m.start(), sent_start + m.end()):
+                continue
+
+            # For event/coverage patterns, keep the numeric span only.
+            if m.group(1):
+                _add_span(sent_start + m.start(1), sent_start + m.end(1))
+            else:
+                _add_span(sent_start + m.start(), sent_start + m.end())
 
         has_worker_context = bool(_WORKER_CONTEXT_REGEX.search(sentence))
 

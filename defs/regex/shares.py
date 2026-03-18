@@ -263,7 +263,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
             if is_unambiguous or is_para_reliable:
                 # Paragraph equity already confirmed — tag directly
-                _add_span(sent_start + num_start, sent_start + num_end)
+                _add_span(sent_start + m.start(), sent_start + m.end())
             else:
                 # Remaining ambiguous terms need clause-level equity context
                 if has_sentence_equity:
@@ -272,6 +272,6 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
                         sentence, num_start, num_end, eq_matches
                     )
                     if dist is not None:
-                        _add_span(sent_start + num_start, sent_start + num_end)
+                        _add_span(sent_start + m.start(), sent_start + m.end())
 
     return spans
