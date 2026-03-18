@@ -8,7 +8,7 @@ from defs.regex_lib import build_alternation
 # =============================================================================
 # NUMERIC FIRM NAMES
 # =============================================================================
-def _load_numeric_firms(path: str = "data/numeric_firms.csv") -> list[str]:
+def _load_numeric_firms(path: str = "data/numeric_firm_names.csv") -> list[str]:
     try:
         df = pd.read_csv(path)
         # Assume first column is the firm name
