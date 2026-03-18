@@ -88,6 +88,13 @@ PHYSICAL_COMPOUNDS: set[str] = {
 }
 
 
+_LOCATION_TERMS = list(LOCATION_TERMS | PHYSICAL_COMPOUNDS)
+_LOCATION_TERM_PATTERN = build_alternation(_LOCATION_TERMS)
+LOCATION_COUNT_REGEX = re.compile(
+    rf"\b({NUMBER_PATTERN_STR})\s+(?:{_LOCATION_TERM_PATTERN})\b", re.IGNORECASE
+)
+
+
 def extract_spans(text: str) -> list[tuple[int, int, str]]:
     """
     Extract LOCATION_COUNT spans from text using location-specific rules.
@@ -96,17 +103,8 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
     if not text:
         return []
 
-    terms = list(LOCATION_TERMS | PHYSICAL_COMPOUNDS)
-    if not terms:
-        return []
-
-    term_pattern = build_alternation(terms)
-    regex = re.compile(
-        rf"\b({NUMBER_PATTERN_STR})\s+(?:{term_pattern})\b", re.IGNORECASE
-    )
-
     spans: list[tuple[int, int, str]] = []
-    for m in regex.finditer(text):
+    for m in LOCATION_COUNT_REGEX.finditer(text):
         spans.append((m.start(), m.end(), LABELS.LOCATION_COUNT.value))
 
     return spans
