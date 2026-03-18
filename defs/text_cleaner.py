@@ -335,10 +335,6 @@ class NumberNormalizer:
         text = self.percent_range_pattern.sub(r"\1% to \2%", text)
         text = self.percent_space_pattern.sub(r"\1%", text)
 
-        # Tag years and zip codes for disambiguation
-        text = self.zip_code_pattern.sub(r"<ZIP:\g<0>>", text)
-        text = YEAR_RE.sub(r"<YEAR:\1>", text)
-
         return clean_spaces_and_punctuation(text)
 
 
