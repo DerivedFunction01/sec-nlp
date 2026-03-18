@@ -68,7 +68,7 @@ DATE_DM = re.compile(
 SLASH_DATE = re.compile(
     r"\b"
     r"(?:"
-    r"\d{1,2}/\d{1,2}/\d{4}"  # 12/31/2001 only
+    r"\d{1,2}/\d{1,2}/\d{2,4}"  # 12/31/2001 or 12/31/01
     r"|"
     r"\d{1,2}/\d{4}"  # 12/2001 only
     r")"
