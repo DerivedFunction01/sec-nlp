@@ -190,6 +190,14 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
         return []
 
     spans: list[tuple[int, int, str]] = []
+    span_set: set[tuple[int, int, str]] = set()
+
+    def _add_span(start: int, end: int, label: str) -> None:
+        item = (start, end, label)
+        if item in span_set:
+            return
+        span_set.add(item)
+        spans.append(item)
 
     def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
         out: list[tuple[int, int, str]] = []
@@ -222,40 +230,39 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
         return LABELS.PCT_OTHER.value
 
     for sent_start, _, sentence in _iter_sentences(text):
+        for m in PCT_CHANGE_POST_RE.finditer(sentence):
+            _add_span(
+                sent_start + m.start(),
+                sent_start + m.end(),
+                LABELS.PCT_CHANGE.value,
+            )
+
         for m in PCT_RANGE.finditer(sentence):
-            spans.append(
-                (
-                    sent_start + m.start(),
-                    sent_start + m.end(),
-                    _label_for_span(m.start(), m.end(), sentence),
-                )
+            _add_span(
+                sent_start + m.start(),
+                sent_start + m.end(),
+                _label_for_span(m.start(), m.end(), sentence),
             )
 
         for m in PCT_OF_RE.finditer(sentence):
-            spans.append(
-                (
-                    sent_start + m.start(1),
-                    sent_start + m.end(1),
-                    _label_for_span(m.start(1), m.end(1), sentence),
-                )
+            _add_span(
+                sent_start + m.start(1),
+                sent_start + m.end(1),
+                _label_for_span(m.start(1), m.end(1), sentence),
             )
 
         for m in PCT_RE.finditer(sentence):
-            spans.append(
-                (
-                    sent_start + m.start(),
-                    sent_start + m.end(),
-                    _label_for_span(m.start(), m.end(), sentence),
-                )
+            _add_span(
+                sent_start + m.start(),
+                sent_start + m.end(),
+                _label_for_span(m.start(), m.end(), sentence),
             )
 
         for m in PCT_NUMERIC_RE.finditer(sentence):
-            spans.append(
-                (
-                    sent_start + m.start(),
-                    sent_start + m.end(),
-                    _label_for_span(m.start(), m.end(), sentence),
-                )
+            _add_span(
+                sent_start + m.start(),
+                sent_start + m.end(),
+                _label_for_span(m.start(), m.end(), sentence),
             )
 
     return spans
