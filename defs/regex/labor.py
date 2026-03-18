@@ -630,7 +630,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
         if not num_text:
             return 0
         # If a range, take the first number as a proxy
-        first = re.split(r"[-–—]|\\bto\\b", num_text, maxsplit=1)[0]
+        first = re.split(r"[-–—]|\bto\b", num_text, maxsplit=1)[0]
         try:
             return int(float(first.replace(",", "")))
         except ValueError:
