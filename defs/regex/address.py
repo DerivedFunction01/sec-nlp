@@ -158,7 +158,7 @@ _PHONE_FORMATS = {
 
 def _build_country_pattern(code: str, local: str) -> str:
     return (
-        rf"(?:\+?{code}{_SEP})?"  # optional country code
+        rf"(?:{code}{_SEP})?"  # optional country code
         rf"(?:{local})"  # local format
         rf"{_EXT}"  # optional extension
     )
