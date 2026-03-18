@@ -196,6 +196,8 @@ SENTENCE_SPLIT_RE2 = re.compile(
     r"(?<!\bp\.)"  # p. (page) - FIXED (Separated)
     r"(?<!\bpp\.)"  # pp. (pages) - FIXED (Separated)
     r"(?<!\b[Ee]tc\.)"  # etc.
+    r"(?<!\be\.g\.)"
+    r"(?<!\bi\.e\.)"
     r"(?<!\bSt\.)"
     r"\s+(?=[A-Z0-9_<])"  # Must be followed by Whitespace + Uppercase <-- issue: doesn't consider tags
 )
