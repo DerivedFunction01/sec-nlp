@@ -101,10 +101,13 @@ PCT = [
     r"per[- ]cent(?:age)?(?:\s+(?:rates?|points?))?",
 ]
 
+_PCT_ALT = to_build_alternation(PCT)
+_PCT_NUM = r"(?:-?\(?\d+(?:\.\d+)?\)?|-?\.\d+)"
+
 PCT_RE = build_regex(PCT)
-PCT_SPACE = re.compile(r"(\d)\s+%", re.IGNORECASE)
+PCT_SPACE = re.compile(rf"({_PCT_NUM})\s+%", re.IGNORECASE)
 PCT_RANGE = re.compile(
-    rf"\b(\d+(?:\.\d+)?)\s*%?\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)\s*(?:%|{to_build_alternation(PCT)})",
+    rf"(?<!\w)({_PCT_NUM})\s*%?\s*(?:-|–|—|to)\s*({_PCT_NUM})\s*(?:%|{_PCT_ALT})(?!\w)",
     re.IGNORECASE,
 )
 
@@ -148,13 +151,17 @@ _PCT_OF_CHAIN = (
 )
 
 PCT_OF_RE = re.compile(
-    rf"\b(\d+(?:\.\d+)?(?:%|{to_build_alternation(PCT)})\s+{_PCT_OF_CHAIN}([A-Za-z][\w-]+))\b",
+    rf"(?<!\w)({_PCT_NUM}(?:%|{_PCT_ALT})\s+{_PCT_OF_CHAIN}([A-Za-z][\w-]+))(?!\w)",
     re.IGNORECASE,
 )
 
 # Change terms are simpler — no compound structure needed
 PCT_CHANGE_RE = build_regex(PCT_CHANGE_TERMS)
 
+PCT_NUMERIC_RE = re.compile(
+    rf"(?<!\w)({_PCT_NUM})\s*(?:%|{_PCT_ALT})(?!\w)",
+    re.IGNORECASE,
+)
 
 def extract_spans(text: str) -> list[tuple[int, int, str]]:
     """
@@ -214,6 +221,15 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
             )
 
         for m in PCT_RE.finditer(sentence):
+            spans.append(
+                (
+                    sent_start + m.start(),
+                    sent_start + m.end(),
+                    _label_for_span(m.start(), m.end(), sentence),
+                )
+            )
+
+        for m in PCT_NUMERIC_RE.finditer(sentence):
             spans.append(
                 (
                     sent_start + m.start(),

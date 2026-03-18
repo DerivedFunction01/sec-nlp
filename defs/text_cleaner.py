@@ -175,9 +175,10 @@ class NumberNormalizer:
         "almost",
     }
     percent_pattern = re.compile(r"\bper[- ]?cent\b", re.IGNORECASE)
-    percent_space_pattern = re.compile(r"(\d)\s+%", re.IGNORECASE)
+    _pct_num = r"(?:-?\(?\d+(?:\.\d+)?\)?|-?\.\d+)"
+    percent_space_pattern = re.compile(rf"({_pct_num})\s+%", re.IGNORECASE)
     percent_range_pattern = re.compile(
-        r"\b(\d+(?:\.\d+)?)\s*%?\s*(?:-|–|—|to)\s*(\d+(?:\.\d+)?)\s*%",
+        rf"(?<!\w)({_pct_num})\s*%?\s*(?:-|–|—|to)\s*({_pct_num})\s*%",
         re.IGNORECASE,
     )
     leading_decimal_pattern = re.compile(r"(?:(?<=^)|(?<=\s))\.(\d+)\b")
