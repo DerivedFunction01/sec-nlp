@@ -1,3 +1,7 @@
+import re
+from defs.regex_lib import NUMBER_RANGE_STR, build_alternation
+from defs.labels import LABELS
+
 UNITS_STRICT = [
     "barrels",
     "bbl",
@@ -172,3 +176,18 @@ UNITS = (
     + UNITS_GENERIC
     + UNITS_STRICT
 )
+
+_UNIT_PATTERN = build_alternation(UNITS)
+QUANTITY_REGEX = re.compile(
+    rf"\b({NUMBER_RANGE_STR})\s+(?:{_UNIT_PATTERN})\b", re.IGNORECASE
+)
+
+
+def extract_spans(text: str) -> list[tuple[int, int, str]]:
+    """
+    Extract QUANTITY spans from text.
+    Returns (start, end, label) tuples.
+    """
+    if not text:
+        return []
+    return [(m.start(), m.end(), LABELS.QUANTITY.value) for m in QUANTITY_REGEX.finditer(text)]
