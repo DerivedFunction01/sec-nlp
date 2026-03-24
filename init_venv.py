@@ -29,6 +29,7 @@ BASE_PACKAGES = [
     "seaborn",
     "IPython",
     "IProgress",
+    "ipykernel",
     "pandas",
     "tqdm",
     "numpy",
