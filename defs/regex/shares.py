@@ -206,10 +206,10 @@ def _iter_paragraphs(src: str) -> list[tuple[int, int, str]]:
     return out
 
 
-def extract_spans(text: str) -> list[tuple[int, int, str]]:
+def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
     Extract SHARE spans from text.
-    Returns (start, end, label) tuples.
+    Returns (match_text, start, end, label) tuples.
 
     Gating logic:
     - All terms require equity context somewhere in the paragraph.
@@ -224,14 +224,14 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
     if not text:
         return []
 
-    spans: list[tuple[int, int, str]] = []
+    spans: list[tuple[str, int, int, str]] = []
     span_set: set[tuple[int, int]] = set()
 
-    def _add_span(start: int, end: int) -> None:
+    def _add_span(match_text: str, start: int, end: int) -> None:
         if (start, end) in span_set:
             return
         span_set.add((start, end))
-        spans.append((start, end, LABELS.SHARE.value))
+        spans.append((match_text, start, end, LABELS.SHARE.value))
 
     # Pre-compute paragraph equity context
     para_equity: list[tuple[int, int, bool]] = [
@@ -263,7 +263,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
             if is_unambiguous or is_para_reliable:
                 # Paragraph equity already confirmed — tag directly
-                _add_span(sent_start + m.start(), sent_start + m.end())
+                _add_span(m.group(0), sent_start + m.start(), sent_start + m.end())
             else:
                 # Remaining ambiguous terms need clause-level equity context
                 if has_sentence_equity:
@@ -272,6 +272,6 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
                         sentence, num_start, num_end, eq_matches
                     )
                     if dist is not None:
-                        _add_span(sent_start + m.start(), sent_start + m.end())
+                        _add_span(m.group(0), sent_start + m.start(), sent_start + m.end())
 
     return spans

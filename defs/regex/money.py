@@ -81,29 +81,29 @@ PRICE_SLASH_RE = re.compile(
 )
 
 
-def extract_spans(text: str) -> list[tuple[int, int, str]]:
+def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
     Extract MONEY spans from text using money-specific rules.
-    Returns (start, end, label) tuples.
+    Returns (match_text, start, end, label) tuples.
     """
     if not text:
         return []
 
-    spans: list[tuple[int, int, str]] = []
+    spans: list[tuple[str, int, int, str]] = []
 
     for m in MONEY_RE.finditer(text):
-        spans.append((m.start(), m.end(), LABELS.MONEY.value))
+        spans.append((m.group(0), m.start(), m.end(), LABELS.MONEY.value))
 
     for m in PRICE_OF_RE.finditer(text):
         money_span = m.span("money")
-        spans.append((money_span[0], money_span[1], LABELS.MONEY.value))
+        spans.append((m.group("money"), money_span[0], money_span[1], LABELS.MONEY.value))
 
     for m in PRICE_PER_RE.finditer(text):
         money_span = m.span("money")
-        spans.append((money_span[0], money_span[1], LABELS.MONEY.value))
+        spans.append((m.group("money"), money_span[0], money_span[1], LABELS.MONEY.value))
 
     for m in PRICE_SLASH_RE.finditer(text):
         money_span = m.span("money")
-        spans.append((money_span[0], money_span[1], LABELS.MONEY.value))
+        spans.append((m.group("money"), money_span[0], money_span[1], LABELS.MONEY.value))
 
     return spans

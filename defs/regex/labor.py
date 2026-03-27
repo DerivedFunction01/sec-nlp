@@ -614,30 +614,30 @@ def _within_tolerance(
 ) -> bool:
     return num_val <= (max_emp_count + 1) * (1 + tolerance)
 
-def extract_spans(text: str, max_emp_count: Optional[int] = None) -> list[tuple[int, int, str]]:
+def extract_spans(text: str, max_emp_count: Optional[int] = None) -> list[tuple[str, int, int, str]]:
     """
     Extract LABOR spans from text using labor-specific rules.
-    Returns (start, end, label) tuples.
+    Returns (match_text, start, end, label) tuples.
     """
     if not text:
         return []
 
-    spans: list[tuple[int, int, str]] = []
-    span_set: set[tuple[int, int, str]] = set()
+    spans: list[tuple[str, int, int, str]] = []
+    span_set: set[tuple[str, int, int, str]] = set()
 
-    def _add_span(start: int, end: int, num_val: Optional[int] = None) -> None:
+    def _add_span(match_text: str, start: int, end: int, num_val: Optional[int] = None) -> None:
         label = LABELS.LABOR.value
         if max_emp_count is not None and num_val is not None:
             if not _within_tolerance(num_val, max_emp_count):
                 label = LABELS.ENTITY_COUNT.value
-        item = (start, end, label)
+        item = (match_text, start, end, label)
         if item in span_set:
             return
         span_set.add(item)
         spans.append(item)
 
     def _overlaps_existing(start: int, end: int) -> bool:
-        for s, e, _ in spans:
+        for _, s, e, _ in spans:
             if not (end <= s or start >= e):
                 return True
         return False
@@ -670,7 +670,7 @@ def extract_spans(text: str, max_emp_count: Optional[int] = None) -> list[tuple[
         # Prefer noun spans like "1,200 employees"
         for m in _WORKER_NOUN_RE.finditer(sentence):
             num_val = _number_value(next((g for g in m.groups() if g), ""))
-            _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
+            _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), num_val)
 
         # Strong patterns always apply
         for m in WORKER_COUNT_RE.finditer(sentence):
@@ -678,30 +678,30 @@ def extract_spans(text: str, max_emp_count: Optional[int] = None) -> list[tuple[
             has_worker_noun = bool(_WORKER_CONTEXT_RE.search(match_text))
             num_val = _number_value(next((g for g in m.groups() if g), ""))
             if has_worker_noun:
-                _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
+                _add_span(match_text, sent_start + m.start(), sent_start + m.end(), num_val)
                 continue
 
             # If a noun span already exists in this sentence, skip verb-only match
             if _overlaps_existing(sent_start + m.start(), sent_start + m.end()):
                 continue
 
-            _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
+            _add_span(match_text, sent_start + m.start(), sent_start + m.end(), num_val)
 
         has_worker_context = bool(_WORKER_CONTEXT_RE.search(sentence))
 
         for m in _COPULA_NUMBER_RE.finditer(sentence):
             num_val = _number_value(m.group(1))
             if has_worker_context or num_val >= _LABOR_CONTEXT_THRESHOLD:
-                _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
+                _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), num_val)
 
         if has_worker_context:
             for m in _DEPT_IN_RE.finditer(sentence):
                 num_val = _number_value(m.group(1))
-                _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
+                _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), num_val)
             
             for m in PRONOUN_RE.finditer(sentence):
                 num_val = _number_value(next((g for g in m.groups() if g), ""))
-                _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
+                _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), num_val)
 
         # If sentence is labor-heavy, tag large standalone numbers
         if _LABOR_CONTEXT_RE.search(sentence):
@@ -709,6 +709,6 @@ def extract_spans(text: str, max_emp_count: Optional[int] = None) -> list[tuple[
                 num_val = _number_value(m.group(1))
                 if num_val >= _LABOR_CONTEXT_THRESHOLD:
                     if not _overlaps_existing(sent_start + m.start(), sent_start + m.end()):
-                        _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
+                        _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), num_val)
 
     return spans

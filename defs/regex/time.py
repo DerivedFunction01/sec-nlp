@@ -139,29 +139,29 @@ _PATTERNS = [
 ]
 
 
-def extract_spans(text: str) -> list[tuple[int, int, str]]:
+def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
     Extract TIME spans from text.
-    Returns (start, end, label) tuples.
+    Returns (match_text, start, end, label) tuples.
     """
     if not text:
         return []
 
-    raw_matches: list[tuple[int, int]] = []
+    raw_matches: list[tuple[str, int, int]] = []
     for pat in _PATTERNS:
         for m in pat.finditer(text):
-            raw_matches.append((m.start(), m.end()))
+            raw_matches.append((m.group(0), m.start(), m.end()))
 
     if not raw_matches:
         return []
 
     # Prefer longer spans, resolve overlaps
-    raw_matches.sort(key=lambda x: (-(x[1] - x[0]), x[0]))
+    raw_matches.sort(key=lambda x: (-(x[2] - x[1]), x[1]))
 
-    chosen: list[tuple[int, int]] = []
-    for start, end in raw_matches:
-        if not any(not (end <= cs or start >= ce) for cs, ce in chosen):
-            chosen.append((start, end))
+    chosen: list[tuple[str, int, int]] = []
+    for match_text, start, end in raw_matches:
+        if not any(not (end <= cs or start >= ce) for _, cs, ce in chosen):
+            chosen.append((match_text, start, end))
 
-    chosen.sort(key=lambda x: x[0])
-    return [(s, e, LABELS.TIME.value) for s, e in chosen]
+    chosen.sort(key=lambda x: x[1])
+    return [(t, s, e, LABELS.TIME.value) for t, s, e in chosen]

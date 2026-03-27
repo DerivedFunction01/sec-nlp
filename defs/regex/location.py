@@ -152,7 +152,7 @@ LOCATION_COUNT_RE = re.compile(
 )
 
 
-def extract_spans(text: str) -> list[tuple[int, int, str]]:
+def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
     Extract LOCATION_COUNT spans from text using location-specific rules.
     Returns (start, end, label) tuples.
@@ -160,8 +160,8 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
     if not text:
         return []
 
-    spans: list[tuple[int, int, str]] = []
+    spans: list[tuple[str, int, int, str]] = []
     for m in LOCATION_COUNT_RE.finditer(text):
-        spans.append((m.start(), m.end(), LABELS.LOCATION_COUNT.value))
+        spans.append((m.group(0), m.start(), m.end(), LABELS.LOCATION_COUNT.value))
 
     return spans

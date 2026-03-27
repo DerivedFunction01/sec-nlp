@@ -124,11 +124,11 @@ PROPER_NUM_RE = re.compile(
 )
 
 
-def extract_spans(text: str) -> list[tuple[int, int, str]]:
+def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
     Extract PROPER_NUM spans from text.
-    Returns (start, end, label) tuples.
+    Returns (match_text, start, end, label) tuples.
     """
     if not text:
         return []
-    return [(m.start(), m.end(), LABELS.PROPER_NUM.value) for m in PROPER_NUM_RE.finditer(text)]
+    return [(m.group(0), m.start(), m.end(), LABELS.PROPER_NUM.value) for m in PROPER_NUM_RE.finditer(text)]

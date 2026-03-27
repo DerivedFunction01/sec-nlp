@@ -193,20 +193,20 @@ _MERGE_GAP = 15
 
 
 def _merge_spans(
-    spans: list[tuple[int, int, str]], gap: int = _MERGE_GAP
-) -> list[tuple[int, int, str]]:
+    spans: list[tuple[int, int, str]], text: str, gap: int = _MERGE_GAP
+) -> list[tuple[str, int, int, str]]:
     if not spans:
         return []
     spans = sorted(spans, key=lambda x: x[0])
-    merged: list[tuple[int, int, str]] = []
+    merged: list[tuple[str, int, int, str]] = []
     cur_start, cur_end, cur_label = spans[0]
     for start, end, label in spans[1:]:
         if start - cur_end <= gap:
             cur_end = max(cur_end, end)
         else:
-            merged.append((cur_start, cur_end, cur_label))
+            merged.append((text[cur_start:cur_end], cur_start, cur_end, cur_label))
             cur_start, cur_end, cur_label = start, end, label
-    merged.append((cur_start, cur_end, cur_label))
+    merged.append((text[cur_start:cur_end], cur_start, cur_end, cur_label))
     return merged
 
 
@@ -215,10 +215,10 @@ def _merge_spans(
 # =============================================================================
 
 
-def extract_spans(text: str) -> list[tuple[int, int, str]]:
+def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
     Extract ADDRESS spans from text.
-    Returns (start, end, label) tuples.
+    Returns (match_text, start, end, label) tuples.
     Merges adjacent spans so street + unit + zip collapse into one span.
     """
     if not text:
@@ -236,4 +236,4 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
         for m in pat.finditer(text):
             spans.append((m.start(), m.end(), LABELS.ADDRESS.value))
 
-    return _merge_spans(spans)
+    return _merge_spans(spans, text)

@@ -124,11 +124,11 @@ REFERENCE_RE = re.compile(
     re.IGNORECASE,
 )
 
-def extract_spans(text: str) -> list[tuple[int, int, str]]:
+def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
     Extract REFERENCE spans from text using reference-specific rules.
-    Returns (start, end, label) tuples.
+    Returns (match_text, start, end, label) tuples.
     """
     if not text:
         return []
-    return [(m.start(), m.end(), LABELS.REFERENCE.value) for m in REFERENCE_RE.finditer(text)]
+    return [(m.group(0), m.start(), m.end(), LABELS.REFERENCE.value) for m in REFERENCE_RE.finditer(text)]

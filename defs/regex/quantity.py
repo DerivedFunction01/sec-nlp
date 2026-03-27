@@ -354,10 +354,10 @@ QUANTITY_RE = re.compile(
 )
 
 
-def extract_spans(text: str) -> list[tuple[int, int, str]]:
+def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     if not text:
         return []
     return [
-        (m.start(), m.end(), LABELS.QUANTITY.value)
+        (m.group(0), m.start(), m.end(), LABELS.QUANTITY.value)
         for m in QUANTITY_RE.finditer(text)
     ]

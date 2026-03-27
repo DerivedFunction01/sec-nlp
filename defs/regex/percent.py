@@ -181,7 +181,7 @@ PCT_CHANGE_POST_RE = re.compile(
     re.IGNORECASE,
 )
 
-def extract_spans(text: str) -> list[tuple[int, int, str]]:
+def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
     Extract PERCENT spans from text.
     Returns (start, end, label) tuples.
@@ -189,11 +189,11 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
     if not text:
         return []
 
-    spans: list[tuple[int, int, str]] = []
-    span_set: set[tuple[int, int, str]] = set()
+    spans: list[tuple[str, int, int, str]] = []
+    span_set: set[tuple[str, int, int, str]] = set()
 
-    def _add_span(start: int, end: int, label: str) -> None:
-        item = (start, end, label)
+    def _add_span(text: str, start: int, end: int, label: str) -> None:
+        item = (text, start, end, label)
         if item in span_set:
             return
         span_set.add(item)
@@ -232,6 +232,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
     for sent_start, _, sentence in _iter_sentences(text):
         for m in PCT_CHANGE_POST_RE.finditer(sentence):
             _add_span(
+                m.group(0),
                 sent_start + m.start(),
                 sent_start + m.end(),
                 LABELS.PCT_CHANGE.value,
@@ -239,6 +240,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
         for m in PCT_RANGE.finditer(sentence):
             _add_span(
+                m.group(0),
                 sent_start + m.start(),
                 sent_start + m.end(),
                 _label_for_span(m.start(), m.end(), sentence),
@@ -246,6 +248,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
         for m in PCT_OF_RE.finditer(sentence):
             _add_span(
+                m.group(1),
                 sent_start + m.start(1),
                 sent_start + m.end(1),
                 _label_for_span(m.start(1), m.end(1), sentence),
@@ -253,6 +256,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
         for m in PCT_RE.finditer(sentence):
             _add_span(
+                m.group(0),
                 sent_start + m.start(),
                 sent_start + m.end(),
                 _label_for_span(m.start(), m.end(), sentence),
@@ -260,6 +264,7 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
 
         for m in PCT_NUMERIC_RE.finditer(sentence):
             _add_span(
+                m.group(0),
                 sent_start + m.start(),
                 sent_start + m.end(),
                 _label_for_span(m.start(), m.end(), sentence),
