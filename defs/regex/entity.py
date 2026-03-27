@@ -210,7 +210,7 @@ BARGAINING_UNIT_COUNT_RE = re.compile(
 )
 
 
-def extract_spans(text: str) -> list[tuple[int, int, str]]:
+def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
     Extract ENTITY_COUNT spans from text using entity-specific rules.
     Returns (start, end, label) tuples.
@@ -218,14 +218,14 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
     if not text:
         return []
 
-    spans: list[tuple[int, int, str]] = []
+    spans: list[tuple[str, int, int, str]] = []
     for m in FINANCIAL_INSTRUMENT_COUNT_RE.finditer(text):
-        spans.append((m.start(), m.end(), LABELS.ENTITY_COUNT.value))
+        spans.append((m.group(0), m.start(), m.end(), LABELS.ENTITY_COUNT.value))
     for m in ENTITY_COUNT_RE.finditer(text):
-        spans.append((m.start(), m.end(), LABELS.ENTITY_COUNT.value))
+        spans.append((m.group(0), m.start(), m.end(), LABELS.ENTITY_COUNT.value))
     for m in ENTITY_STANDALONE_RE.finditer(text):
-        spans.append((m.start(), m.end(), LABELS.ENTITY_COUNT.value))
+        spans.append((m.group(0), m.start(), m.end(), LABELS.ENTITY_COUNT.value))
     for m in BARGAINING_UNIT_COUNT_RE.finditer(text):
-        spans.append((m.start(), m.end(), LABELS.ENTITY_COUNT.value))
+        spans.append((m.group(0), m.start(), m.end(), LABELS.ENTITY_COUNT.value))
 
     return spans
