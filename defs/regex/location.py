@@ -90,7 +90,9 @@ PHYSICAL_COMPOUNDS: set[str] = {
             r"plants?",
             r"factor(?:y|ies)",
             r"warehouses?",
-            r"centers?"
+            r"centers?",
+            r"sites?",
+            r"locations?",
         ],
     ),
 }
