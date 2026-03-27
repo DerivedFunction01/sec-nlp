@@ -668,34 +668,28 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
             if _overlaps_existing(sent_start + m.start(), sent_start + m.end()):
                 continue
 
-            # For event/coverage patterns, keep the numeric span only.
-            if m.group(1):
-                _add_span(sent_start + m.start(1), sent_start + m.end(1))
-            else:
-                _add_span(sent_start + m.start(), sent_start + m.end())
+            _add_span(sent_start + m.start(), sent_start + m.end())
 
         has_worker_context = bool(_WORKER_CONTEXT_RE.search(sentence))
 
         for m in _COPULA_NUMBER_RE.finditer(sentence):
             num_val = _number_value(m.group(1))
             if has_worker_context or num_val >= _LABOR_CONTEXT_THRESHOLD:
-                _add_span(sent_start + m.start(1), sent_start + m.end(1))
+                _add_span(sent_start + m.start(), sent_start + m.end())
 
         if has_worker_context:
             for m in _DEPT_IN_RE.finditer(sentence):
-                _add_span(sent_start + m.start(1), sent_start + m.end(1))
+                _add_span(sent_start + m.start(), sent_start + m.end())
             
             for m in PRONOUN_RE.finditer(sentence):
-                if m.group(1):
-                    _add_span(sent_start + m.start(1), sent_start + m.end(1))
-                elif m.group(2):
-                    _add_span(sent_start + m.start(2), sent_start + m.end(2))
+                _add_span(sent_start + m.start(), sent_start + m.end())
 
         # If sentence is labor-heavy, tag large standalone numbers
         if _LABOR_CONTEXT_RE.search(sentence):
             for m in _NUMBER_RE.finditer(sentence):
                 num_val = _number_value(m.group(1))
                 if num_val >= _LABOR_CONTEXT_THRESHOLD:
-                    _add_span(sent_start + m.start(1), sent_start + m.end(1))
+                    if not _overlaps_existing(sent_start + m.start(), sent_start + m.end()):
+                        _add_span(sent_start + m.start(), sent_start + m.end())
 
     return spans
