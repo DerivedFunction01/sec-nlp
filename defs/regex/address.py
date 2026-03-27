@@ -2,6 +2,7 @@ from __future__ import annotations
 import re
 from defs.regex_lib import build_alternation
 from defs.labels import LABELS
+from defs.text_cleaner import _remap, _strip_angle_brackets
 
 
 # =============================================================================
@@ -305,7 +306,6 @@ def _merge_spans(
     merged.append((text[cur_start:cur_end], cur_start, cur_end, cur_label))
     return merged
 
-
 # =============================================================================
 # EXTRACT SPANS
 # =============================================================================
@@ -316,29 +316,27 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     Extract ADDRESS / PHONE spans from text.
     Returns (match_text, start, end, label) tuples.
 
-    Merge rules
-    -----------
-    ADDRESS group  : STREET_ADDRESS_RE, UNIT_RE, ADDRESS_COMPONENT_RE, ZIP_CODE_RE
-                     These merge with each other.  The gap is widened when the
-                     intervening text contains title-case words (city names) or
-                     state abbreviations so that full postal addresses collapse
-                     into a single span.
-    PHONE group    : PHONE_NUMBER_RE — never merges with address spans or with
-                     other phone spans (each number stays its own span).
+    Angle brackets (<>) inserted by the upstream number normalizer are stripped
+    before matching so patterns see clean numeric text, then all positions are
+    remapped back to the original text coordinates before returning.
     """
     if not text:
         return []
 
-    # (start, end, label, merge_group)
-    raw: list[tuple[int, int, str, str]] = []
+    stripped, pos_map = _strip_angle_brackets(text)
 
+    raw: list[tuple[int, int, str, str]] = []
     address_label = LABELS.ADDRESS.value
 
     for pat in (STREET_ADDRESS_RE, UNIT_RE, ADDRESS_COMPONENT_RE, ZIP_CODE_RE):
-        for m in pat.finditer(text):
-            raw.append((m.start(), m.end(), address_label, _GRP_ADDRESS))
+        for m in pat.finditer(stripped):
+            orig_start, orig_end = _remap(pos_map, m.start(), m.end())
+            raw.append((orig_start, orig_end, address_label, _GRP_ADDRESS))
 
-    for m in PHONE_NUMBER_RE.finditer(text):
-        raw.append((m.start(), m.end(), address_label, _GRP_PHONE))
+    for m in PHONE_NUMBER_RE.finditer(stripped):
+        orig_start, orig_end = _remap(pos_map, m.start(), m.end())
+        raw.append((orig_start, orig_end, address_label, _GRP_PHONE))
 
+    # _merge_spans operates on original text coordinates and slices from
+    # the original text, so angle brackets are preserved in returned spans
     return _merge_spans(raw, text)
