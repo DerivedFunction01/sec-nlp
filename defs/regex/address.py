@@ -102,7 +102,7 @@ _unit_terms = build_alternation(UNIT_TERMS)
 _address_terms = build_alternation(ADDRESS_COMPONENT_TERMS)
 
 STREET_ADDRESS_RE = re.compile(
-    rf"\b\d{{1,6}}[A-Za-z]*\s+[A-Za-z0-9][\w\s\-']{{1,40}}\s+(?:{_street_terms})\b",
+    rf"\b\d{{1,6}}[A-Za-z]{{0,2}}\s+[A-Za-z0-9][\w\s\-']{{1,40}}\s+(?:{_street_terms})\b",
     re.IGNORECASE,
 )
 
@@ -234,21 +234,74 @@ def match_phone(text: str) -> list[tuple[str, str]]:
 
 _MERGE_GAP = 15
 
+TITLE_CASE_WORDS_RE = re.compile(r"\b[A-Z][a-z]+(?:[\s,]+[A-Z][a-z]+)*\b")
+STATE_ABBR_RE = re.compile(r"\b[A-Z]{2,4}\b")
+# =============================================================================
+# SPAN MERGING
+# =============================================================================
+
+_MERGE_GAP = 15
+
+TITLE_CASE_WORDS_RE = re.compile(r"\b[A-Z][a-z]+(?:[\s,]+[A-Z][a-z]+)*\b")
+STATE_ABBR_RE = re.compile(r"\b[A-Z]{2,4}\b")
+
+# Merge-group constants
+_GRP_ADDRESS = "ADDRESS"
+_GRP_PHONE = "PHONE"
+_GRP_NONE = "NONE"  # never merges with anything
+
+
+def _gap_has_city_state(text: str, gap_start: int, gap_end: int) -> bool:
+    """Return True if the gap between two spans contains a city/state fragment."""
+    gap = text[gap_start:gap_end]
+    return bool(TITLE_CASE_WORDS_RE.search(gap) or STATE_ABBR_RE.search(gap))
+
 
 def _merge_spans(
-    spans: list[tuple[int, int, str]], text: str, gap: int = _MERGE_GAP
+    spans: list[tuple[int, int, str, str]],  # (start, end, label, group)
+    text: str,
+    gap: int = _MERGE_GAP,
 ) -> list[tuple[str, int, int, str]]:
+    """
+    Merge adjacent spans that share the same merge-group.
+    ADDRESS spans get an extended gap when the intervening text looks like
+    a city / state fragment (title-case words or state abbreviations).
+    PHONE spans (_GRP_PHONE) never merge with anything.
+    """
     if not spans:
         return []
+
     spans = sorted(spans, key=lambda x: x[0])
     merged: list[tuple[str, int, int, str]] = []
-    cur_start, cur_end, cur_label = spans[0]
-    for start, end, label in spans[1:]:
-        if start - cur_end <= gap:
+
+    cur_start, cur_end, cur_label, cur_group = spans[0]
+
+    for start, end, label, group in spans[1:]:
+        # Never merge if either span opted out
+        if cur_group == _GRP_NONE or group == _GRP_NONE:
+            merged.append((text[cur_start:cur_end], cur_start, cur_end, cur_label))
+            cur_start, cur_end, cur_label, cur_group = start, end, label, group
+            continue
+
+        # Only merge spans in the same group
+        if cur_group != group:
+            merged.append((text[cur_start:cur_end], cur_start, cur_end, cur_label))
+            cur_start, cur_end, cur_label, cur_group = start, end, label, group
+            continue
+
+        raw_gap = start - cur_end
+        if cur_group == _GRP_ADDRESS:
+            # Allow a larger gap when the intervening text looks like city/state
+            effective_gap = 40 if _gap_has_city_state(text, cur_end, start) else gap
+        else:
+            effective_gap = gap
+
+        if raw_gap <= effective_gap:
             cur_end = max(cur_end, end)
         else:
             merged.append((text[cur_start:cur_end], cur_start, cur_end, cur_label))
-            cur_start, cur_end, cur_label = start, end, label
+            cur_start, cur_end, cur_label, cur_group = start, end, label, group
+
     merged.append((text[cur_start:cur_end], cur_start, cur_end, cur_label))
     return merged
 
@@ -260,23 +313,32 @@ def _merge_spans(
 
 def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
-    Extract ADDRESS spans from text.
+    Extract ADDRESS / PHONE spans from text.
     Returns (match_text, start, end, label) tuples.
-    Merges adjacent spans so street + unit + zip collapse into one span.
+
+    Merge rules
+    -----------
+    ADDRESS group  : STREET_ADDRESS_RE, UNIT_RE, ADDRESS_COMPONENT_RE, ZIP_CODE_RE
+                     These merge with each other.  The gap is widened when the
+                     intervening text contains title-case words (city names) or
+                     state abbreviations so that full postal addresses collapse
+                     into a single span.
+    PHONE group    : PHONE_NUMBER_RE — never merges with address spans or with
+                     other phone spans (each number stays its own span).
     """
     if not text:
         return []
 
-    spans: list[tuple[int, int, str]] = []
+    # (start, end, label, merge_group)
+    raw: list[tuple[int, int, str, str]] = []
 
-    for pat in (
-        STREET_ADDRESS_RE,
-        UNIT_RE,
-        ADDRESS_COMPONENT_RE,
-        ZIP_CODE_RE,
-        PHONE_NUMBER_RE,
-    ):
+    address_label = LABELS.ADDRESS.value
+
+    for pat in (STREET_ADDRESS_RE, UNIT_RE, ADDRESS_COMPONENT_RE, ZIP_CODE_RE):
         for m in pat.finditer(text):
-            spans.append((m.start(), m.end(), LABELS.ADDRESS.value))
+            raw.append((m.start(), m.end(), address_label, _GRP_ADDRESS))
 
-    return _merge_spans(spans, text)
+    for m in PHONE_NUMBER_RE.finditer(text):
+        raw.append((m.start(), m.end(), address_label, _GRP_PHONE))
+
+    return _merge_spans(raw, text)
