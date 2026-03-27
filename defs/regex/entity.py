@@ -1,6 +1,6 @@
 from __future__ import annotations
 import re
-from defs.regex_lib import NUMBER_PATTERN_STR, build_alternation, build_compound
+from defs.regex_lib import NUMBER_PATTERN_STR, add_restrictions, build_alternation, build_compound
 from defs.labels import LABELS
 from defs.regex.labor import GENERIC_WORKER_TERMS, WORKER_TERMS
 
@@ -11,6 +11,13 @@ ORGANIZATIONAL_TERMS = {
     r"subsidiar(?:y|ies)",
     r"affiliates?",
     r"airlines?",
+    r"airplanes?",
+    r"helicopters?",
+    r"jets?",
+    # not to ship, but ship/vessel
+    add_restrictions(r"ships?",lookbehinds=[r"to"]),
+    r"vessels?",
+    r"freights?",
     r"unions",
     r"partnerships?",
     r"ventures?",
