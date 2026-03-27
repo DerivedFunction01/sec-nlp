@@ -492,7 +492,7 @@ _SUFFIX_AGREEMENTS = [
 ]
 _SUFFIX_ORGS = [r"organizations?"]
 
-_UNION_TERMS = [
+_UNION_TERMS = {
     _CORE.UNION,
     _CORE.FEDERATION,
     _CORE.GUILD,
@@ -503,7 +503,7 @@ _UNION_TERMS = [
     _CORE.SOCIETY,
     _CORE.UNITED,
     _CORE.ORDER,
-]
+}
 
 
 # --- Collective bargaining ---
@@ -541,7 +541,7 @@ _DYNAMIC_UNION_CORE = build_alternation(
     [
         build_compound(_UNION_TERMS, WORKER_TERMS, sep_prefix=_GAP),
         build_compound(WORKER_TERMS, _UNION_TERMS, sep_prefix=_GAP),
-        build_compound(_UNION_TERMS, _CORE.UNION.value, sep_prefix=_GAP),
+        build_compound(_UNION_TERMS - {_CORE.UNION}, _CORE.UNION, sep_prefix=_GAP),
     ]
 )
 
