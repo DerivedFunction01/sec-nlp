@@ -12,6 +12,7 @@ from defs.regex_lib import (
     to_build_alternation,
     SENTENCE_SPLIT_RE,
 )
+from defs.text_cleaner import remap_span, strip_angle_brackets
 
 
 # =============================================================================
@@ -614,6 +615,77 @@ def _within_tolerance(
 ) -> bool:
     return num_val <= (max_emp_count + 1) * (1 + tolerance)
 
+
+def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
+    out: list[tuple[int, int, str]] = []
+    start = 0
+    for m in SENTENCE_SPLIT_RE.finditer(src):
+        end = m.end()
+        chunk = src[start:end]
+        if chunk.strip():
+            out.append((start, end, chunk))
+        start = end
+    tail = src[start:]
+    if tail.strip():
+        out.append((start, len(src), tail))
+    return out
+
+
+def _number_value(num_text: str) -> int:
+    if not num_text:
+        return 0
+    # If a range, take the first number as a proxy
+    first = re.split(r"[-–—]|\bto\b", num_text, maxsplit=1)[0]
+    try:
+        return int(float(first.replace(",", "")))
+    except ValueError:
+        return 0
+
+
+def extract_high_confidence_spans(text: str, max_emp_count: Optional[int] = None) -> list[tuple[str, int, int, str]]:
+    """
+    Extract high-confidence LABOR spans (e.g. "1,200 employees") that should take priority 
+    over other extractors like TIME to prevent misclassification.
+    """
+    if not text:
+        return []
+
+    stripped_text, pos_map = strip_angle_brackets(text)
+
+    spans: list[tuple[str, int, int, str]] = []
+    span_set: set[tuple[str, int, int, str]] = set()
+
+    def _add_span(start: int, end: int, num_val: Optional[int] = None) -> None:
+        label = LABELS.LABOR.value
+        if max_emp_count is not None and num_val is not None:
+            if not _within_tolerance(num_val, max_emp_count):
+                label = LABELS.ENTITY_COUNT.value
+        
+        orig_start, orig_end = remap_span(pos_map, start, end)
+        item = (text[orig_start:orig_end], orig_start, orig_end, label)
+        
+        if item in span_set:
+            return
+        span_set.add(item)
+        spans.append(item)
+
+    for sent_start, _, sentence in _iter_sentences(stripped_text):
+        # Prefer noun spans like "1,200 employees"
+        for m in _WORKER_NOUN_RE.finditer(sentence):
+            num_val = _number_value(next((g for g in m.groups() if g), ""))
+            _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
+
+        # Strong patterns always apply
+        for m in WORKER_COUNT_RE.finditer(sentence):
+            match_text = m.group(0)
+            has_worker_noun = bool(_WORKER_CONTEXT_RE.search(match_text))
+            if has_worker_noun:
+                num_val = _number_value(next((g for g in m.groups() if g), ""))
+                _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
+
+    return spans
+
+
 def extract_spans(text: str, max_emp_count: Optional[int] = None) -> list[tuple[str, int, int, str]]:
     """
     Extract LABOR spans from text using labor-specific rules.
@@ -622,55 +694,38 @@ def extract_spans(text: str, max_emp_count: Optional[int] = None) -> list[tuple[
     if not text:
         return []
 
+    stripped_text, pos_map = strip_angle_brackets(text)
+
     spans: list[tuple[str, int, int, str]] = []
     span_set: set[tuple[str, int, int, str]] = set()
+    stripped_spans: list[tuple[int, int]] = []
 
-    def _add_span(match_text: str, start: int, end: int, num_val: Optional[int] = None) -> None:
+    def _add_span(start: int, end: int, num_val: Optional[int] = None) -> None:
         label = LABELS.LABOR.value
         if max_emp_count is not None and num_val is not None:
             if not _within_tolerance(num_val, max_emp_count):
                 label = LABELS.ENTITY_COUNT.value
-        item = (match_text, start, end, label)
+                
+        orig_start, orig_end = remap_span(pos_map, start, end)
+        item = (text[orig_start:orig_end], orig_start, orig_end, label)
+        
         if item in span_set:
             return
         span_set.add(item)
         spans.append(item)
+        stripped_spans.append((start, end))
 
     def _overlaps_existing(start: int, end: int) -> bool:
-        for _, s, e, _ in spans:
+        for s, e in stripped_spans:
             if not (end <= s or start >= e):
                 return True
         return False
 
-    def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
-        out: list[tuple[int, int, str]] = []
-        start = 0
-        for m in SENTENCE_SPLIT_RE.finditer(src):
-            end = m.end()
-            chunk = src[start:end]
-            if chunk.strip():
-                out.append((start, end, chunk))
-            start = end
-        tail = src[start:]
-        if tail.strip():
-            out.append((start, len(src), tail))
-        return out
-
-    def _number_value(num_text: str) -> int:
-        if not num_text:
-            return 0
-        # If a range, take the first number as a proxy
-        first = re.split(r"[-–—]|\bto\b", num_text, maxsplit=1)[0]
-        try:
-            return int(float(first.replace(",", "")))
-        except ValueError:
-            return 0
-
-    for sent_start, _, sentence in _iter_sentences(text):
+    for sent_start, _, sentence in _iter_sentences(stripped_text):
         # Prefer noun spans like "1,200 employees"
         for m in _WORKER_NOUN_RE.finditer(sentence):
             num_val = _number_value(next((g for g in m.groups() if g), ""))
-            _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), num_val)
+            _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
 
         # Strong patterns always apply
         for m in WORKER_COUNT_RE.finditer(sentence):
@@ -678,30 +733,30 @@ def extract_spans(text: str, max_emp_count: Optional[int] = None) -> list[tuple[
             has_worker_noun = bool(_WORKER_CONTEXT_RE.search(match_text))
             num_val = _number_value(next((g for g in m.groups() if g), ""))
             if has_worker_noun:
-                _add_span(match_text, sent_start + m.start(), sent_start + m.end(), num_val)
+                _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
                 continue
 
             # If a noun span already exists in this sentence, skip verb-only match
             if _overlaps_existing(sent_start + m.start(), sent_start + m.end()):
                 continue
 
-            _add_span(match_text, sent_start + m.start(), sent_start + m.end(), num_val)
+            _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
 
         has_worker_context = bool(_WORKER_CONTEXT_RE.search(sentence))
 
         for m in _COPULA_NUMBER_RE.finditer(sentence):
             num_val = _number_value(m.group(1))
             if has_worker_context or num_val >= _LABOR_CONTEXT_THRESHOLD:
-                _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), num_val)
+                _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
 
         if has_worker_context:
             for m in _DEPT_IN_RE.finditer(sentence):
                 num_val = _number_value(m.group(1))
-                _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), num_val)
+                _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
             
             for m in PRONOUN_RE.finditer(sentence):
                 num_val = _number_value(next((g for g in m.groups() if g), ""))
-                _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), num_val)
+                _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
 
         # If sentence is labor-heavy, tag large standalone numbers
         if _LABOR_CONTEXT_RE.search(sentence):
@@ -709,6 +764,6 @@ def extract_spans(text: str, max_emp_count: Optional[int] = None) -> list[tuple[
                 num_val = _number_value(m.group(1))
                 if num_val >= _LABOR_CONTEXT_THRESHOLD:
                     if not _overlaps_existing(sent_start + m.start(), sent_start + m.end()):
-                        _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), num_val)
+                        _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
 
     return spans
