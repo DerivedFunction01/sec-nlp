@@ -233,7 +233,7 @@ def detect_and_wrap_plaintext_tables(
 
 def _process_plaintext_chunk(part: str) -> List[str]:
     hint_bonus = 0.0
-    if TABLE_HINT_PATTERN.search(part):
+    if TABLE_HINT_RE.search(part):
         hint_bonus = 0.1
     text = detect_and_wrap_plaintext_tables(part, hint_bonus=hint_bonus)
     segments = TABLE_SPLIT_RE.split(text)
@@ -247,7 +247,7 @@ def _process_plaintext_chunk(part: str) -> List[str]:
         chunk = UNDERLINE_RE.sub("\n\n", segment)
         paragraphs = PARAGRAPH_SPLIT_RE.split(chunk)
         cleaned = [
-            WRAPPED_LINE_PATTERN.sub(" ", p).strip() for p in paragraphs if p.strip()
+            WRAPPED_LINE_RE.sub(" ", p).strip() for p in paragraphs if p.strip()
         ]
         if cleaned:
             processed.append("\n\n".join(cleaned))
@@ -1013,7 +1013,7 @@ def extract_content(data: str, asHTML=True) -> str:
             )
             if prev_text:
                 prev_string = prev_text.strip()
-                if len(prev_string) < 500 and TABLE_HINT_PATTERN.search(prev_string):
+                if len(prev_string) < 500 and TABLE_HINT_RE.search(prev_string):
                     prologue_text = prev_string
 
             if title and prologue_text:
@@ -1261,11 +1261,11 @@ def extract_fiscal_year(text: str, accession: Optional[str] = None) -> Optional[
         header_text = text[:CHAR_LIMIT]
 
         # Check for 10-K header first
-        ar_match = ANNUAL_REPORT_PATTERN.search(header_text)
+        ar_match = ANNUAL_REPORT_RE.search(header_text)
         if not ar_match:
             return None
 
-        fy_match = FISCAL_YEAR_PATTERN.search(header_text)
+        fy_match = FISCAL_YEAR_RE.search(header_text)
         if fy_match:
             # Safety Check 1: Distance
             # Ensure the fiscal year date is not too far from the "Annual Report" header
@@ -1310,7 +1310,7 @@ def normalize_for_matching(text: str) -> str:
     if not text:
         return ""
     sanitized = re.sub(r"[^a-z0-9]+", " ", text.lower())
-    return SPACE_PATTERN.sub(" ", sanitized).strip()
+    return SPACE_RE.sub(" ", sanitized).strip()
 
 
 @dataclass
@@ -1836,7 +1836,7 @@ def is_structural_only(text: str) -> bool:
     """True if the block has negligible alphanumeric content after removing punctuation/symbols."""
     residual = ALPHANUM_RE.sub("", text).strip()
     # Collapse whitespace to measure actual content
-    residual = SPACE_PATTERN.sub(" ", residual).strip()
+    residual = SPACE_RE.sub(" ", residual).strip()
     return len(residual) < _RESIDUAL_MIN_LEN
 
 
