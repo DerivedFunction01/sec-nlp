@@ -36,7 +36,7 @@ MONTHS = [
 ]
 
 _MONTH_STR = build_alternation(MONTHS) + r"[a-z]*\.?"
-_YEAR_STR = r"(?:19|20)\d{2}"
+_YEAR_STR = r"<?(?:19|20)\d{2}>?"
 _FISCAL_YEAR_NUM_STR = rf"(?:{_YEAR_STR}|\d{{2}})"
 _DAY_STR = r"\d{1,2}(?:st|nd|rd|th)?"
 _OPT_COMMA = r"(?:,)?"
@@ -77,7 +77,8 @@ SLASH_DATE = re.compile(
 
 YEAR_RANGE = re.compile(rf"\b({_YEAR_STR})-(\d{{2}})\b")
 
-DATE_YEAR = YEAR_RE
+# Bare year — ONLY matches when wrapped in <> by the upstream normalizer.
+DATE_YEAR = re.compile(r"<(?:19|20)\d{2}>")
 
 # =============================================================================
 # FISCAL / QUARTER PATTERNS
