@@ -42,7 +42,62 @@ PRODUCT_TERMS = {
     r"contracts?",
     r"agreements?",
     r"permits?",
+    r"instruments",
 }
+
+# Derivatives
+FINANCIAL_INSTRUMENTS = {
+    "core": {
+        r"swaps?",
+        r"collars?",
+        r"forward",
+        r"hedges?",
+        r"hedging",
+        r"caps?",
+        r"locks?",
+        r"floors?",
+        r"futures",
+        r"options?",
+        r"spreads?",
+        r"derivatives?",
+        r"financial",
+        r"index",
+    },
+    "ending": {
+        r"contracts?",
+        r"options?",
+        r"agreements?",
+        r"arrangements?",
+        r"assets?",
+        r"liabiliy(?:y|ies)",
+        r"derivatives?",
+        r"instruments?",
+    },
+    "prefix": {
+        r"interest", r"treasury", r"forward", r'fixed', r"floating", r"variable", r"pay", r"receive", r"rate",
+        r"price", r"commodity", r"currency", r"foreign", r"exchange", r"equity", r"cryptocurrency", r"trading",
+        r"starting", r"libor", r"sonia", r'embedded', r"back[-\s]to[-\s]back", r"open", r"linked",
+    },
+}
+_FI_PREFIX_PATTERN = build_alternation(list(FINANCIAL_INSTRUMENTS["prefix"]))
+_FI_CORE_PATTERN = build_alternation(list(FINANCIAL_INSTRUMENTS["core"]))
+_FI_ENDING_PATTERN = build_alternation(list(FINANCIAL_INSTRUMENTS["ending"]))
+
+# Any word that belongs to the FI vocabulary (prefix | core), repeated 0-6 times
+# Free words (non-digit) allowed anywhere in the modifier chain
+_FI_FREE_GAP = r"(?:[A-Za-z][\w]*[-\s]+){0,3}"
+
+_FI_MODIFIER_GAP = (
+    rf"(?:(?:{_FI_PREFIX_PATTERN}|{_FI_CORE_PATTERN}|{_FI_FREE_GAP})[-\s]+){{0,6}}"
+)
+
+# Must end with a core OR ending term
+_FI_TERMINAL = rf"(?:{_FI_CORE_PATTERN}|{_FI_ENDING_PATTERN})"
+
+FINANCIAL_INSTRUMENT_COUNT_RE = re.compile(
+    rf"\b{NUMBER_PATTERN_STR}\s+{_FI_MODIFIER_GAP}{_FI_TERMINAL}\b",
+    re.IGNORECASE,
+)
 
 # --- Ambiguous: context decides ---
 AMBIGUOUS_TERMS = {
@@ -164,6 +219,8 @@ def extract_spans(text: str) -> list[tuple[int, int, str]]:
         return []
 
     spans: list[tuple[int, int, str]] = []
+    for m in FINANCIAL_INSTRUMENT_COUNT_RE.finditer(text):
+        spans.append((m.start(), m.end(), LABELS.ENTITY_COUNT.value))
     for m in ENTITY_COUNT_RE.finditer(text):
         spans.append((m.start(), m.end(), LABELS.ENTITY_COUNT.value))
     for m in ENTITY_STANDALONE_RE.finditer(text):
