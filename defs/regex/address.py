@@ -2,7 +2,7 @@ from __future__ import annotations
 import re
 from defs.regex_lib import build_alternation
 from defs.labels import LABELS
-from defs.text_cleaner import _remap, _strip_angle_brackets
+from defs.text_cleaner import remap_span, strip_angle_brackets
 
 
 # =============================================================================
@@ -323,18 +323,18 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     if not text:
         return []
 
-    stripped, pos_map = _strip_angle_brackets(text)
+    stripped, pos_map = strip_angle_brackets(text)
 
     raw: list[tuple[int, int, str, str]] = []
     address_label = LABELS.ADDRESS.value
 
     for pat in (STREET_ADDRESS_RE, UNIT_RE, ADDRESS_COMPONENT_RE, ZIP_CODE_RE):
         for m in pat.finditer(stripped):
-            orig_start, orig_end = _remap(pos_map, m.start(), m.end())
+            orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
             raw.append((orig_start, orig_end, address_label, _GRP_ADDRESS))
 
     for m in PHONE_NUMBER_RE.finditer(stripped):
-        orig_start, orig_end = _remap(pos_map, m.start(), m.end())
+        orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
         raw.append((orig_start, orig_end, address_label, _GRP_PHONE))
 
     # _merge_spans operates on original text coordinates and slices from

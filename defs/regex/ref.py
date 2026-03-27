@@ -2,7 +2,7 @@ from __future__ import annotations
 import re
 from defs.regex_lib import build_alternation
 from defs.labels import LABELS
-from defs.text_cleaner import _strip_angle_brackets
+from defs.text_cleaner import remap_span, strip_angle_brackets
 
 # --- ACCOUNTING STANDARD ISSUERS ---
 STANDARDS_TERMS = [
@@ -127,30 +127,16 @@ REFERENCE_RE = re.compile(
 
 
 def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
-    """
-    Extract REFERENCE spans from text using reference-specific rules.
-    Returns (match_text, start, end, label) tuples.
-
-    Handles numeric normalization markers: the input may wrap numbers in
-    angle brackets (e.g. <1000>) from an upstream normalizer that converts
-    1,000 -> <1000>. Brackets are stripped before matching so the regex
-    sees clean text, then match positions are remapped back to the original
-    coordinates (brackets included) so spans align with the raw input.
-    """
     if not text:
         return []
 
-    stripped, pos_map = _strip_angle_brackets(text)
+    stripped, pos_map = strip_angle_brackets(text)
 
     results: list[tuple[str, int, int, str]] = []
     for m in REFERENCE_RE.finditer(stripped):
-        # Remap stripped positions back to original text positions
-        orig_start = pos_map[m.start()]
-        # end is exclusive — map the last matched char, then step past it
-        orig_end = pos_map[m.end() - 1] + 1
-
-        # Slice from original text so angle brackets are preserved in the span
-        orig_text = text[orig_start:orig_end]
-        results.append((orig_text, orig_start, orig_end, LABELS.REFERENCE.value))
+        orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
+        results.append(
+            (text[orig_start:orig_end], orig_start, orig_end, LABELS.REFERENCE.value)
+        )
 
     return results

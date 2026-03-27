@@ -542,7 +542,7 @@ def clean_text(text: str, cik: Optional[str] = None) -> str:
     return text.strip()
 
 
-def _strip_angle_brackets(text: str) -> tuple[str, list[int]]:
+def strip_angle_brackets(text: str) -> tuple[str, list[int]]:
     """
     Remove < and > from text, returning the stripped text and
     a position map: stripped_pos -> original_pos.
@@ -557,3 +557,10 @@ def _strip_angle_brackets(text: str) -> tuple[str, list[int]]:
         pos_map.append(orig_i)
 
     return "".join(stripped_chars), pos_map
+
+
+def remap_span(pos_map: list[int], start: int, end: int) -> tuple[int, int]:
+    """Map a [start, end) span in stripped text back to original coordinates."""
+    orig_start = pos_map[start]
+    orig_end = pos_map[end - 1] + 1
+    return orig_start, orig_end
