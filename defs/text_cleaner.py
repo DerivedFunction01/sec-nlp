@@ -3,7 +3,7 @@ import csv
 import difflib
 from pathlib import Path
 from typing import Optional
-from defs.regex_lib import YEAR_RE, build_alternation, build_regex
+from defs.regex_lib import CONSEC_DIGIT_RE, build_alternation, build_regex
 
 COMPANY_TOKEN = "the Company"
 
@@ -183,7 +183,7 @@ class NumberNormalizer:
     )
     leading_decimal_pattern = re.compile(r"(?:(?<=^)|(?<=\s))\.(\d+)\b")
 
-    zip_code_pattern = re.compile(r"\b\d{5}(?:-\d{4})?\b")
+    # zip_code_pattern = re.compile(r"\b\d{5}(?:-\d{4})?\b")
     def _convert_hyphenated_fraction(self, match):
         num_word = match.group(1).lower()
         frac_word = match.group(2).lower()
@@ -301,7 +301,7 @@ class NumberNormalizer:
     def normalize(self, text: str) -> str:
         if not text:
             return ""
-
+        text = CONSEC_DIGIT_RE.sub(r"<\1>", text)
         # Preserve numeric firm names before any number conversion
         if self.numeric_firm_cleaner:
             text = self.numeric_firm_cleaner.clean_numeric_names(text)
@@ -336,8 +336,6 @@ class NumberNormalizer:
         text = self.percent_space_pattern.sub(r"\1%", text)
 
         return clean_spaces_and_punctuation(text)
-
-
 
 class CompanyNameReplacer:
     """
@@ -531,3 +529,14 @@ class NumericFirmCleaner:
                 text = text[:start] + COMPANY_TOKEN + text[end:]
 
         return text
+
+
+_NUM_NORMALIZER = NumberNormalizer()
+_COMPANY_NAME_REPLACER = CompanyNameReplacer()
+_NUMERIC_FIRM_CLEANER = NumericFirmCleaner()
+
+
+def clean_text(text: str, cik: Optional[str] = None) -> str:
+    text = _COMPANY_NAME_REPLACER.replace(text, cik=cik)
+    text = _NUM_NORMALIZER.normalize(text)
+    return text.strip()
