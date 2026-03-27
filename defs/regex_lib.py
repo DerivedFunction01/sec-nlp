@@ -201,7 +201,7 @@ SENTENCE_SPLIT_RE2 = re.compile(
 )
 
 YEAR_RE = re.compile(r"\b(19\d{2}|20\d{2})\b")
-CONSEC_DIGIT_RE = re.compile(r"\b(\d{4,}(?:\.\d+)*(?:-\d+)*)\b")
+CONSEC_DIGIT_RE = re.compile(r"\b(\d{4,5}(?:\.\d+)*(?:-\d+)*)\b")
 
 # Reusable range fragments for numeric regexes
 NUMBER_PATTERN_STR = r"\d+(?:\.\d+)?"
