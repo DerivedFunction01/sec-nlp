@@ -22,6 +22,7 @@ ORGANIZATIONAL_TERMS = {
     r"dealers?",
     r"distributors?",
     r"agenc(?:y|ies)",
+    r"programs",
 }
 
 PRODUCT_TERMS = {
