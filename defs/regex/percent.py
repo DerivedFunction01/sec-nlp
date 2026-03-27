@@ -100,12 +100,12 @@ _MOD_PAT = rf"(?:{to_build_alternation(PCT_RATE_MODIFIERS)})"
 _CORE_PAT = rf"(?:{to_build_alternation(PCT_RATE_CORE)})"
 _SUFFIX_PAT = rf"(?:{to_build_alternation(PCT_RATE_SUFFIX)})"
 
+_RATE_INNER = rf"(?:{_MOD_PAT}\s+)*(?:{_CORE_PAT}\s+)*{_SUFFIX_PAT}"
+
 # Structure: [MOD*] CORE+ SUFFIX
 # One or more core terms, must end with a suffix
 PCT_RATE_RE = re.compile(
-    rf"\b(?:{_MOD_PAT}\s+)*"  # zero or more modifiers
-    rf"(?:{_CORE_PAT}\s+)*"  # zero or more core terms
-    rf"{_SUFFIX_PAT}\b",  # required suffix
+    rf"\b{_RATE_INNER}\b",  # required suffix
     re.IGNORECASE,
 )
 
@@ -115,11 +115,25 @@ PCT = [
 
 _PCT_ALT = to_build_alternation(PCT)
 _PCT_NUM = r"(?:-?\(?\d+(?:\.\d+)?\)?|-?\.\d+)"
+_PCT_VAL_PAT = rf"{_PCT_NUM}\s*(?:%|{_PCT_ALT})"
+_PCT_RANGE_PAT = rf"{_PCT_NUM}\s*%?\s*(?:-|–|—|to)\s*{_PCT_NUM}\s*(?:%|{_PCT_ALT})"
+_PCT_VAL_OR_RANGE = rf"(?:{_PCT_RANGE_PAT}|{_PCT_VAL_PAT})"
+
+_CONN_GAP = r"(?:(?:of|at|is|was|were|are|by|to|an|a|the|for|in)\s+){0,3}"
+
+PCT_RATE_FORWARD_RE = re.compile(rf"(?<!\w){_PCT_VAL_OR_RANGE}\s+{_CONN_GAP}{_RATE_INNER}\b", re.IGNORECASE)
+PCT_RATE_BACKWARD_RE = re.compile(rf"\b{_RATE_INNER}\s+{_CONN_GAP}{_PCT_VAL_OR_RANGE}(?!\w)", re.IGNORECASE)
+
+_CHANGE_INNER = to_build_alternation(PCT_CHANGE_TERMS)
+PCT_CHANGE_RE = build_regex(PCT_CHANGE_TERMS)
+
+PCT_CHANGE_FORWARD_RE = re.compile(rf"(?<!\w){_PCT_VAL_OR_RANGE}\s+{_CONN_GAP}{_CHANGE_INNER}\b", re.IGNORECASE)
+PCT_CHANGE_BACKWARD_RE = re.compile(rf"\b{_CHANGE_INNER}\s+{_CONN_GAP}{_PCT_VAL_OR_RANGE}(?!\w)", re.IGNORECASE)
 
 PCT_RE = build_regex(PCT)
 PCT_SPACE = re.compile(rf"({_PCT_NUM})\s+%", re.IGNORECASE)
 PCT_RANGE = re.compile(
-    rf"(?<!\w)({_PCT_NUM})\s*%?\s*(?:-|–|—|to)\s*({_PCT_NUM})\s*(?:%|{_PCT_ALT})(?!\w)",
+    rf"(?<!\w){_PCT_RANGE_PAT}(?!\w)",
     re.IGNORECASE,
 )
 
@@ -163,23 +177,21 @@ _PCT_OF_CHAIN = (
 )
 
 PCT_OF_RE = re.compile(
-    rf"(?<!\w)({_PCT_NUM}(?:%|{_PCT_ALT})\s+{_PCT_OF_CHAIN}([A-Za-z][\w-]+))(?!\w)",
+    rf"(?<!\w)({_PCT_VAL_OR_RANGE}\s+{_PCT_OF_CHAIN}[A-Za-z][\w-]+)(?!\w)",
     re.IGNORECASE,
 )
 
-# Change terms are simpler — no compound structure needed
-PCT_CHANGE_RE = build_regex(PCT_CHANGE_TERMS)
-
 PCT_NUMERIC_RE = re.compile(
-    rf"(?<!\w)({_PCT_NUM})\s*(?:%|{_PCT_ALT})(?!\w)",
+    rf"(?<!\w){_PCT_VAL_PAT}(?!\w)",
     re.IGNORECASE,
 )
 
 _PCT_CHANGE_POST_ALT = to_build_alternation(PCT_CHANGE_POST_TERMS)
 PCT_CHANGE_POST_RE = re.compile(
-    rf"(?<!\w)({_PCT_NUM})\s*(?:%|{_PCT_ALT})\s+(?:{_PCT_CHANGE_POST_ALT})(?!\w)",
+    rf"(?<!\w){_PCT_VAL_OR_RANGE}\s+(?:{_PCT_CHANGE_POST_ALT})(?!\w)",
     re.IGNORECASE,
 )
+
 
 def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
@@ -190,14 +202,17 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
         return []
 
     spans: list[tuple[str, int, int, str]] = []
-    span_set: set[tuple[str, int, int, str]] = set()
+
+    def _overlaps_existing(start: int, end: int) -> bool:
+        for _, s, e, _ in spans:
+            if not (end <= s or start >= e):
+                return True
+        return False
 
     def _add_span(text: str, start: int, end: int, label: str) -> None:
-        item = (text, start, end, label)
-        if item in span_set:
+        if _overlaps_existing(start, end):
             return
-        span_set.add(item)
-        spans.append(item)
+        spans.append((text, start, end, label))
 
     def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
         out: list[tuple[int, int, str]] = []
@@ -212,7 +227,6 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
         if tail.strip():
             out.append((start, len(src), tail))
         return out
-
 
     def _label_for_span(start: int, end: int, sentence: str) -> str:
         change_matches = list(PCT_CHANGE_RE.finditer(sentence))
@@ -230,6 +244,18 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
         return LABELS.PCT_OTHER.value
 
     for sent_start, _, sentence in _iter_sentences(text):
+        for m in PCT_RATE_FORWARD_RE.finditer(sentence):
+            _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), LABELS.PCT_RATE.value)
+
+        for m in PCT_RATE_BACKWARD_RE.finditer(sentence):
+            _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), LABELS.PCT_RATE.value)
+
+        for m in PCT_CHANGE_FORWARD_RE.finditer(sentence):
+            _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), LABELS.PCT_CHANGE.value)
+
+        for m in PCT_CHANGE_BACKWARD_RE.finditer(sentence):
+            _add_span(m.group(0), sent_start + m.start(), sent_start + m.end(), LABELS.PCT_CHANGE.value)
+
         for m in PCT_CHANGE_POST_RE.finditer(sentence):
             _add_span(
                 m.group(0),
