@@ -1,6 +1,6 @@
 from enum import Enum
 import re
-from typing import Any, List, Optional
+from typing import Any, List, Literal, Optional
 
 
 def build_alternation(items: List[str], sort_longest_first: bool = True) -> str:
@@ -267,4 +267,13 @@ def closest_distance_in_segment(
     return closest_distance(start, end, filtered)
 
 
-def make_gap(gap_size: int, allow_digits: bool = False):
+def make_gap(gap_size: int, allow_digits: bool = False, space: Literal["after", "before"] = "before"):
+    if allow_digits:
+        base = r"(?:[\w+\-\']+)"
+    else:
+        base = r"(?:[A-Za-z\-\']+)"
+    if space.lower().strip() == "before":
+        base = r"\s+" + base
+    elif space.lower().strip() == "after":
+        base = base + r"\s+"
+    return rf"(?:{base}){{0,{gap_size}}}"
