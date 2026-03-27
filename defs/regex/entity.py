@@ -100,10 +100,14 @@ _ENTITY_FILLER = build_alternation(
         r"global",
         r"regional",
         r"local",
+        r"regional",
         r"affiliate",
         r"strategic",
         r"major",
         r"minor",
+        r"different",
+        r"similar",
+        r"several",
         r"third[-\s]party",
         r"trade",
         r"labo(?:u)r",
@@ -111,11 +115,11 @@ _ENTITY_FILLER = build_alternation(
         r"(?:collective\s+)?bargaining",
     ]
 )
-_ENTITY_FILLER_GAP = rf"(?:{_ENTITY_FILLER}\s+){{0,2}}"
+_ENTITY_FILLER_GAP = rf"(?:{_ENTITY_FILLER}\s*(?:and|or|,)?\s*){{0,4}}"
 _ENTITY_GAP = r"(?:[^\W\d][\w\.-]*\s+){0,1}"
 ENTITY_COUNT_RE = re.compile(
-    rf"\b({NUMBER_PATTERN_STR})\s+{_ENTITY_FILLER_GAP}{_ENTITY_GAP}"
-    rf"(?:{_ENTITY_TERM_PATTERN})"
+    rf"\b({NUMBER_PATTERN_STR}\s+{_ENTITY_FILLER_GAP}{_ENTITY_GAP}"
+    rf"(?:{_ENTITY_TERM_PATTERN}))"
     rf"(?!\s+(?:{_GENERIC_WORKER_PATTERN})\b)\b",
     re.IGNORECASE,
 )

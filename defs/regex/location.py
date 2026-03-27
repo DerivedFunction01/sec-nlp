@@ -1,7 +1,14 @@
 from __future__ import annotations
 import re
-from defs.regex_lib import NUMBER_RANGE_STR, build_compound, NUMBER_PATTERN_STR, build_alternation, make_gap
+from defs.regex_lib import (
+    NUMBER_RANGE_STR,
+    build_compound,
+    NUMBER_PATTERN_STR,
+    build_alternation,
+    make_gap,
+)
 from defs.labels import LABELS
+from defs.regex.labor import INDUSTRY_PREFIX_TERMS_FLAT
 
 # =============================================================================
 # LOCATION TERMS
@@ -77,23 +84,25 @@ GEO_LOCATION_TERMS: set[str] = {
 # =============================================================================
 
 # Flat union for matching "number + location term" patterns
-LOCATION_TERMS: set[str] = (
-    PHYSICAL_LOCATION_TERMS | GEO_LOCATION_TERMS
-)
+LOCATION_TERMS: set[str] = PHYSICAL_LOCATION_TERMS | GEO_LOCATION_TERMS
 
 # Optional: build compound patterns for multi-word physical locations if needed
 PHYSICAL_COMPOUNDS: set[str] = {
     build_compound(
-        [r"distribution", r"fulfillment", r"data", r"call", r"manufacturing"],
-        [
-            r"facilit(?:y|ies)",
-            r"plants?",
-            r"factor(?:y|ies)",
-            r"warehouses?",
-            r"centers?",
-            r"sites?",
-            r"locations?",
-        ],
+        set(
+            [
+                r"distribution",
+                r"fulfillment",
+                r"data",
+                r"call",
+                r"manufacturing",
+                r"production",
+                r"supply",
+                r"assembly",
+            ]
+            + INDUSTRY_PREFIX_TERMS_FLAT
+        ),
+        PHYSICAL_LOCATION_TERMS,
     ),
 }
 
@@ -112,24 +121,33 @@ _LOCATION_FILLER = build_alternation(
         r"global",
         r"regional",
         r"local",
+        r"regional",
         r"affiliate",
         r"strategic",
         r"major",
         r"minor",
         r"different",
         r"similar",
+        r"several",
         r"third[-\s]party",
         r"trade",
+        r"company",
+        r"[A-Z][a-z]+(?:ese|ian|ish|an|ic)",
     ]
 )
 # optional 0-2 filler words, allowing connectors (and/or/,)
-_LOCATION_FILLER_GAP = rf"(?:{_LOCATION_FILLER}\s*(?:and|or|,)?\s*){{0,2}}"
+_LOCATION_FILLER_GAP = rf"(?:{_LOCATION_FILLER}\s*(?:and|or|,)?\s*){{0,4}}"
 
 # optional 1-word gap before the location term
 _OPTIONAL_WORD_BEFORE = make_gap(1, allow_digits=False, space="before")
 
+_FUNCTION_WORDS = build_alternation(
+    [r"of", r"our", r"(?:company|registrant)(?:'?s)?", r"the", r"an", r"a", r"out", r"that", r"this"]
+)
+_FUNCTION_WORD_GAP = rf"(?:{_FUNCTION_WORDS}\s+){{0,3}}"
+
 LOCATION_COUNT_RE = re.compile(
-    rf"\b{NUMBER_RANGE_STR}\s+{_LOCATION_FILLER_GAP}{_OPTIONAL_WORD_BEFORE}{_LOCATION_TERM_PATTERN}\b",
+    rf"\b{NUMBER_RANGE_STR}\s+{_FUNCTION_WORD_GAP}{_LOCATION_FILLER_GAP}{_OPTIONAL_WORD_BEFORE}\s*{_LOCATION_FILLER_GAP}{_LOCATION_TERM_PATTERN}\b",
     re.IGNORECASE,
 )
 
