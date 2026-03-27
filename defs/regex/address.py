@@ -9,6 +9,7 @@ from defs.labels import LABELS
 # =============================================================================
 
 STREET_TERMS: list[str] = [
+    # Existing
     r"ave(?:nue)?\.?",
     r"street",
     r"st\.?",
@@ -27,8 +28,50 @@ STREET_TERMS: list[str] = [
     r"hwy\.?",
     r"route",
     r"rt\.?",
+    # Places / Ways
+    r"place",
+    r"pl\.?",
+    r"way",
+    r"wy\.?",
+    # Terrace / Trail
+    r"terrace",
+    r"ter(?:r)?\.?",
+    r"trail",
+    r"trl\.?",
+    # Parkway / Expressway / Freeway / Turnpike
+    r"parkway",
+    r"pkwy\.?",
+    r"expressway",
+    r"expy\.?",
+    r"freeway",
+    r"fwy\.?",
+    r"turnpike",
+    r"tpke?\.?",
+    # Pike / Pass / Path / Walk / Loop / Alley / Run / Bend / Trace
+    r"pike",
+    r"pass",
+    r"path",
+    r"walk",
+    r"loop",
+    r"alley",
+    r"aly\.?",
+    r"run",
+    r"bend",
+    r"trace",
+    # Broadway and similar named-street suffixes
+    r"broadway",
+    # Additional common suffixes
+    r"square",
+    r"sq\.?",
+    r"plaza",
+    r"plz\.?",
+    r"crossing",
+    r"xing\.?",
+    r"junction",
+    r"jct\.?",
+    r"center",
+    r"ctr\.?",
 ]
-
 UNIT_TERMS: list[str] = [
     r"floors?",
     r"apts?",
@@ -59,7 +102,7 @@ _unit_terms = build_alternation(UNIT_TERMS)
 _address_terms = build_alternation(ADDRESS_COMPONENT_TERMS)
 
 STREET_ADDRESS_RE = re.compile(
-    rf"\b\d{{1,6}}\s+[A-Za-z0-9][\w\s\-']{{1,40}}\s+(?:{_street_terms})\b",
+    rf"\b\d{{1,6}}[A-Za-z]*\s+[A-Za-z0-9][\w\s\-']{{1,40}}\s+(?:{_street_terms})\b",
     re.IGNORECASE,
 )
 
