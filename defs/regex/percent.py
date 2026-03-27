@@ -158,8 +158,8 @@ _DET = rf"(?:{to_build_alternation(PCT_OF_DETERMINERS)})\s+"
 _MOD = rf"(?:[A-Za-z][\w-]*(?:'s|s')?\s+)"
 
 _PCT_OF_CHAIN = (
-    rf"{_DET}{{1,4}}"  # 1-3 determiners: "of the", "of each of the"
-    rf"{_MOD}{{0,3}}"  # up to 3 modifier words
+    rf"(?:{_DET}){{1,4}}"  # 1-3 determiners: "of the", "of each of the"
+    rf"(?:{_MOD}){{0,3}}"  # up to 3 modifier words
 )
 
 PCT_OF_RE = re.compile(
