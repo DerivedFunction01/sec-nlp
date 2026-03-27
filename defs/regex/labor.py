@@ -530,7 +530,7 @@ COLLECTIVE_BARGAIN = build_alternation(
 _UNION_PHRASES = [
     COLLECTIVE_BARGAIN,
     build_compound([_CORE.LABOR, _CORE.TRADE], _CORE.UNION, sep_prefix=r"[\s-]+"),
-    _CORE.UNION.value,
+    _CORE.UNIONIZE.value,
     _CORE.REUNIONIZE.value,
     build_compound(
         [_CORE.LABOR], _SUFFIX_AGREEMENTS + _SUFFIX_ORGS, sep_prefix=r"[\s-]+"
