@@ -1,6 +1,6 @@
 from __future__ import annotations
 import re
-from defs.regex_lib import NUMBER_PATTERN_STR, add_restrictions, build_alternation, build_compound
+from defs.regex_lib import NUMBER_PATTERN_STR, NUMBER_RANGE_STR, add_restrictions, build_alternation, build_compound
 from defs.labels import LABELS
 from defs.regex.labor import GENERIC_WORKER_TERMS, WORKER_TERMS
 
@@ -95,7 +95,7 @@ _FI_MODIFIER_GAP = (
 _FI_TERMINAL = rf"(?:{_FI_CORE_PATTERN}|{_FI_ENDING_PATTERN})"
 
 FINANCIAL_INSTRUMENT_COUNT_RE = re.compile(
-    rf"\b{NUMBER_PATTERN_STR}\s+{_FI_MODIFIER_GAP}{_FI_TERMINAL}\b",
+    rf"\b{NUMBER_RANGE_STR}\s+{_FI_MODIFIER_GAP}{_FI_TERMINAL}\b",
     re.IGNORECASE,
 )
 
