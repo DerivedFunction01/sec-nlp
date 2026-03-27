@@ -100,8 +100,36 @@ PHYSICAL_COMPOUNDS: set[str] = {
 
 _LOCATION_TERMS = list(LOCATION_TERMS | PHYSICAL_COMPOUNDS)
 _LOCATION_TERM_PATTERN = build_alternation(_LOCATION_TERMS)
+
+_LOCATION_FILLER = build_alternation(
+    [
+        r"independent",
+        r"international",
+        r"national",
+        r"dependent",
+        r"domestic",
+        r"foreign",
+        r"global",
+        r"regional",
+        r"local",
+        r"affiliate",
+        r"strategic",
+        r"major",
+        r"minor",
+        r"different",
+        r"similar",
+        r"third[-\s]party",
+        r"trade",
+    ]
+)
+# optional 0-2 filler words, allowing connectors (and/or/,)
+_LOCATION_FILLER_GAP = rf"(?:{_LOCATION_FILLER}\s*(?:and|or|,)?\s*){{0,2}}"
+
+# optional 1-word gap before the location term
+_OPTIONAL_WORD_BEFORE = make_gap(1, allow_digits=False, space="before")
+
 LOCATION_COUNT_RE = re.compile(
-    rf"\b({NUMBER_RANGE_STR}){make_gap(1, allow_digits=False)}\s+(?:{_LOCATION_TERM_PATTERN})\b",
+    rf"\b{NUMBER_RANGE_STR}\s+{_LOCATION_FILLER_GAP}{_OPTIONAL_WORD_BEFORE}{_LOCATION_TERM_PATTERN}\b",
     re.IGNORECASE,
 )
 
