@@ -74,6 +74,8 @@ INDUSTRY_PREFIX_TERMS: dict[IndustryGroup, list[str]] = {
         r"plant",
         r"heat insulator",
         r"frost insulator",
+        r"brick",
+        r"craft",
     ],
     IndustryGroup.TRANSPORT: [
         r"aviation",
@@ -225,6 +227,9 @@ OCCUPATION_GROUP_TERMS = {
         r"dispatchers?",
         r"mechanics?",
         r"engineers?",
+        r"longshoremen",
+        r"longshoreman",
+        r"bricklayer",
     ],
     OccupationGroup.PUBLIC_SAFETY: [
         r"police",
