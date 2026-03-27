@@ -1,6 +1,6 @@
 from __future__ import annotations
 import re
-from defs.regex_lib import build_compound, NUMBER_PATTERN_STR, build_alternation
+from defs.regex_lib import NUMBER_RANGE_STR, build_compound, NUMBER_PATTERN_STR, build_alternation, make_gap
 from defs.labels import LABELS
 
 # =============================================================================
@@ -22,7 +22,7 @@ PHYSICAL_LOCATION_TERMS: set[str] = {
     r"outlets?",
     r"showrooms?",
     r"branch(?:es)?",
-    r"headquarters",
+    r"headquarters?",
     # Industrial / Energy
     r"mines?",
     r"refiner(?:ies|y)",
@@ -83,14 +83,24 @@ LOCATION_TERMS: set[str] = (
 
 # Optional: build compound patterns for multi-word physical locations if needed
 PHYSICAL_COMPOUNDS: set[str] = {
-    build_compound([r"distribution", r"fulfillment", r"data", r"call", r"manufacturing"], r"centers?"),
+    build_compound(
+        [r"distribution", r"fulfillment", r"data", r"call", r"manufacturing"],
+        [
+            r"facilit(?:y|ies)",
+            r"plants?",
+            r"factor(?:y|ies)",
+            r"warehouses?",
+            r"centers?"
+        ],
+    ),
 }
 
 
 _LOCATION_TERMS = list(LOCATION_TERMS | PHYSICAL_COMPOUNDS)
 _LOCATION_TERM_PATTERN = build_alternation(_LOCATION_TERMS)
 LOCATION_COUNT_RE = re.compile(
-    rf"\b({NUMBER_PATTERN_STR})\s+(?:{_LOCATION_TERM_PATTERN})\b", re.IGNORECASE
+    rf"\b({NUMBER_RANGE_STR}){make_gap(1, allow_digits=False)}\s+(?:{_LOCATION_TERM_PATTERN})\b",
+    re.IGNORECASE,
 )
 
 
