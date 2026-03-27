@@ -199,15 +199,17 @@ OCCUPATION_GROUP_TERMS = {
     OccupationGroup.AVIATION: [
         r"pilots?",
         r"flight\s+attendants?",
+        r"flight\s+crews?",
+        r"air\s+traffic\s+operators?",
         r"air\s*line\s+attendents?",
         r"air\s+traffic\s+controllers?",
     ],
     OccupationGroup.TRANSPORT: [
         r"drivers?",
-        r"truck\s+drivers",
-        r"delivery\s+drivers",
-        r"taxi\s+drivers",
-        r"cargo\s+drivers",
+        r"truck\s+drivers?",
+        r"delivery\s+drivers?",
+        r"taxi\s+drivers?",
+        r"cargo\s+drivers?",
     ],
     OccupationGroup.TRADES: [
         r"electricians?",
@@ -226,9 +228,9 @@ OCCUPATION_GROUP_TERMS = {
     OccupationGroup.PUBLIC_SAFETY: [
         r"police",
         r"sheriffs?",
-        r"security\s+guards",
-        r"firefighters",
-        r"security\s+officers",
+        r"security\s+guards?",
+        r"firefighters?",
+        r"security\s+officers?",
     ],
     OccupationGroup.HOSPITALITY: [
         r"chefs?",
