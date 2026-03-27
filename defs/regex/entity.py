@@ -76,7 +76,7 @@ FINANCIAL_INSTRUMENTS = {
     "prefix": {
         r"interest", r"treasury", r"forward", r'fixed', r"floating", r"variable", r"pay", r"receive", r"rate",
         r"price", r"commodity", r"currency", r"foreign", r"exchange", r"equity", r"cryptocurrency", r"trading",
-        r"starting", r"libor", r"sonia", r'embedded', r"back[-\s]to[-\s]back", r"open", r"linked",
+        r"starting", r"libor", r"sonia", r'embedded', r"back[-\s]to[-\s]back", r"open", r"linked", r"cross"
     },
 }
 _FI_PREFIX_PATTERN = build_alternation(list(FINANCIAL_INSTRUMENTS["prefix"]))
