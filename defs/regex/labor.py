@@ -112,6 +112,7 @@ INDUSTRY_PREFIX_TERMS: dict[IndustryGroup, list[str]] = {
         r"timber",
         r"building",
         r"construction",
+        r"tobacco",
     ],
 }
 
