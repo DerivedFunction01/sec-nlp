@@ -540,3 +540,20 @@ def clean_text(text: str, cik: Optional[str] = None) -> str:
     text = _COMPANY_NAME_REPLACER.replace(text, cik=cik)
     text = _NUM_NORMALIZER.normalize(text)
     return text.strip()
+
+
+def _strip_angle_brackets(text: str) -> tuple[str, list[int]]:
+    """
+    Remove < and > from text, returning the stripped text and
+    a position map: stripped_pos -> original_pos.
+    """
+    stripped_chars: list[str] = []
+    pos_map: list[int] = []  # index i -> original index for stripped[i]
+
+    for orig_i, ch in enumerate(text):
+        if ch in "<>":
+            continue
+        stripped_chars.append(ch)
+        pos_map.append(orig_i)
+
+    return "".join(stripped_chars), pos_map
