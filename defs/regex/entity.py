@@ -588,6 +588,14 @@ FINANCIAL_INSTRUMENTS = {
         r"otc",
         r"over[-\s]the[-\s]counter",
         r"overnight",
+        r"part",
+        r"full",
+        r"seasonal",
+        r"temporary",
+        r"time",
+        r"amendable",
+        r"private",
+        r"public",
     },
 }
 _FI_PREFIX_PATTERN = build_alternation(list(FINANCIAL_INSTRUMENTS["prefix"]) + COMMON_COMMODITIES)
