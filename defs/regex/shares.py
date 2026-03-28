@@ -11,6 +11,8 @@ from defs.regex_lib import (
     closest_distance_in_segment,
 )
 
+from defs.text_cleaner import remap_span, strip_angle_brackets
+
 # =============================================================================
 # SHARE TERMS
 # =============================================================================
@@ -211,18 +213,15 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     Extract SHARE spans from text.
     Returns (match_text, start, end, label) tuples.
 
-    Gating logic:
-    - All terms require equity context somewhere in the paragraph.
-    - Unambiguous terms (RSUs, PSUs, DSUs, SARs, warrants) need only
-      paragraph-level equity context.
-    - Paragraph-reliable terms (stock, shares, options) also only need
-      paragraph-level equity context — if the paragraph is strictly equity,
-      these terms unambiguously refer to shares.
-    - Remaining ambiguous terms require equity context in the same sentence
-      segment (clause-scoped via closest_distance_in_segment).
+    Angle brackets (<>) from the upstream number normalizer are stripped
+    before matching. All internal offsets (sent_start, match positions)
+    operate on stripped text and are remapped to original coordinates
+    before appending to results.
     """
     if not text:
         return []
+
+    stripped, pos_map = strip_angle_brackets(text)
 
     spans: list[tuple[str, int, int, str]] = []
     span_set: set[tuple[int, int]] = set()
@@ -233,10 +232,11 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
         span_set.add((start, end))
         spans.append((match_text, start, end, LABELS.SHARE.value))
 
-    # Pre-compute paragraph equity context
+    # Paragraph / sentence iterators run on stripped text so their offsets
+    # are in stripped-coordinate space and can be passed directly to remap_span.
     para_equity: list[tuple[int, int, bool]] = [
         (ps, pe, bool(_EQUITY_CONTEXT_RE.search(para)))
-        for ps, pe, para in _iter_paragraphs(text)
+        for ps, pe, para in _iter_paragraphs(stripped)
     ]
 
     def _para_has_equity(abs_pos: int) -> bool:
@@ -245,7 +245,7 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
                 return has_eq
         return False
 
-    for sent_start, sent_end, sentence in _iter_sentences(text):
+    for sent_start, sent_end, sentence in _iter_sentences(stripped):
         if not _para_has_equity(sent_start):
             continue
 
@@ -261,17 +261,20 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
             is_unambiguous = bool(_UNAMBIGUOUS_RE.search(match_text))
             is_para_reliable = bool(_PARAGRAPH_RELIABLE_RE.search(match_text))
 
+            # Remap the full match span back to original text coordinates
+            orig_start, orig_end = remap_span(
+                pos_map, sent_start + m.start(), sent_start + m.end()
+            )
+
             if is_unambiguous or is_para_reliable:
-                # Paragraph equity already confirmed — tag directly
-                _add_span(m.group(0), sent_start + m.start(), sent_start + m.end())
+                _add_span(text[orig_start:orig_end], orig_start, orig_end)
             else:
-                # Remaining ambiguous terms need clause-level equity context
                 if has_sentence_equity:
                     eq_matches = list(_EQUITY_CONTEXT_RE.finditer(sentence))
                     dist = closest_distance_in_segment(
                         sentence, num_start, num_end, eq_matches
                     )
                     if dist is not None:
-                        _add_span(m.group(0), sent_start + m.start(), sent_start + m.end())
+                        _add_span(text[orig_start:orig_end], orig_start, orig_end)
 
     return spans

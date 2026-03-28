@@ -2,6 +2,7 @@ from __future__ import annotations
 import re
 from defs.labels import LABELS
 from defs.regex_lib import NUMBER_RANGE_STR, build_alternation
+from defs.text_cleaner import remap_span, strip_angle_brackets
 
 
 SI_PREFIXES: dict[str, str] = {
@@ -357,7 +358,14 @@ QUANTITY_RE = re.compile(
 def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     if not text:
         return []
-    return [
-        (m.group(0), m.start(), m.end(), LABELS.QUANTITY.value)
-        for m in QUANTITY_RE.finditer(text)
-    ]
+
+    stripped, pos_map = strip_angle_brackets(text)
+    results = []
+
+    for m in QUANTITY_RE.finditer(stripped):
+        orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
+        results.append(
+            (text[orig_start:orig_end], orig_start, orig_end, LABELS.QUANTITY.value)
+        )
+
+    return results
