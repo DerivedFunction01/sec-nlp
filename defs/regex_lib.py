@@ -215,6 +215,7 @@ RANGE_SEPARATOR_STR = to_build_alternation(
         "to",
         "and",
         r"(?:out\s+)?of(?:\s+[A-Za-z][\w'-]*){0,5}",
+        "through",
     ]
 )
 NUMBER_RANGE_STR = rf"{NUMBER_PATTERN_STR}(?:\s*{RANGE_SEPARATOR_STR}\s*{NUMBER_PATTERN_STR})?"
