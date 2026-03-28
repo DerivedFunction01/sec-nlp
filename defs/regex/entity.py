@@ -1,6 +1,8 @@
 from __future__ import annotations
 import re
-from defs.regex_lib import NUMBER_PATTERN_STR, NUMBER_RANGE_STR, add_restrictions, build_alternation, build_compound
+from typing import Optional
+from defs.regex.shares import _EQUITY_CONTEXT_RE
+from defs.regex_lib import NUMBER_PATTERN_STR, NUMBER_RANGE_STR, SENTENCE_SPLIT_RE, add_restrictions, build_alternation, build_compound
 from defs.labels import LABELS
 from defs.regex.labor import GENERIC_WORKER_TERMS, WORKER_TERMS
 
@@ -734,6 +736,17 @@ _YEAR_PRONE_TERMS = [
 ]
 _YEAR_PRONE_RE = build_regex(_YEAR_PRONE_TERMS)
 
+# Terms that could be either SHARE or ENTITY
+_AMBIGUOUS_SHARE_ENTITY_TERMS = {
+    r"options?",
+    r"warrants?",
+    r"rights?",
+    r"awards?",
+    r"grants?",
+    r"units?", # e.g. RSUs, PSUs
+}
+_AMBIGUOUS_SHARE_ENTITY_RE = build_regex(_AMBIGUOUS_SHARE_ENTITY_TERMS)
+
 _IMMEDIATE_COUNT_VERBS = [
     r"have", r"had", r"has", r"having", r"are", r"is", r"were", r"was"
 ]
@@ -741,6 +754,27 @@ _IMMEDIATE_COUNT_VERB_RE = re.compile(
     rf"\b(?:{'|'.join(_IMMEDIATE_COUNT_VERBS)})\s+$",
     re.IGNORECASE
 )
+
+def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
+    out: list[tuple[int, int, str]] = []
+    start = 0
+    for m in SENTENCE_SPLIT_RE.finditer(src):
+        end = m.end()
+        chunk = src[start:end]
+        if chunk.strip():
+            out.append((start, end, chunk))
+        start = end
+    tail = src[start:]
+    if tail.strip():
+        out.append((start, len(src), tail))
+    return out
+
+def _number_value(num_text: str) -> int:
+    first = re.split(r"[-–—]|\bto\b", num_text, maxsplit=1)[0]
+    try:
+        return int(float(first.replace(",", "")))
+    except (ValueError, IndexError):
+        return 0
 
 def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
@@ -752,14 +786,30 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
 
     stripped, pos_map = strip_angle_brackets(text)
     spans: list[tuple[str, int, int, str]] = []
+    span_set: set[tuple[str, int, int, str]] = set()
+    stripped_spans: list[tuple[int, int]] = []
+
+    def _add_span(start: int, end: int, num_val: Optional[int] = None, label: str = LABELS.ENTITY_COUNT.value) -> None:
+        orig_start, orig_end = remap_span(pos_map, start, end)
+        item = (text[orig_start:orig_end], orig_start, orig_end, label)
+        if item in span_set:
+            return
+        span_set.add(item)
+        spans.append(item)
+        stripped_spans.append((start, end))
+
+    def _overlaps_existing(start: int, end: int) -> bool:
+        for s, e in stripped_spans:
+            if not (end <= s or start >= e):
+                return True
+        return False
 
     def _is_year_like(num_str: str, entity_text: str, pre_context: str, is_fi: bool = False) -> bool:
-
         if _IMMEDIATE_COUNT_VERB_RE.search(pre_context):
             return False
             
         try:
-            num_val_str = num_str.split('-')[0]
+            num_val_str = num_str.replace(',', '').split('-')[0]
             num_val = int(float(num_val_str))
             if 1970 <= num_val <= 2050:
                 # Treat as a year if it's a financial instrument or a year-prone term, 
@@ -770,13 +820,25 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
             pass
         return False
 
-    for pat in [FINANCIAL_INSTRUMENT_COUNT_RE, ENTITY_COUNT_RE, ENTITY_STANDALONE_RE, BARGAINING_UNIT_COUNT_RE]:
-        is_fi = pat is FINANCIAL_INSTRUMENT_COUNT_RE
-        for m in pat.finditer(stripped):
-            pre_context = stripped[:m.start()]
-            if _is_year_like(m.group(1), m.group(2), pre_context, is_fi):
-                continue
-            orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
-            spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.ENTITY_COUNT.value))
+    for sent_start, _, sentence in _iter_sentences(stripped):
+        has_equity_context = bool(_EQUITY_CONTEXT_RE.search(sentence))
+
+        for pat in [FINANCIAL_INSTRUMENT_COUNT_RE, ENTITY_COUNT_RE, ENTITY_STANDALONE_RE, BARGAINING_UNIT_COUNT_RE]:
+            is_fi = pat is FINANCIAL_INSTRUMENT_COUNT_RE
+            for m in pat.finditer(sentence):
+                num_str = m.group(1)
+                entity_text = m.group(2)
+
+                # 1. Check for year-like numbers
+                if _is_year_like(num_str, entity_text, sentence[:m.start()], is_fi):
+                    continue
+
+                # 2. Check for share/entity ambiguity
+                if has_equity_context and _AMBIGUOUS_SHARE_ENTITY_RE.search(entity_text):
+                    continue # Let shares.py handle it
+
+                # 3. Add span if it doesn't overlap
+                if not _overlaps_existing(sent_start + m.start(), sent_start + m.end()):
+                    _add_span(sent_start + m.start(), sent_start + m.end())
 
     return spans
