@@ -464,3 +464,79 @@ MAJOR_CURRENCIES = {
         "adj": "vietnamese",
     },
 }
+
+# Nation code -> compatible currency codes.
+# This is intentionally separate from MAJOR_CURRENCIES so the matcher can use
+# it as routing metadata without conflating nation codes with currency codes.
+NATION_TO_CURRENCY_CODES: dict[str, set[str]] = {
+    "US": {"USD"},
+    "CA": {"CAD"},
+    "MX": {"MXN"},
+    "BR": {"BRL"},
+    "AR": {"ARS"},
+    "CL": {"CLP"},
+    "CO": {"COP"},
+    "PE": {"PEN"},
+    "GB": {"GBP"},
+    "JP": {"JPY"},
+    "CN": {"CNY"},
+    "IN": {"INR"},
+    "AU": {"AUD"},
+    "NZ": {"NZD"},
+    "HK": {"HKD"},
+    "SG": {"SGD"},
+    "TH": {"THB"},
+    "TW": {"TWD"},
+    "ID": {"IDR"},
+    "KR": {"KRW"},
+    "MY": {"MYR"},
+    "PH": {"PHP"},
+    "VN": {"VND"},
+    "SA": {"SAR"},
+    "AE": {"AED"},
+    "IL": {"ILS"},
+    "TR": {"TRY"},
+    "EG": {"EGP"},
+    "NG": {"NGN"},
+    "PK": {"PKR"},
+    "CH": {"CHF"},
+    "SE": {"SEK"},
+    "NO": {"NOK"},
+    "DK": {"DKK"},
+    "PL": {"PLN"},
+    "CZ": {"CZK"},
+    "HU": {"HUF"},
+    "RO": {"RON"},
+    "RU": {"RUB"},
+    "ZA": {"ZAR"},
+    "EU": {"EUR"},
+    "DE": {"EUR"},
+    "FR": {"EUR"},
+    "IT": {"EUR"},
+    "ES": {"EUR"},
+    "PT": {"EUR"},
+    "NL": {"EUR"},
+    "BE": {"EUR"},
+    "AT": {"EUR"},
+    "FI": {"EUR"},
+    "IE": {"EUR"},
+    "GR": {"EUR"},
+    "SI": {"EUR"},
+    "SK": {"EUR"},
+    "LV": {"EUR"},
+    "LT": {"EUR"},
+    "EE": {"EUR"},
+    "LU": {"EUR"},
+    "CY": {"EUR"},
+    "MT": {"EUR"},
+}
+
+
+def get_compatible_currency_codes(nation_code: str) -> set[str]:
+    """
+    Return the currency codes associated with a nation code.
+
+    The mapping is intentionally permissive for shared-currency regions like
+    the euro area.
+    """
+    return set(NATION_TO_CURRENCY_CODES.get(nation_code.upper(), set()))

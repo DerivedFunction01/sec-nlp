@@ -1,3 +1,4 @@
+import math
 import re
 import random
 from typing import Literal, Optional, Sequence
@@ -58,6 +59,83 @@ for _code in _codes:
         _safe_codes.append(rf"{_code}(?![A-Za-z])")
 
 _CODES = r"(?:" + "|".join(_safe_codes) + r")"
+
+
+def _surface_regex(surface: str) -> re.Pattern[str]:
+    escaped = re.escape(surface)
+    if any(ch.isalpha() for ch in surface):
+        return re.compile(rf"(?<!\w){escaped}(?!\w)", re.IGNORECASE)
+    return re.compile(escaped)
+
+
+def _titlecase_currency_surface(surface: str) -> str:
+    parts = re.split(r"(\s+|-)", surface)
+    titled: list[str] = []
+    for part in parts:
+        if part == "" or part.isspace() or part == "-":
+            titled.append(part)
+            continue
+        if part.isupper():
+            titled.append(part)
+        elif part.lower() == "us":
+            titled.append("US")
+        else:
+            titled.append(part[:1].upper() + part[1:].lower())
+    return "".join(titled)
+
+
+_CURRENCY_SURFACES: list[dict[str, object]] = []
+for _code, _props in MAJOR_CURRENCIES.items():
+    _symbols_for_code = [sym for sym in _props.get("symbols", []) if sym]
+    _names_for_code = [name for name in _props.get("names", []) if name]
+    _adj = _props.get("adj")
+    _amb_names = [name for name in _props.get("amb_names", []) if name]
+
+    for _sym in _symbols_for_code:
+        _CURRENCY_SURFACES.append(
+            {
+                "code": _code,
+                "kind": "symbol",
+                "surface": _sym,
+            }
+        )
+
+    _CURRENCY_SURFACES.append(
+        {
+            "code": _code,
+            "kind": "code",
+            "surface": _code,
+        }
+    )
+
+    for _name in _names_for_code:
+        if _name in _amb_names:
+            if _adj:
+                _CURRENCY_SURFACES.append(
+                    {
+                        "code": _code,
+                        "kind": "adj_name",
+                        "surface": f"{_adj} {_name}",
+                    }
+                )
+        else:
+            _CURRENCY_SURFACES.append(
+                {
+                    "code": _code,
+                    "kind": "name",
+                    "surface": _name,
+                }
+            )
+
+_CURRENCY_SURFACES.sort(key=lambda entry: len(entry["surface"]), reverse=True)
+for _entry in _CURRENCY_SURFACES:
+    _entry["pattern"] = _surface_regex(_entry["surface"])
+
+_CURRENCY_SURFACES_BY_KIND: dict[str, list[dict[str, object]]] = {}
+for _entry in _CURRENCY_SURFACES:
+    _CURRENCY_SURFACES_BY_KIND.setdefault(_entry["kind"], []).append(_entry)
+
+_CURRENCY_DATA_BY_CODE = MAJOR_CURRENCIES
 
 _NUM = r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+"
 _SCALE = r"(?:k|m|mm|b|t|thousand|million|billion|trillion)"
@@ -208,6 +286,123 @@ def _replace_first_numeric(text: str, new_value: str) -> str:
     return _NUMERIC_CORE_RE.sub(repl, text, count=1)
 
 
+def _find_currency_surface(text: str) -> tuple[re.Match[str], dict[str, object]] | None:
+    for entry in _CURRENCY_SURFACES:
+        pattern = entry["pattern"]
+        assert isinstance(pattern, re.Pattern)
+        match = pattern.search(text)
+        if match is not None:
+            return match, entry
+    return None
+
+
+def _pick_currency_name(props: dict, value: int | float, rng: random.Random) -> str | None:
+    names = [name for name in props.get("names", []) if name]
+    if not names:
+        return None
+
+    amb_names = set(props.get("amb_names", []))
+    plural = not math.isclose(abs(float(value)), 1.0)
+
+    preferred = []
+    fallback = []
+    for name in names:
+        if name in amb_names:
+            continue
+        fallback.append(name)
+        if plural and name.endswith("s"):
+            preferred.append(name)
+        elif not plural and not name.endswith("s"):
+            preferred.append(name)
+
+    if preferred:
+        return rng.choice(preferred)
+    if fallback:
+        return rng.choice(fallback)
+    return rng.choice(names)
+
+
+def _pick_currency_adj_name(props: dict, value: int | float, rng: random.Random) -> str | None:
+    adj = props.get("adj")
+    if not adj:
+        return None
+
+    amb_names = [name for name in props.get("amb_names", []) if name]
+    if not amb_names:
+        return None
+
+    plural = not math.isclose(abs(float(value)), 1.0)
+    preferred = []
+    fallback = []
+    for name in amb_names:
+        fallback.append(name)
+        if plural and name.endswith("s"):
+            preferred.append(name)
+        elif not plural and not name.endswith("s"):
+            preferred.append(name)
+
+    name = rng.choice(preferred or fallback)
+    return f"{adj} {name}"
+
+
+def _pick_replacement_currency(
+    current_entry: dict[str, object], value: int | float, rng: random.Random
+) -> str | None:
+    current_code = str(current_entry["code"])
+    current_kind = str(current_entry["kind"])
+
+    candidate_codes = [code for code in _CURRENCY_DATA_BY_CODE.keys() if code != current_code]
+    if not candidate_codes:
+        return None
+
+    rng.shuffle(candidate_codes)
+
+    for code in candidate_codes:
+        props = _CURRENCY_DATA_BY_CODE[code]
+        if current_kind == "symbol":
+            symbols = [sym for sym in props.get("symbols", []) if sym]
+            if symbols:
+                return rng.choice(symbols)
+        elif current_kind == "code":
+            return code
+        elif current_kind == "adj_name":
+            adj_name = _pick_currency_adj_name(props, value, rng)
+            if adj_name is not None:
+                return _titlecase_currency_surface(adj_name)
+        elif current_kind == "name":
+            name = _pick_currency_name(props, value, rng)
+            if name is not None:
+                return _titlecase_currency_surface(name)
+
+    for code in candidate_codes:
+        props = _CURRENCY_DATA_BY_CODE[code]
+        symbols = [sym for sym in props.get("symbols", []) if sym]
+        if symbols:
+            return rng.choice(symbols)
+        name = _pick_currency_name(props, value, rng)
+        if name is not None:
+            return _titlecase_currency_surface(name)
+        adj_name = _pick_currency_adj_name(props, value, rng)
+        if adj_name is not None:
+            return _titlecase_currency_surface(adj_name)
+        return code
+
+    return None
+
+
+def _swap_currency_surface(text: str, value: int | float, rng: random.Random) -> str:
+    found = _find_currency_surface(text)
+    if found is None:
+        return text
+
+    match, current_entry = found
+    replacement = _pick_replacement_currency(current_entry, value, rng)
+    if replacement is None:
+        return text
+
+    return text[: match.start()] + replacement + text[match.end() :]
+
+
 def _pick_money_format(value: int | float, rng: random.Random) -> tuple[str, bool]:
     """
     Choose a money formatting style that still looks natural.
@@ -258,6 +453,7 @@ def mutate_money_span(
     strategy: Strategy = "random",
     format_strategy: MoneyFormatStrategy = "random",
     pad_magnitude_decimals: bool = False,
+    mutate_currency: bool = True,
 ) -> str:
     """
     Mutate the numeric portion of a single money span and reinsert it.
@@ -282,7 +478,10 @@ def mutate_money_span(
         numeric_only=True,
         pad_magnitude_decimals=pad_magnitude_decimals or chosen_pad,
     )
-    return _replace_first_numeric(text, formatted)
+    mutated_text = _replace_first_numeric(text, formatted)
+    if mutate_currency:
+        mutated_text = _swap_currency_surface(mutated_text, mutated, rng)
+    return mutated_text
 
 
 def mutate_money_spans(
@@ -292,6 +491,7 @@ def mutate_money_spans(
     strategy: Strategy = "random",
     format_strategy: MoneyFormatStrategy = "random",
     pad_magnitude_decimals: bool = False,
+    mutate_currency: bool = True,
 ) -> list[str]:
     """
     Mutate a batch of money spans.
@@ -346,6 +546,9 @@ def mutate_money_spans(
             numeric_only=True,
             pad_magnitude_decimals=pad_magnitude_decimals or chosen_pad,
         )
-        out.append(_replace_first_numeric(span, formatted))
+        mutated_span = _replace_first_numeric(span, formatted)
+        if mutate_currency:
+            mutated_span = _swap_currency_surface(mutated_span, mutated, rng)
+        out.append(mutated_span)
 
     return out
