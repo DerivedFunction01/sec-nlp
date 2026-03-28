@@ -1,7 +1,10 @@
 import re
+import random
+from typing import Literal, Optional, Sequence
 
 from defs.regex_lib import closest_distance_in_segment, to_build_alternation, build_regex, SENTENCE_SPLIT_RE
 from defs.labels import LABELS
+from defs.number import Number, Strategy, mutate_number, mutate_numbers
 
 PCT_CHANGE_TERMS = [
     r"increas(?:es?|ed|ing)",
@@ -186,6 +189,10 @@ PCT_NUMERIC_RE = re.compile(
     re.IGNORECASE,
 )
 
+PercentFormatStrategy = Literal["random", "raw", "commas"]
+_PCT_FORMATS = ("raw", "commas")
+_PCT_NUMERIC_CORE_RE = re.compile(r"(?P<num>-?\(?\d+(?:\.\d+)?\)?|-?\.\d+)")
+
 _PCT_CHANGE_POST_ALT = to_build_alternation(PCT_CHANGE_POST_TERMS)
 PCT_CHANGE_POST_RE = re.compile(
     rf"(?<!\w){_PCT_VAL_OR_RANGE}\s+(?:{_PCT_CHANGE_POST_ALT})(?!\w)",
@@ -297,3 +304,167 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
             )
 
     return spans
+
+
+def extract_numeric_values(text: str) -> list[int | float]:
+    """
+    Extract numeric values from a percent span or fragment.
+
+    Parentheses and percent words are ignored; only the numeric cores are returned.
+    """
+    if not text:
+        return []
+
+    values: list[int | float] = []
+    for m in _PCT_NUMERIC_CORE_RE.finditer(text):
+        raw = m.group("num")
+        cleaned = raw.strip().strip("()")
+        if cleaned.startswith("."):
+            cleaned = "0" + cleaned
+        try:
+            value = float(cleaned)
+        except ValueError:
+            continue
+        values.append(int(value) if value.is_integer() else value)
+    return values
+
+
+def _replace_numeric_cores(text: str, replacements: Sequence[str]) -> str:
+    it = iter(replacements)
+
+    def repl(match: re.Match[str]) -> str:
+        try:
+            return next(it)
+        except StopIteration:
+            return match.group(0)
+
+    return _PCT_NUMERIC_CORE_RE.sub(repl, text)
+
+
+def _pick_percent_format(rng: random.Random) -> str:
+    return rng.choice(_PCT_FORMATS)
+
+
+def _format_percent_value(value: Number, strategy: str) -> str:
+    """
+    Render a percent number without noisy float artifacts.
+    """
+    v = float(value)
+    if strategy == "raw":
+        if v == round(v):
+            return str(int(round(v)))
+        return f"{v:.2f}".rstrip("0").rstrip(".")
+    if v == round(v):
+        return f"{int(round(v)):,}"
+    return f"{v:,.2f}".rstrip("0").rstrip(".")
+
+
+def mutate_percent_span(
+    text: str,
+    *,
+    rng: Optional[random.Random] = None,
+    strategy: Strategy = "random",
+    format_strategy: PercentFormatStrategy = "random",
+    allow_negative: bool = False,
+) -> str:
+    """
+    Mutate the numeric portion of a percent span and reinsert it.
+
+    Keeps the percent surface form intact and only changes the numeric core.
+    """
+    if rng is None:
+        rng = random.Random()
+
+    values = extract_numeric_values(text)
+    if not values:
+        return text
+
+    if len(values) == 1:
+        mutated_values = [
+            mutate_number(
+                values[0],
+                strategy=strategy,
+                int_only=False,
+                allow_zero=False,
+                allow_negative=allow_negative,
+                rng=rng,
+            )
+        ]
+    else:
+        mutated_values = mutate_numbers(
+            values,
+            strategy=strategy,
+            int_only=False,
+            allow_zero=False,
+            allow_negative=allow_negative,
+            rng=rng,
+        )
+        if isinstance(mutated_values, tuple):
+            mutated_values = mutated_values[0]
+
+    chosen_format = format_strategy
+    if format_strategy == "random":
+        chosen_format = _pick_percent_format(rng)
+
+    formatted = [
+        _format_percent_value(v, chosen_format) for v in mutated_values if isinstance(v, Number)
+    ]
+    return _replace_numeric_cores(text, formatted)
+
+
+def mutate_percent_spans(
+    spans: Sequence[str],
+    *,
+    rng: Optional[random.Random] = None,
+    strategy: Strategy = "random",
+    format_strategy: PercentFormatStrategy = "random",
+    allow_negative: bool = False,
+) -> list[str]:
+    """
+    Mutate a batch of percent spans.
+
+    A single formatting choice is used for the full batch so related examples
+    stay visually coherent.
+    """
+    if rng is None:
+        rng = random.Random()
+
+    all_values: list[int | float] = []
+    per_span_counts: list[int] = []
+    for span in spans:
+        vals = extract_numeric_values(span)
+        per_span_counts.append(len(vals))
+        all_values.extend(vals)
+
+    if not all_values:
+        return list(spans)
+
+    mutated_values = mutate_numbers(
+        all_values,
+        strategy=strategy,
+        int_only=False,
+        allow_zero=False,
+        allow_negative=allow_negative,
+        rng=rng,
+    )
+    if isinstance(mutated_values, tuple):
+        mutated_values = mutated_values[0]
+
+    chosen_format = format_strategy
+    if format_strategy == "random":
+        chosen_format = _pick_percent_format(rng)
+
+    out: list[str] = []
+    idx = 0
+    for span, count in zip(spans, per_span_counts):
+        if count == 0:
+            out.append(span)
+            continue
+        formatted = [
+            _format_percent_value(v, chosen_format)
+            for v in mutated_values[idx : idx + count]
+        ]
+        idx += count
+        out.append(_replace_numeric_cores(span, formatted))
+
+    return out
