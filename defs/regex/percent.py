@@ -306,7 +306,7 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     return spans
 
 
-def extract_numeric_values(text: str) -> list[int | float]:
+def extract_numeric_values(text: str) -> list[Number]:
     """
     Extract numeric values from a percent span or fragment.
 
@@ -315,7 +315,7 @@ def extract_numeric_values(text: str) -> list[int | float]:
     if not text:
         return []
 
-    values: list[int | float] = []
+    values: list[Number] = []
     for m in _PCT_NUMERIC_CORE_RE.finditer(text):
         raw = m.group("num")
         cleaned = raw.strip().strip("()")
@@ -429,7 +429,7 @@ def mutate_percent_spans(
     if rng is None:
         rng = random.Random()
 
-    all_values: list[int | float] = []
+    all_values: list[Number] = []
     per_span_counts: list[int] = []
     for span in spans:
         vals = extract_numeric_values(span)
