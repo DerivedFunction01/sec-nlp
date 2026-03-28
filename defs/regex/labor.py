@@ -231,6 +231,7 @@ OCCUPATION_GROUP_TERMS = {
         r"longshoremen",
         r"longshoreman",
         r"bricklayer",
+        r"teamsters?",
     ],
     OccupationGroup.PUBLIC_SAFETY: [
         r"police",
@@ -580,6 +581,32 @@ _DYNAMIC_UNION_CORE = build_alternation(
 # --- Works councils / co-determination ---
 _WORKS_TERMS = [_CORE.WORKS_COUNCIL, r"ewc", _CORE.CO_DET]
 
+_SPECIFIC_UNIONS = [
+    r"UAW",
+    r"AFL-CIO",
+    r"AFL-CIO-CLC",
+    r"ALPA",
+    r"TWU",
+    r"CWA",
+    r"BMWED",
+    r"SMWIA",
+    r"LIUNA",
+    r"AFSCME",
+    r"BCTGM",
+    r"AFPA",
+    r"ILWU",
+    r"IUOE",
+    r"IATSE",
+    r"UMWA",
+    r"AFMA",
+    r"WGA",
+    r"IFPTE",
+    r"USWA",
+    r"UFCW",
+    r"SEIU",
+    r"IBEW",
+    r"IBT",
+]
 # --- Disruption / risk ---
 _RISK_PHRASES = [
     build_compound(
@@ -615,6 +642,7 @@ _LABOR_CONTEXT_RE = build_regex(
     + _NON_UNION_PHRASES
     + _RISK_PHRASES
     + _WORKS_TERMS
+    + _SPECIFIC_UNIONS
     + [_DYNAMIC_UNION_CORE]
 )
 
