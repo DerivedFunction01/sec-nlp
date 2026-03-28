@@ -143,6 +143,8 @@ FINANCIAL_INSTRUMENTS = {
         r"time",
         r"amendable",
         r"private",
+        r"master",
+        r"netting",
         r"public",
     },
 }
@@ -177,6 +179,9 @@ AMBIGUOUS_TERMS = {
     r"portfolios?",
     r"types?",
     r"members?",
+    r"laws?",
+    r"rights?",
+    r"bills?",
 }
 
 GENERIC_COUNT_NOUNS = {
