@@ -606,6 +606,11 @@ _SPECIFIC_UNIONS = [
     r"SEIU",
     r"IBEW",
     r"IBT",
+    r"CUPE",
+    r"IBT",
+    r"IAM",
+    r"ACFTU",
+    r"NUMSA",
 ]
 # --- Disruption / risk ---
 _RISK_PHRASES = [
