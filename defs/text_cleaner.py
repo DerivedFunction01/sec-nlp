@@ -4,6 +4,8 @@ from pathlib import Path
 from typing import Optional, Union
 from defs.regex_lib import CONSEC_DIGIT_RE, build_alternation, build_regex
 import pandas as pd
+from defs.regex.money import MONEY_RE
+from string import punctuation as punct
 COMPANY_TOKEN = "the Company"
 
 SPACE_RE = re.compile(r"\s+")
@@ -11,7 +13,7 @@ PUNCT_SPACE_RE = re.compile(r"\s+([,\.;\:\!\?])")
 DOUBLE_PUNCT_RE = re.compile(r"([,\.;\:\!\?])\1+")
 MISSING_SPACE_RE = re.compile(r"(?:(?<!\b[A-Z])\.|[,;\:\!\?])(?=[a-zA-Z])")
 HANGING_APOSTROPHE_RE = re.compile(r"\s+'(s|re|ve|t|m|ll|d)\b", re.IGNORECASE)
-
+SAFE_PUNCT = re.escape(punct)
 
 def clean_spaces_and_punctuation(text: str) -> str:
     """
@@ -48,10 +50,10 @@ class TextCleaner:
             r"",
         ),
         # toc style . . . . . 5 (at least 4 dots (optional spaces between dots) then a number)
-        (re.compile(r"(?:\.\s*){4,}\d{1,3}", re.IGNORECASE), r""),
+        (re.compile(r"(?:[._]\s*){4,}\d{1,3}", re.IGNORECASE), r""),
         # "1. Employee Agreement" (starting bullets in the beginning of a text string)
-        (re.compile(r"^\s*\d+\.\d+\s+(?=[A-Z])"), r""),
-        (re.compile(r"^\s*\d+[*).*#]\s+"), r""),
+        (re.compile(rf"^\s*\d{{1,3}}\.\d{{1,3}}\s+(?=[A-Z{SAFE_PUNCT}])"), r""),
+        (re.compile(rf"^\s*\d+\s*[{SAFE_PUNCT}]\s+"), r""),
     ]
     def __init__(self):
         pass
@@ -60,7 +62,11 @@ class TextCleaner:
         if not text:
             return ""
         for pattern, replacement in self.cleanup_patterns:
-            text = pattern.sub(replacement, text.strip())
+            text = text.strip()
+            # Ensure we don't strip valid currency starting with numbers (e.g. "10.5 USD")
+            if pattern.pattern.startswith(r"^\s*\d") and MONEY_RE.match(text[:100]):
+                continue
+            text = pattern.sub(replacement, text)
         return clean_spaces_and_punctuation(text)
 
 class NumberNormalizer:
