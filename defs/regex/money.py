@@ -17,7 +17,8 @@ _amb_names: list[str] = []
 for code, props in MAJOR_CURRENCIES.items():
     _codes.append(re.escape(code))
     for sym in props.get("symbols", []):
-        if len(sym) > 0: _symbols.append(re.escape(sym))
+        if len(sym) > 0:
+            _symbols.append(re.escape(sym))
     adj = props.get("adj")
     if adj:
         _adjs.append(re.escape(adj))
@@ -30,11 +31,29 @@ for code, props in MAJOR_CURRENCIES.items():
 
 _UNAMB_NAMES = build_alternation(_unamb_names)
 _AMB_NAMES = build_alternation(_amb_names)
-_SYMBOLS = build_alternation(_symbols)
 _ADJS = build_alternation(_adjs)
 
-# Word-bounded codes: prevents "EUR" matching inside "Euro"
-_CODES = r"(?:" + "|".join(_codes) + r")\b"
+_ALPHA_SYM_RE = re.compile(r"[A-Za-z]")
+
+_safe_symbols: list[str] = []
+for _sym in _symbols:
+    _unescaped = re.sub(r"\\(.)", r"\1", _sym)
+    if _ALPHA_SYM_RE.search(_unescaped):
+        _safe_symbols.append(rf"(?<!\w){_sym}(?!\w)")
+    else:
+        _safe_symbols.append(_sym)
+
+_SYMBOLS = build_alternation(_safe_symbols)
+
+_safe_codes: list[str] = []
+for _code in _codes:
+    _unescaped = re.sub(r"\\(.)", r"\1", _code)
+    if _unescaped[-1].isalpha():
+        _safe_codes.append(rf"{_code}\b")
+    else:
+        _safe_codes.append(rf"{_code}(?![A-Za-z])")
+
+_CODES = r"(?:" + "|".join(_safe_codes) + r")"
 
 _NUM = r"\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+"
 _SCALE = r"(?:k|m|mm|b|t|thousand|million|billion|trillion)"
