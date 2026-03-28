@@ -7,13 +7,13 @@ import pandas as pd
 from defs.regex.money import MONEY_RE
 from string import punctuation as punct
 COMPANY_TOKEN = "the Company"
-
+SAFE_PUNCT = re.escape(punct)
 SPACE_RE = re.compile(r"\s+")
-PUNCT_SPACE_RE = re.compile(r"\s+([,\.;\:\!\?])")
-DOUBLE_PUNCT_RE = re.compile(r"([,\.;\:\!\?])\1+")
+PUNCT_SPACE_RE = re.compile(r"\s+([,\.;\:\!\?\#\*\=\-\~\_])")
+DOUBLE_PUNCT_RE = re.compile(r"([,\.;\:\!\?\#\*\=\-\~\_])\1+")
 MISSING_SPACE_RE = re.compile(r"(?:(?<!\b[A-Z])\.|[,;\:\!\?])(?=[a-zA-Z])")
 HANGING_APOSTROPHE_RE = re.compile(r"\s+'(s|re|ve|t|m|ll|d)\b", re.IGNORECASE)
-SAFE_PUNCT = re.escape(punct)
+
 
 def clean_spaces_and_punctuation(text: str) -> str:
     """
