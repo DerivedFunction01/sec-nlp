@@ -25,6 +25,7 @@ EXTRACTION_PIPELINE = [
     (entity.extract_spans, 3),  # 200 programs , 1000 employee contracts
     (shares.extract_spans, 4),  # 18102 shares of common stock, 2024 shares
     (labor.extract_high_confidence_spans, 5),  # 1000 employees
+    (time.extract_high_confidence_spans, 5),  # 12:30 WEST
     (address.extract_spans, 6),  # Bethlehem, 18102
     (time.extract_spans, 7),  # 2024, 2024 contract, 2024 interest rate swap.
     (labor.extract_spans, 8),

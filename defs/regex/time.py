@@ -170,7 +170,7 @@ TIMEZONE_ABBREVS = [
 ]
 _TZ_STR = build_alternation(TIMEZONE_ABBREVS)
 _AMPM_STR = r"[AP]M"
-_TZ_OR_AMPM_STR = rf"(?:{_AMPM_STR}|{_TZ_STR})"
+_TZ_OR_AMPM_STR = rf"(?:{_AMPM_STR}(?:\s+{_TZ_STR})?|{_TZ_STR})"
 
 CLOCK_TIME = re.compile(
     rf"\b(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?\s*{_TZ_OR_AMPM_STR}\b",
@@ -189,10 +189,10 @@ OCLOCK_TIME = re.compile(
 # =============================================================================
 
 # Tier 1: Full date+year forms (most specific)
-_TIER_1 = [DATE_MDY, DATE_DMY, SLASH_DATE, YEAR_RANGE, CLOCK_TIME, OCLOCK_TIME]
+_TIER_1 = [DATE_MDY, DATE_DMY, SLASH_DATE, CLOCK_TIME, OCLOCK_TIME]
 
 # Tier 2: Fiscal/quarter (specific enough to beat bare years)
-_TIER_2 = [QUARTER, FISCAL_YEAR]
+_TIER_2 = [YEAR_RANGE, QUARTER, FISCAL_YEAR]
 
 # Tier 3: Partial dates (no year — only used if no tier-1/2 match covers the span)
 _TIER_3 = [DATE_MD, DATE_DM]
@@ -202,9 +202,6 @@ _TIER_4 = [DURATION]
 
 # Tier 5: Bare year (last resort — only if nothing else claimed the span)
 _TIER_5 = [DATE_YEAR]
-
-_TIERS = [_TIER_1, _TIER_2, _TIER_3, _TIER_4, _TIER_5]
-
 
 def _overlaps(start: int, end: int, chosen: list[tuple[str, int, int]]) -> bool:
     """True if [start, end) overlaps any already-chosen span."""
@@ -261,13 +258,13 @@ def _gap_is_time_connector(text: str, gap_start: int, gap_end: int) -> bool:
     return bool(_TIME_CONNECTORS_RE.match(gap))
 
 
-def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
+def _extract_from_tiers(text: str, tiers: list[list[re.Pattern]]) -> list[tuple[str, int, int, str]]:
     if not text:
         return []
 
     chosen: list[tuple[str, int, int]] = []
 
-    for tier in _TIERS:
+    for tier in tiers:
         candidates: list[tuple[str, int, int]] = []
         for pat in tier:
             for m in pat.finditer(text):
@@ -284,3 +281,11 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
 
     # Collapse adjacent time spans separated only by whitespace/punctuation
     return _merge_time_spans(labeled, text)
+
+
+def extract_high_confidence_spans(text: str) -> list[tuple[str, int, int, str]]:
+    return _extract_from_tiers(text, [_TIER_1])
+
+
+def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
+    return _extract_from_tiers(text, [_TIER_2, _TIER_3, _TIER_4, _TIER_5])
