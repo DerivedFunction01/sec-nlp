@@ -1,7 +1,6 @@
 from __future__ import annotations
 import re
 from typing import Optional
-from defs.regex.entity import COMMON_COMMODITIES
 from defs.regex_lib import (
     NUMBER_RANGE_STR,
     build_compound,
@@ -94,6 +93,8 @@ GEO_LOCATION_TERMS: set[str] = {
 LOCATION_TERMS: set[str] = PHYSICAL_LOCATION_TERMS | GEO_LOCATION_TERMS
 
 # Optional: build compound patterns for multi-word physical locations if needed
+from defs.regex.cp import COMMON_COMMODITIES
+
 PHYSICAL_COMPOUNDS: set[str] = {
     build_compound(
         set(
@@ -139,11 +140,12 @@ _LOCATION_FILLER = build_alternation(
         r"third[-\s]party",
         r"trade",
         r"company",
+        r"union(?:ized)?",
         r"[A-Z][a-z]+(?:ese|ian|ish|an|ic)",
     ]
 )
 # optional 0-2 filler words, allowing connectors (and/or/,)
-_LOCATION_FILLER_GAP = rf"(?:{_LOCATION_FILLER}\s*(?:and|or|,)?\s*){{0,4}}"
+_LOCATION_FILLER_GAP = rf"(?:{_LOCATION_FILLER}\s*(?:and|or|,\s*(?:and|or))?\s*){{0,4}}"
 
 # optional 1-word gap before the location term
 _OPTIONAL_WORD_BEFORE = make_gap(1, allow_digits=False, space="before")
@@ -158,7 +160,7 @@ _LOCATION_RE = build_regex(_LOCATION_TERMS)
 _GENERIC_WORKER_PATTERN = build_alternation(list(GENERIC_WORKER_TERMS))
 
 LOCATION_COUNT_RE = re.compile(
-    rf"\b{NUMBER_RANGE_STR}\s+{_FUNCTION_WORD_GAP}{_LOCATION_FILLER_GAP}{_OPTIONAL_WORD_BEFORE}\s*{_LOCATION_FILLER_GAP}{_LOCATION_TERM_PATTERN}\b(?!\s+(?:{_GENERIC_WORKER_PATTERN})\b)",
+    rf"\b{NUMBER_RANGE_STR}\s+{_FUNCTION_WORD_GAP}{_LOCATION_FILLER_GAP}{_OPTIONAL_WORD_BEFORE}\s*{_LOCATION_FILLER_GAP}{_LOCATION_TERM_PATTERN}(\s+(?:{_GENERIC_WORKER_PATTERN}))?\b",
     re.IGNORECASE,
 )
 
@@ -214,7 +216,7 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     def _add_span(start: int, end: int, num_val: Optional[int] = None, label: str = LABELS.LOCATION_COUNT.value) -> None:
         orig_start, orig_end = remap_span(pos_map, start, end)
         item = (text[orig_start:orig_end], orig_start, orig_end, label)
-        
+
         if item in span_set:
             return
         span_set.add(item)
@@ -230,16 +232,25 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     for sent_start, _, sentence in _iter_sentences(stripped_text):
         for m in LOCATION_COUNT_RE.finditer(sentence):
             if not _overlaps_existing(sent_start + m.start(), sent_start + m.end()):
-                _add_span(sent_start + m.start(), sent_start + m.end())
+                # If match group 1 exists (ie employee, staff), then it is labor
+                work_val = m.group(1)
+                if work_val:
+                    _add_span(
+                        sent_start + m.start(),
+                        sent_start + m.end(),
+                        label=LABELS.LABOR.value,
+                    )
+                else:
+                    _add_span(sent_start + m.start(), sent_start + m.end())
 
         # Disambiguate "[num] in [Region]" between Labor and Location
         has_worker_context = bool(_WORKER_CONTEXT_RE.search(sentence))
         has_location_context = bool(_LOCATION_RE.search(sentence))
 
         # If there are NO worker terms, and there IS location context, claim it for location.
-        if not has_worker_context and has_location_context:
+        if has_location_context:
             for m in _NUM_IN_REGION_RE.finditer(sentence):
                 if not _overlaps_existing(sent_start + m.start(), sent_start + m.end()):
-                    _add_span(sent_start + m.start(), sent_start + m.end())
+                    _add_span(sent_start + m.start(), sent_start + m.end(), label=LABELS.LOCATION_COUNT.value if not has_worker_context else LABELS.LABOR.value)
 
     return spans

@@ -1,10 +1,11 @@
 from __future__ import annotations
 import re
 from typing import Optional
+from defs.regex.cp import COMMODITY_CHAIN, COMMON_COMMODITIES
 from defs.regex.shares import _EQUITY_CONTEXT_RE
 from defs.regex_lib import NUMBER_PATTERN_STR, NUMBER_RANGE_STR, SENTENCE_SPLIT_RE, add_restrictions, build_alternation, build_compound
 from defs.labels import LABELS
-from defs.regex.labor import GENERIC_WORKER_TERMS, WORKER_TERMS
+from defs.regex.labor import _DISPUTE_TERMS, _RISK_PHRASES, GENERIC_WORKER_TERMS, WORKER_TERMS
 
 # Unambiguously ENTITY_COUNT
 ORGANIZATIONAL_TERMS = {
@@ -50,459 +51,6 @@ PRODUCT_TERMS = {
     r"grants?",
 }
 
-
-def build_energy_dynamic_pattern() -> str:
-    prefixes = [
-        "bio",
-        "liquefied",
-        "liquid",
-    ]
-
-    bases = [
-        "fuels?",
-        "oils?",
-        "energy",
-        "coal",
-        "gas(?:oline)?",
-        "propane",
-        "petroleum",
-        "diesel",
-        "butane",
-        "electricity",
-        "distillates",
-        "ethane",
-        "ethanol",
-        "kerosene",
-        "LNG",
-        "LPG",
-        "solar",
-        "wind",
-    ]
-
-    modifiers = [
-        "bunker",
-        "marine",
-        "jet",
-        "(?:air|aero)plane",
-        "helicopter",
-        "plane",
-        "aero",
-        "aviation",
-        "crude",
-        "heating",
-        "coking",
-        "natural",
-        "carbon",
-        "renewable",
-        "liquid",
-    ]
-
-    prefix_alt = build_alternation(prefixes, sort_longest_first=True)
-    modifier_alt = build_alternation(modifiers, sort_longest_first=True)
-    base_alt = build_alternation(bases, sort_longest_first=True)
-
-    # Optional prefix, optional modifier, required base, optional second base
-    return (
-        rf"(?:(?:{prefix_alt})[- ])?"
-        rf"(?:(?:{modifier_alt})[- ])?"
-        rf"(?:{base_alt})"
-        rf"(?:[- ](?:{base_alt}|liquids?|power))?"
-    )
-
-
-def build_metals_dynamic_pattern() -> str:
-    """
-    Dynamically build comprehensive Metals patterns.
-    Allows:
-        prefix? modifier? base (base)?
-    """
-
-    prefixes = [
-        "precious",
-        "rare earth",
-        "base",
-        "scrap",
-        "silicon",
-    ]
-
-    # Optional: add more if you want "raw copper", "refined nickel", etc.
-    modifiers = [
-        "stainless",
-        "refined",
-        "raw",
-        "unrefined",
-        "high[- ]grade",
-        "low[- ]grade",
-    ]
-
-    bases = [
-        "aluminum",
-        "copper",
-        "iron",
-        "gold",
-        "silver",
-        "metals?",
-        "ores?",
-        "(?:stainless[- ])?steel",
-        "titanium",
-        "uranium",
-        "nickel",
-        "zinc",
-        "lead",
-        "tin",
-        "platinum",
-        "palladium",
-        "rhodium",
-        "cobalt",
-        "molybdenum",
-        "chromium",
-        "lithium",
-        "magnesium",
-        "vanadium",
-        "alumina",
-        "bauxite",
-        "antimony",
-        "arsenic",
-        "bismuth",
-        "indium",
-        "gallium",
-        "graphite",
-        "potassium",
-        "diamonds?",
-        "gemstones?",
-    ]
-
-    prefix_alt = build_alternation(prefixes, sort_longest_first=True)
-    modifier_alt = build_alternation(modifiers, sort_longest_first=True)
-    base_alt = build_alternation(bases, sort_longest_first=True)
-
-    # prefix? modifier? base base?
-    return (
-        rf"(?:(?:{prefix_alt})[- ])?"
-        rf"(?:(?:{modifier_alt})[- ])?"
-        rf"(?:{base_alt})"
-        rf"(?:[- ](?:{base_alt}))?"
-    )
-
-
-COMMODITY_MAP = {
-    "crops": [
-        # --- Fruits ---
-        "oranges?",
-        "bananas?",
-        "apples?",
-        "grapes?",
-        "avocados?",
-        "mango(?:es)?",
-        "pineapples?",
-        "papayas?",
-        "fruits?",
-        "kiwi(?:s)?",
-        "lemon(?:s)?",
-        "lime(?:s)?",
-        "peach(?:es)?",
-        "pear(?:s)?",
-        "plum(?:s)?",
-        "apricot(?:s)?",
-        "fig(?:s)?",
-        "olive(?:s)?",
-        "coconut(?:s)?",
-        # --- Berries ---
-        "strawberr(?:y|ies)",
-        "blueberr(?:y|ies)",
-        "raspberr(?:y|ies)",
-        "cherr(?:y|ies)",
-        "berr(?:y|ies)",
-        "cranberr(?:y|ies)",
-        # --- Vegetables ---
-        "tomato(?:es)?",
-        "potato(?:es)?",
-        "garlic",
-        "pumpkins?",
-        "peppers?",
-        "peas?",
-        "carrots?",
-        "onions?",
-        "cabbages?",
-        "lettuces?",
-        "spinach",
-        "broccoli",
-        "cauliflowers?",
-        "vegetables?",
-        "cucumber(?:s)?",
-        "eggplant(?:s)?",
-        "zucchini",
-        "squash(?:es)?",
-        "sweet potato(?:es)?",
-        "turnip(?:s)?",
-        "radish(?:es)?",
-        "asparagus",
-        "celer(?:y|ies)",
-        # --- Grains / Cereals ---
-        "corns?",
-        "grains?",
-        "wheats?",
-        "rices?",
-        "barley",
-        "oats?",
-        "rye",
-        "sorghum",
-        "millet",
-        "quinoa",
-        "buckwheats?",
-        "triticale",
-        "cereals?",
-        "oatmeals?",
-        # --- Oilseeds ---
-        "soybeans?",
-        "canola",
-        "sunflowers?",
-        "palm oils?",
-        "rapeseeds?",
-        "flax",
-        "hemp",
-        "soy",
-        # --- Legumes / Pulses ---
-        "lentils?",
-        "chickpeas?",
-        "beans?",
-        "peas?",
-        "legumes?",
-        "pulses?",
-        # --- Nuts ---
-        "almonds?",
-        "walnuts?",
-        "pecans?",
-        "pistachios?",
-        # --- Roots / Tubers ---
-        "cassava",
-        "yams?",
-        "beets?",
-        # --- Fungi ---
-        "mushrooms?",
-        # --- Specialty Crops ---
-        "cocoa",
-        "coffee",
-        "cotton",
-        "sugars?",
-        "tea",
-        "tobacco",
-        # --- General Crop Categories ---
-        "(?:horticultural|row) crops?",
-        # -- Other ---
-        "honey",
-        "beeswax",
-        "spices?",
-        "(?:(?:bell|spicy|sweet|green|red|chili|jalape[nñ]o|banana|ghost|cayenne)[- ])?peppers?",
-        # Certain peppers
-        "jalape[nñ]os?",
-        "california reapers?",
-        "paprika",
-        "cinnamon",
-        "cloves?",
-        "nutmeg",
-        "ginger",
-        "turmeric",
-        "vanilla",
-        "saffron",
-        "essential oils?",  # borderline but traded physically
-        "(?:natural[- ])?rubber",
-        "latex",
-        "gum arabic",
-        "seeds?",
-    ],
-    "livestock": [
-        "dairy",
-        "milk",
-        "livestocks?",
-        "eggs?",
-        "cattle",
-        "chickens?",
-        "pork",
-        "turkeys?",
-        "avian",
-        "hogs?",
-        "lean hogs?",
-        "(?:feeder|live) cattle",
-        "poultry",
-        "beef",
-        "meat",
-        "lamb",
-        "wool",
-        "sheep",
-        "goats?",
-        "mutton",
-        "veal",
-        "bisons?",
-        "buffalos?",
-        "ducks?",
-        "geese?",
-        "broilers?",
-        "swines?",
-        "sows?",
-        "boars?",
-        "calves?",
-        "heifers?",
-        "ruminants?",
-        "livestock feeds?",
-        "feedlots?",
-        "feedstocks?",
-        "turkeys?",
-        "ducks?",
-        "goose",
-        "geese",
-        "waterfowls?",
-        "guinea fowls?",
-        "rabbits?",
-        "venisons?",
-        "alpacas?",
-        "llamas?",
-        "yaks?",
-        "butter",
-        "cheeses?",
-        "whey",
-        "milk powders?",
-        "dry milk",
-        "dry whey",
-    ],
-    "seafood": [
-        "salmon",
-        "fish(?:es)?",
-        "shrimps?",
-        "crabs?",
-        "lobsters?",
-        "tunas?",
-        "seafoods?",
-        "aquaculture",
-        "prawns?",
-        "scallops?",
-        "oysters?",
-        "clams?",
-        "mussels?",
-        "squids?",
-        "octop(?:i|us)",
-        "halibuts?",
-        "cods?",
-        "haddocks?",
-        "tilapias?",
-        "snappers?",
-        "mackerels?",
-        "anchov(?:i|es)",
-        "sardines?",
-        "trouts?",
-        "catfish",
-        "(?:king|snow|blue) crabs?",
-        "shellfish(?:es)?",
-        "bivalves?",
-        "crustaceans?",
-        "sea bass",
-        "bass",
-        "yellowtail",
-        "albacore",
-        "eels?",
-        "uni",
-        "roe",
-        "caviars?",
-        "seaweeds?",
-        "kelps?",
-        "mariculture",
-        "pollocks?",
-        "hake",
-        "herring",
-        "plaice",
-        "flounders?",
-        "groupers?",
-        "mahi-mahi",
-        "swordfish",
-        "kingfish",
-        "pomfret",
-        "abalone",
-        "sea urchin",
-        "periwinkle",
-        "sharks?",
-        "whales?",
-        "dolphins?",
-    ],
-    "energy": [
-        "biodiesel",
-        "biomass",
-        build_energy_dynamic_pattern(),
-        "condensate",
-        "naphtha",
-    ],
-    "chemicals": [
-        "fertilizer",
-        "nitrogen",
-        "petrochemical",
-        "phosphate",
-        "plastic",
-        "polymer",
-        "potash",
-        "resin",
-        "rubber",
-        "soda ash",
-        "sulfur",
-        "salt",
-        "silicon",
-        "urea",
-        "ammonia",
-        "carbon",
-    ],
-    "metals": [build_metals_dynamic_pattern()],
-    "construction": [
-        "asphalt",
-        "bitumen",
-        "cement",
-        "concrete",
-        "gravel",
-        "limestone",
-        "sand",
-        "clay",
-        "slate",
-        "granite",
-        "marble",
-        "gypsum",
-        "plaster",
-        "mortar",
-        "bricks?",
-        "ballast",
-        "dolomite",
-        "basalt",
-        "quartzite",
-        "pavers?",
-        "tiles?",
-        "drywall",
-        "sheetrock",
-        "insulation",
-        "fiberglass",
-        "roofing materials?",
-        "shingles?",
-        "precast panels?",
-    ],
-    "forestry": [
-        "(?:hardwood|softwood) lumber",
-        "logs?",
-        "lumber",
-        "(?:ply|hard|soft|sawn)woods?",
-        "timber",
-        "woods?",
-        "wood (?:chips?|pellets?|fibers?|panels?|pulps?)",
-        r"(?<!commercial[ -])papers?",
-        r"cardboards?",
-        r"cartons?",
-        "pulps?",
-        # --- Added ---
-        "veneers?",
-        "kraft papers?",
-    ],
-    "general": [
-        "raw materials?",
-        "textiles?",
-        "commodit(?:y|ies)",
-    ],
-}
-
-COMMON_COMMODITIES = [item for sublist in COMMODITY_MAP.values() for item in sublist]
 
 # Derivatives
 FINANCIAL_INSTRUMENTS = {
@@ -620,14 +168,15 @@ FINANCIAL_INSTRUMENT_COUNT_RE = re.compile(
 
 # --- Ambiguous: context decides ---
 AMBIGUOUS_TERMS = {
-    r"segments?",  
-    r"divisions?", 
+    r"segments?",
+    r"divisions?",
     r"markets?",
-    r"groups?", 
-    r"networks?",  
-    r"channels?",  
+    r"groups?",
+    r"networks?",
+    r"channels?",
     r"portfolios?",
-    r'types?',
+    r"types?",
+    r"members?",
 }
 
 GENERIC_COUNT_NOUNS = {
@@ -695,11 +244,11 @@ _ENTITY_FILLER = build_alternation(
         r"third[-\s]party",
         r"trade",
         r"labo(?:u)r",
-        r"union",
+        r"union(?:ized)?",
         r"(?:collective\s+)?bargaining",
     ] + COMMON_COMMODITIES
 )
-_ENTITY_FILLER_GAP = rf"(?:{_ENTITY_FILLER}\s*(?:and|or|,)?\s*){{0,4}}"
+_ENTITY_FILLER_GAP = rf"(?:{_ENTITY_FILLER}\s*(?:and|or|,\s*(?:and|or))?\s*){{0,4}}"
 _FUNCTION_WORDS = build_alternation(
     [
         r"of",
@@ -718,7 +267,7 @@ _ENTITY_GAP = r"(?:[^\W\d][\w\.-]*\s+){0,1}"
 ENTITY_COUNT_RE = re.compile(
     rf"\b({NUMBER_PATTERN_STR})\s+{_FUNCTION_WORD_GAP}({_ENTITY_FILLER_GAP}{_ENTITY_GAP}"
     rf"(?:{_ENTITY_TERM_PATTERN}))"
-    rf"(?!\s+(?:{_GENERIC_WORKER_PATTERN})\b)\b",
+    rf"(?!\s+(?:(?:{COMMODITY_CHAIN})?{_GENERIC_WORKER_PATTERN})\b)\b",
     re.IGNORECASE,
 )
 
@@ -727,12 +276,12 @@ _STANDALONE_TERMS = [
     r"cba(?:s)?",
     r"nda(?:s)?",
     r"mou(?:s)?",
-    r"(?:collective\s+)?bargaining\s+units",
-]
+    r"(?:collective\s+)?bargaining\s+units?",
+] + _RISK_PHRASES + _DISPUTE_TERMS + COMMON_COMMODITIES
 
 _STANDALONE_PATTERN = build_alternation(_STANDALONE_TERMS)
 ENTITY_STANDALONE_RE = re.compile(
-    rf"\b({NUMBER_PATTERN_STR})\s+({_STANDALONE_PATTERN})\b",
+    rf"\b({NUMBER_PATTERN_STR})\s+({_STANDALONE_PATTERN})\b(?!\s+(?:{_GENERIC_WORKER_PATTERN})\b)",
     re.IGNORECASE,
 )
 

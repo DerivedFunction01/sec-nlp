@@ -169,7 +169,6 @@ GENERIC_WORKER_TERMS: set[str] = {
     r"labo(?:u)?rers?",
     r"staff",
     r"personnel",
-    r"members?",
     r"labo(?:u)?r\s+force",
     r"associates?",
     r"work\s+force",
@@ -505,7 +504,15 @@ class _DISRUPT(Enum):
     SLOWDOWN = r"slow[- ]?downs?"
     OUT = build_compound([r"walk", r"sick", r"lock"], r"outs?")
 
-
+_DISPUTE_TERMS = [
+    _DISRUPT.STRIKE.value,
+    _DISRUPT.DISPUTE.value,
+    _DISRUPT.STOPPAGE.value,
+    _DISRUPT.DISAGREEMENT.value,
+    _DISRUPT.DISRUPT.value,
+    _DISRUPT.SLOWDOWN.value,
+    _DISRUPT.OUT.value,
+]
 _GAP = r"(?:'s?)?(?:\s+(?:of|the|for|&|[\'\w-]*)){0,3}\s+"
 
 _SUFFIX_AGREEMENTS = [
