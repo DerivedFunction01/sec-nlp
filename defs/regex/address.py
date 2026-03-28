@@ -135,10 +135,12 @@ _PHONE_FORMATS: dict[str, tuple] = {
     "UK": (
         r"44",
         rf"(?:\(?0?\d{{2,4}}\)?{_OPT_SEP})\d{{3,4}}{_SEP}\d{{3,4}}",
+        True,  # requires_country_code
     ),
     "FR": (
         r"33",
         rf"0?\d{_OPT_SEP}\d{{2}}{_SEP}\d{{2}}{_SEP}\d{{2}}{_SEP}\d{{2}}",
+        True,  # requires_country_code
     ),
     "DE": (
         r"49",
@@ -153,18 +155,22 @@ _PHONE_FORMATS: dict[str, tuple] = {
     "JP": (
         r"81",
         rf"0?\d{{1,4}}{_SEP}\d{{4}}{_SEP}\d{{4}}",
+        True,  # requires_country_code
     ),
     "CN": (
         r"86",
         rf"(?:1\d{{2}}{_SEP}\d{{4}}{_SEP}\d{{4}}|0\d{{2,3}}{_SEP}\d{{4}}{_SEP}\d{{4}})",
+        True,  # requires_country_code
     ),
     "IN": (
         r"91",
         rf"\d{{5}}{_SEP}\d{{5}}",
+        True,  # requires_country_code
     ),
     "BR": (
         r"55",
         rf"(?:\(?\d{{2}}\)?{_OPT_SEP})\d{{4,5}}{_SEP}\d{{4}}",
+        True,  # requires_country_code
     ),
     "RU": (
         r"7",
@@ -178,6 +184,7 @@ _PHONE_FORMATS: dict[str, tuple] = {
     "MX": (
         r"52",
         rf"(?:\(?\d{{2}}\)?{_OPT_SEP})\d{{4}}{_SEP}\d{{4}}",
+        True,  # requires_country_code
     ),
     "KR": (
         r"82",
