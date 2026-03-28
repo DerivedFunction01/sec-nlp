@@ -37,7 +37,7 @@ _ADJS = build_alternation(_adjs)
 _CODES = r"(?:" + "|".join(_codes) + r")\b"
 
 _NUM = r"\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+"
-_SCALE = r"(?:k|m|b|t|thousand|million|billion|trillion)"
+_SCALE = r"(?:k|m|mm|b|t|thousand|million|billion|trillion)"
 _NUM_WITH_SCALE = rf"(?:{_NUM})(?:\s*{_SCALE})?"
 
 # --------------------------------------------------------------------------
