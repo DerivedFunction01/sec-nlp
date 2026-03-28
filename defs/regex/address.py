@@ -296,7 +296,7 @@ def match_phone(text: str) -> list[tuple[str, str]]:
 _MERGE_GAP = 15
 
 TITLE_CASE_WORDS_RE = re.compile(r"\b[A-Z][a-z]+(?:[\s,]+[A-Z][a-z]+)*\b")
-STATE_ABBR_RE = re.compile(r"\b[A-Z]{2,4}\b")
+STATE_ABBR_RE = re.compile(r"\b[A-Z]{2}\b")
 
 # Merge-group constants
 _GRP_ADDRESS = "ADDRESS"
