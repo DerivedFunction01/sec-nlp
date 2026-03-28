@@ -72,6 +72,7 @@ EXHIBIT_NOUNS = [
     r"annexes?",
     r"addenda?",
     r"addendums?",
+    r"files?",
 ]
 
 _STANDARDS_FRAGMENT = build_alternation(STANDARDS_TERMS)
