@@ -1,4 +1,5 @@
 from __future__ import annotations
+import math
 import re
 import random
 from typing import Literal, Optional, Sequence
@@ -20,6 +21,23 @@ SI_PREFIXES: dict[str, str] = {
     "milli": "m",
     "micro": "μ",
     "nano": "n",
+}
+
+SI_PREFIX_FACTORS: dict[str, float] = {
+    "kilo": 1_000.0,
+    "mega": 1_000_000.0,
+    "giga": 1_000_000_000.0,
+    "tera": 1_000_000_000_000.0,
+    "peta": 1_000_000_000_000_000.0,
+    "hecto": 100.0,
+    "centi": 0.01,
+    "milli": 0.001,
+    "micro": 0.000001,
+    "nano": 0.000000001,
+}
+
+_COMPOUND_FACTORS: dict[str, float] = {
+    "hour": 3_600.0,
 }
 
 # =============================================================================
@@ -48,7 +66,7 @@ SI_UNITS: dict[str, dict] = {
         "suppress_base_abbrev": True,
     },
     "temperature": {
-        "name": "celsius",
+        "name": "centigrade",
         "aliases": [],
         "abbrev": "°C",
         "prefixes": [],
@@ -56,7 +74,7 @@ SI_UNITS: dict[str, dict] = {
             "kelvin",
             "degrees celsius",
             "degrees kelvin",
-            "centigrade",
+            "celsius",
             "degree centigrade",
         ],
         "factor_to_base": 1.0,
@@ -606,6 +624,193 @@ QUANTITY_COMPACT_RE = re.compile(
 _QUANTITY_NUMERIC_CORE_RE = re.compile(r"(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+)")
 _QUANTITY_PREFIX_RE = re.compile(rf"^(?P<num>{_QUANTITY_NUMBER_RANGE_STR})")
 
+
+def _sanitize_unit_surface(term: str, unit_terms_lower: set[str]) -> str:
+    """
+    Normalize regex-oriented unit terms into readable display text.
+
+    This keeps the mutator from emitting raw regex fragments like
+    ``foot[- ]pound`` while staying within extractable surface forms.
+    """
+    surface = term.replace("[- ]", "-")
+    if surface.endswith("ss") and surface[:-1].lower() in unit_terms_lower:
+        surface = surface[:-1]
+    return surface
+
+
+def _is_compact_surface(surface: str) -> bool:
+    return " " not in surface
+
+
+def _lookup_unit_entry(surface: str) -> dict[str, object] | None:
+    """
+    Find a unit entry using a few forgiving surface variants.
+
+    This helps normalize space vs hyphen spellings for regex-y terms like
+    ``foot[- ]pound``.
+    """
+    candidates = [
+        surface,
+        surface.replace(" ", "-"),
+        surface.replace("-", " "),
+    ]
+    for candidate in candidates:
+        entry = UNIT_CATALOG_BY_SURFACE.get(candidate.lower())
+        if entry is not None:
+            return entry
+    return None
+
+
+def _build_quantity_unit_catalog() -> dict[str, list[dict[str, object]]]:
+    """
+    Build per-dimension unit candidates with factors to the base unit.
+
+    The result is used by the mutator to swap units within the same dimension.
+    """
+    raw_terms_lower = {t.lower() for t in UNITS_FLAT}
+    catalog: dict[str, list[dict[str, object]]] = {}
+
+    def add_term(dimension: str, term: str, factor: float) -> None:
+        surface = _sanitize_unit_surface(term, raw_terms_lower)
+        entry = {
+            "surface": surface,
+            "factor_to_base": factor,
+            "dimension": dimension,
+            "compact": _is_compact_surface(surface),
+        }
+        catalog.setdefault(dimension, []).append(entry)
+
+    for dimension, config in SI_UNITS.items():
+        base_factor = float(config.get("factor_to_base", 1.0))
+        name = config["name"]
+        aliases = config.get("aliases", [])
+        abbrev = config.get("abbrev", "")
+        prefixes = config.get("prefixes", [])
+        compounds = config.get("compounds", [])
+        extra = config.get("extra", [])
+
+        for n in [name] + aliases:
+            add_term(dimension, n, base_factor)
+            add_term(dimension, f"{n}s", base_factor)
+        if abbrev and not config.get("suppress_base_abbrev"):
+            add_term(dimension, abbrev, base_factor)
+
+        for prefix in prefixes:
+            prefix_factor = SI_PREFIX_FACTORS.get(prefix, 1.0)
+            for n in [name] + aliases:
+                add_term(dimension, f"{prefix}{n}", base_factor * prefix_factor)
+                add_term(dimension, f"{prefix}{n}s", base_factor * prefix_factor)
+            if abbrev:
+                add_term(dimension, f"{SI_PREFIXES.get(prefix, '')}{abbrev}", base_factor * prefix_factor)
+                for compound_name, compound_abbrev in compounds:
+                    compound_factor = _COMPOUND_FACTORS.get(compound_name, 1.0)
+                    add_term(dimension, f"{prefix}{name}-{compound_name}", base_factor * prefix_factor * compound_factor)
+                    add_term(dimension, f"{prefix}{name} {compound_name}", base_factor * prefix_factor * compound_factor)
+                    if compound_abbrev:
+                        add_term(
+                            dimension,
+                            f"{SI_PREFIXES.get(prefix, '')}{abbrev}{compound_abbrev}",
+                            base_factor * prefix_factor * compound_factor,
+                        )
+
+        if config.get("derive_area"):
+            for n in [name] + aliases:
+                add_term("area", f"square {n}", base_factor**2)
+                add_term("area", f"square {n}s", base_factor**2)
+                add_term("area", f"sq {n}", base_factor**2)
+                add_term("area", f"sq {n}s", base_factor**2)
+            if abbrev:
+                add_term("area", f"sq {abbrev}", base_factor**2)
+                add_term("area", f"{abbrev}2", base_factor**2)
+            for prefix in prefixes:
+                prefix_factor = SI_PREFIX_FACTORS.get(prefix, 1.0)
+                pref_factor = (base_factor * prefix_factor) ** 2
+                prefixed_name = f"{prefix}{name}"
+                add_term("area", f"square {prefixed_name}", pref_factor)
+                add_term("area", f"square {prefixed_name}s", pref_factor)
+                add_term("area", f"sq {prefixed_name}", pref_factor)
+                add_term("area", f"sq {prefixed_name}s", pref_factor)
+                if abbrev:
+                    add_term("area", f"{SI_PREFIXES.get(prefix, '')}{abbrev}2", pref_factor)
+
+        if config.get("derive_volume"):
+            for n in [name] + aliases:
+                add_term("volume", f"cubic {n}", base_factor**3)
+                add_term("volume", f"cubic {n}s", base_factor**3)
+                add_term("volume", f"cu {n}", base_factor**3)
+                add_term("volume", f"cu {n}s", base_factor**3)
+            if abbrev:
+                add_term("volume", f"cu {abbrev}", base_factor**3)
+                add_term("volume", f"{abbrev}3", base_factor**3)
+            for prefix in prefixes:
+                prefix_factor = SI_PREFIX_FACTORS.get(prefix, 1.0)
+                pref_factor = (base_factor * prefix_factor) ** 3
+                prefixed_name = f"{prefix}{name}"
+                add_term("volume", f"cubic {prefixed_name}", pref_factor)
+                add_term("volume", f"cubic {prefixed_name}s", pref_factor)
+                add_term("volume", f"cu {prefixed_name}", pref_factor)
+                add_term("volume", f"cu {prefixed_name}s", pref_factor)
+                if abbrev:
+                    add_term("volume", f"{SI_PREFIXES.get(prefix, '')}{abbrev}3", pref_factor)
+
+        for term in extra:
+            add_term(dimension, term, base_factor)
+
+    for dimension, config in IMPERIAL_UNITS.items():
+        for unit in config.get("units", []):
+            unit_factor = float(unit["factor_to_base"])
+            name = unit["name"]
+            plural = unit.get("plural")
+            abbrev = unit.get("abbrev")
+            extra = unit.get("extra", [])
+
+            add_term(dimension, name, unit_factor)
+            if plural:
+                add_term(dimension, plural, unit_factor)
+            if abbrev:
+                add_term(dimension, abbrev, unit_factor)
+            for term in extra:
+                add_term(dimension, term, unit_factor)
+
+            if config.get("derive_area"):
+                add_term("area", f"square {name}", unit_factor**2)
+                add_term("area", f"sq {name}", unit_factor**2)
+                if plural:
+                    add_term("area", f"square {plural}", unit_factor**2)
+                    add_term("area", f"sq {plural}", unit_factor**2)
+                if abbrev:
+                    add_term("area", f"sq {abbrev}", unit_factor**2)
+                    add_term("area", f"{abbrev}2", unit_factor**2)
+            if config.get("derive_volume"):
+                add_term("volume", f"cubic {name}", unit_factor**3)
+                add_term("volume", f"cu {name}", unit_factor**3)
+                if plural:
+                    add_term("volume", f"cubic {plural}", unit_factor**3)
+                    add_term("volume", f"cu {plural}", unit_factor**3)
+                if abbrev:
+                    add_term("volume", f"cu {abbrev}", unit_factor**3)
+                    add_term("volume", f"{abbrev}3", unit_factor**3)
+
+    deduped: dict[str, list[dict[str, object]]] = {}
+    for dimension, entries in catalog.items():
+        seen: set[str] = set()
+        out: list[dict[str, object]] = []
+        for entry in entries:
+            key = str(entry["surface"]).lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(entry)
+        deduped[dimension] = out
+    return deduped
+
+
+UNIT_CATALOG_BY_DIMENSION = _build_quantity_unit_catalog()
+UNIT_CATALOG_BY_SURFACE: dict[str, dict[str, object]] = {}
+for dimension, entries in UNIT_CATALOG_BY_DIMENSION.items():
+    for entry in entries:
+        UNIT_CATALOG_BY_SURFACE[str(entry["surface"]).lower()] = entry
+
 QuantityFormatStrategy = Literal[
     "random",
     "raw",
@@ -684,18 +889,98 @@ def _normalize_format_strategy(
     return _pick_quantity_format(value, rng)
 
 
+def _round_quantity_value(value: Number) -> Number:
+    """
+    Round quantity values to a human-friendly precision.
+
+    Unit conversion can introduce long floating tails, but quantity spans do
+    not need that level of exactness in this pipeline.
+    """
+    rounded = round(float(value), 3)
+    if math.isclose(rounded, round(rounded)):
+        return int(round(rounded))
+    return rounded
+
+
+def _split_quantity_surface(text: str) -> tuple[str, str, str] | None:
+    """
+    Split a quantity span into (numeric_prefix, separator, unit_surface).
+
+    The separator preserves the original whitespace between the number and unit.
+    """
+    prefix_match = _QUANTITY_PREFIX_RE.match(text)
+    if not prefix_match:
+        return None
+
+    numeric_prefix = prefix_match.group("num")
+    rest = text[prefix_match.end("num") :]
+    separator = rest[: len(rest) - len(rest.lstrip())]
+    unit_surface = rest.lstrip()
+    return numeric_prefix, separator, unit_surface
+
+
+def _pick_quantity_unit(
+    current_surface: str,
+    rng: random.Random,
+    reference_value: Number | None = None,
+) -> tuple[str, float] | None:
+    """
+    Pick a replacement unit from the same dimension as `current_surface`.
+
+    Tries to preserve the compact/spaced style of the source unit when possible.
+    """
+    current_entry = _lookup_unit_entry(current_surface)
+    if not current_entry:
+        return None
+
+    dimension = str(current_entry["dimension"])
+    current_compact = bool(current_entry["compact"])
+    candidates = [
+        entry
+        for entry in UNIT_CATALOG_BY_DIMENSION.get(dimension, [])
+        if str(entry["surface"]).lower() != current_surface.lower()
+    ]
+    if not candidates:
+        return current_surface, float(current_entry["factor_to_base"])
+
+    same_style = [entry for entry in candidates if bool(entry["compact"]) == current_compact]
+    pool = same_style or candidates
+    if reference_value is not None:
+        source_factor = float(current_entry["factor_to_base"])
+        ref_abs = abs(float(reference_value))
+        scored: list[tuple[float, dict[str, object]]] = []
+        for entry in pool:
+            target_factor = float(entry["factor_to_base"])
+            converted = ref_abs * source_factor / target_factor if target_factor else ref_abs
+            if 0.1 <= converted < 10_000:
+                score = 0.0
+            elif converted <= 0:
+                score = 1_000.0
+            else:
+                score = abs(math.log10(converted))
+            scored.append((score, entry))
+        best_score = min(score for score, _ in scored)
+        best_pool = [entry for score, entry in scored if score == best_score]
+        chosen = rng.choice(best_pool)
+    else:
+        chosen = rng.choice(pool)
+    return str(chosen["surface"]), float(chosen["factor_to_base"])
+
+
 def mutate_quantity_span(
     text: str,
     *,
     rng: Optional[random.Random] = None,
     strategy: Strategy = "random",
     format_strategy: QuantityFormatStrategy = "random",
+    mutate_unit: bool = True,
     allow_negative: bool = False,
 ) -> str:
     """
     Mutate the numeric portion of a single quantity span and reinsert it.
 
-    The unit surface form is preserved exactly as extracted.
+    By default the unit is also converted to another unit in the same
+    dimension using factor_to_base.
     """
     if rng is None:
         rng = random.Random()
@@ -704,10 +989,31 @@ def mutate_quantity_span(
     if not values:
         return text
 
+    split = _split_quantity_surface(text)
+    if split is None:
+        return text
+
+    numeric_prefix, separator, unit_surface = split
+    unit_surface = unit_surface.strip()
+
+    target_surface = unit_surface
+    source_factor = 1.0
+    target_factor = 1.0
+    if mutate_unit:
+        picked = _pick_quantity_unit(unit_surface, rng, reference_value=values[0])
+        if picked is not None:
+            target_surface, target_factor = picked
+            source_entry = _lookup_unit_entry(unit_surface)
+            if source_entry is not None:
+                source_factor = float(source_entry["factor_to_base"])
+
     if len(values) == 1:
+        transformed_values = [values[0]]
+        if mutate_unit and source_factor != target_factor:
+            transformed_values = [float(values[0]) * source_factor / target_factor]
         mutated_values = [
             mutate_number(
-                values[0],
+                transformed_values[0],
                 strategy=strategy,
                 int_only=False,
                 allow_zero=False,
@@ -716,8 +1022,11 @@ def mutate_quantity_span(
             )
         ]
     else:
+        transformed_values = values
+        if mutate_unit and source_factor != target_factor:
+            transformed_values = [float(v) * source_factor / target_factor for v in values]
         mutated_values = mutate_numbers(
-            values,
+            transformed_values,
             strategy=strategy,
             int_only=False,
             allow_zero=False,
@@ -726,7 +1035,9 @@ def mutate_quantity_span(
         )
         if isinstance(mutated_values, tuple):
             mutated_values = mutated_values[0]
-    
+
+    mutated_values = [_round_quantity_value(v) for v in mutated_values]
+
     assert isinstance(mutated_values[0], Number)
     chosen_format = _normalize_format_strategy(mutated_values[0], format_strategy, rng)
     formatted = [
@@ -738,7 +1049,8 @@ def mutate_quantity_span(
         for v in mutated_values
         if isinstance(v, Number)
     ]
-    return _replace_numeric_cores(text, formatted)
+    numeric_text = _replace_numeric_cores(numeric_prefix, formatted)
+    return f"{numeric_text}{separator}{target_surface}"
 
 
 def mutate_quantity_spans(
@@ -747,6 +1059,7 @@ def mutate_quantity_spans(
     rng: Optional[random.Random] = None,
     strategy: Strategy = "random",
     format_strategy: QuantityFormatStrategy = "random",
+    mutate_unit: bool = True,
     allow_negative: bool = False,
 ) -> list[str]:
     """
@@ -758,45 +1071,20 @@ def mutate_quantity_spans(
     if rng is None:
         rng = random.Random()
 
-    values: list[Number] = []
-    per_span_counts: list[int] = []
-    for span in spans:
-        vals = extract_numeric_values(span)
-        per_span_counts.append(len(vals))
-        values.extend(vals)
-
-    if not values:
-        return list(spans)
-
-    mutated_values = mutate_numbers(
-        values,
-        strategy=strategy,
-        int_only=False,
-        allow_zero=False,
-        allow_negative=allow_negative,
-        rng=rng,
-    )
-    if isinstance(mutated_values, tuple):
-        mutated_values = mutated_values[0]
-
-    chosen_format = _normalize_format_strategy(mutated_values[0], format_strategy, rng)
-
     out: list[str] = []
-    idx = 0
-    for span, count in zip(spans, per_span_counts):
-        if count == 0:
-            out.append(span)
-            continue
-        formatted = [
-            format_number(
-                v,
-                strategy=chosen_format,  # type: ignore[arg-type]
-                numeric_only=False,
+    for span in spans:
+        # Each span mutates independently, but all stay within the same
+        # precision rules used by `mutate_quantity_span`.
+        out.append(
+            mutate_quantity_span(
+                span,
+                rng=rng,
+                strategy=strategy,
+                format_strategy=format_strategy,
+                mutate_unit=mutate_unit,
+                allow_negative=allow_negative,
             )
-            for v in mutated_values[idx : idx + count]
-        ]
-        idx += count
-        out.append(_replace_numeric_cores(span, formatted))
+        )
 
     return out
 
