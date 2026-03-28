@@ -113,11 +113,14 @@ SI_UNITS: dict[str, dict] = {
 IMPERIAL_UNITS: dict[str, dict] = {
     "length": {
         "units": [
-            # {"name": "inch", "plural": "inches", "abbrev": "in"},
+            {"name": "inch", "plural": "inches", "abbrev": None},
             {"name": "foot", "plural": "feet", "abbrev": "ft"},
             {"name": "yard", "plural": "yards", "abbrev": "yd"},
             {"name": "mile", "plural": "miles", "abbrev": "mi"},
-            # {"name": "nautical mile", "plural": "nautical miles", "abbrev": "nm"},
+            {"name": "nautical mile", "plural": "nautical miles", "abbrev": "nm"},
+            {"name": "furlong", "plural": "furlongs", "abbrev": None},
+            {"name": "board foot", "plural": "board feet", "abbrev": "bf"},
+            {"name": "linear foot", "plural": "linear feet", "abbrev": "lf"},
         ],
         "derive_area": True,
         "derive_volume": True,
@@ -133,6 +136,12 @@ IMPERIAL_UNITS: dict[str, dict] = {
                 "extra": ["short ton", "short tons", "long ton", "long tons"],
             },
             {"name": "hundredweight", "plural": "hundredweights", "abbrev": "cwt"},
+            {"name": "bale", "plural": "bales", "abbrev": "bl"},
+            {"name": "grain", "plural": "grains", "abbrev": "gr"},
+            {"name": "dram", "plural": "drams", "abbrev": "dr"},
+            {"name": "slug", "plural": "slugs", "abbrev": "sl"},
+            # sacks
+            {"name": "sack", "plural": "sacks", "abbrev": "sc"},
         ],
     },
     "temperature": {
@@ -159,13 +168,20 @@ IMPERIAL_UNITS: dict[str, dict] = {
             },
             {"name": "bushel", "plural": "bushels", "abbrev": None},
             {"name": "peck", "plural": "pecks", "abbrev": None},
+            {"name": "tablespoon", "plural": "tablespoons", "abbrev": "tbsp"},
+            {"name": "teaspoon", "plural": "teaspoons", "abbrev": "tsp"},
         ],
     },
     "area": {
         "units": [
             {"name": "acre", "plural": "acres", "abbrev": None},
             {"name": "hectare", "plural": "hectares", "abbrev": "ha"},
-            {"name": "square inch", "plural": "square inches", "abbrev": "in2", "extra": ["sq in"]},
+            {
+                "name": "square inch",
+                "plural": "square inches",
+                "abbrev": "in2",
+                "extra": ["sq in"],
+            },
         ],
     },
     "energy": {
@@ -178,6 +194,8 @@ IMPERIAL_UNITS: dict[str, dict] = {
             },
             {"name": "therm", "plural": "therms", "abbrev": None},
             {"name": "dekatherm", "plural": "dekatherms", "abbrev": "dth"},
+            # foot pound
+            {"name": "foot[- ]pound", "plural": "foot[- ]pounds", "abbrev": "fp"},
         ],
     },
     "power": {
@@ -190,6 +208,10 @@ IMPERIAL_UNITS: dict[str, dict] = {
             {"name": "mcf", "plural": None, "abbrev": None},
             {"name": "mmcf", "plural": None, "abbrev": None},
             {"name": "bcf", "plural": None, "abbrev": None},
+            {"name": "standard cubic foot", "plural": "standard cubic feet", "abbrev": "scf"},
+            {"name": "gpm", "plural": None, "abbrev": None},
+            # stb
+            {"name": "stock tank barrel", "plural": "stock tank barrels", "abbrev": "stb"},
         ],
     },
 }
