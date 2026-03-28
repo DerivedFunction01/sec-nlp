@@ -1,6 +1,6 @@
 from __future__ import annotations
 import re
-from defs.regex_lib import build_alternation
+from defs.regex_lib import build_alternation, make_gap
 from defs.labels import LABELS
 from defs.text_cleaner import remap_span, strip_angle_brackets
 
@@ -217,6 +217,43 @@ PHONE_NUMBER_RE = re.compile(
     re.IGNORECASE,
 )
 
+_PHONE_WORDS = [r"phone", r"telephone", r"facsimile", r"fax", r"mobile", r"cell number", r"cellphone"]
+_PHONE_ENDING = [r"line", r"number", r"no.?", r"num.?", r"phone"]
+
+_phone_words_alt = build_alternation(_PHONE_WORDS)
+_phone_ending_alt = build_alternation(_PHONE_ENDING)
+
+# Ambiguous short number (needs context anchoring from one of the patterns below)
+_AMBIGUOUS_PHONE = (
+    rf"(?:\+?[\d]{{1,3}}[\s.-]?)?"  # optional country code
+    rf"(?:\(?\d{{3}}\)?[\s.-]?)?"  # optional area code
+    rf"\d{{3}}[\s.-]\d{{4}}"  # core local number
+    rf"{_EXT}"  # optional extension
+)
+
+# Label words + optional ending, with a gap reducing modifier
+_PHONE_LABEL = (
+    rf"(?:{_phone_words_alt})"  # "phone", "fax", etc.
+    rf"(?:\s+(?:{_phone_ending_alt}))?"  # optional "number", "no.", etc.
+)
+
+# words -> number  ("phone number is 555-1234")
+_before_gap = make_gap(3, allow_digits=False, space="before")
+PHONE_WORDS_BEFORE_RE = re.compile(
+    rf"\b{_PHONE_LABEL}"
+    rf"(?:[\s:]{{1,3}})"  # colon / spaces tighten the gap right before digits
+    rf"{_before_gap}"
+    rf"{_AMBIGUOUS_PHONE}\b",
+    re.IGNORECASE,
+)
+
+# number -> words  ("555-1234 (fax)")
+_after_gap = make_gap(2, allow_digits=False, space="after")
+PHONE_WORDS_AFTER_RE = re.compile(
+    rf"\b{_AMBIGUOUS_PHONE}" rf"{_after_gap}" rf"(?:[\s:]{{1,3}})" rf"{_PHONE_LABEL}\b",
+    re.IGNORECASE,
+)
+
 
 def match_phone(text: str) -> list[tuple[str, str]]:
     """
@@ -337,9 +374,10 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
             orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
             raw.append((orig_start, orig_end, address_label, _GRP_ADDRESS))
 
-    for m in PHONE_NUMBER_RE.finditer(stripped):
-        orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
-        raw.append((orig_start, orig_end, address_label, _GRP_PHONE))
+    for pat in (PHONE_NUMBER_RE, PHONE_WORDS_BEFORE_RE, PHONE_WORDS_AFTER_RE):
+        for m in pat.finditer(stripped):
+            orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
+            raw.append((orig_start, orig_end, address_label, _GRP_PHONE))
 
     # _merge_spans operates on original text coordinates and slices from
     # the original text, so angle brackets are preserved in returned spans
