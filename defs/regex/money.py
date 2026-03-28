@@ -131,6 +131,7 @@ MoneyFormatStrategy = Literal[
 _MONEY_FORMATS_SMALL = ("raw", "commas")
 _MONEY_FORMATS_MEDIUM = ("commas", "magnitude_long")
 _MONEY_FORMATS_LARGE = ("commas", "magnitude_long", "magnitude_short", "magnitude_financial")
+_DROP_DECIMALS_ABOVE = 10_000
 
 PRICE_OF_RE = re.compile(
     rf"\bprice\s+of\s+(?:the\s+)?(?P<money>{MONEY_RE.pattern})",
@@ -234,6 +235,22 @@ def _normalize_format_strategy(
     return _pick_money_format(value, rng)
 
 
+def _normalize_money_value(
+    value: int | float,
+    *,
+    drop_decimals_above: int = _DROP_DECIMALS_ABOVE,
+) -> int | float:
+    """
+    Remove non-informational decimals for large money values.
+
+    For example:
+      2,899,868.89 -> 2,899,869
+    """
+    if abs(float(value)) >= drop_decimals_above:
+        return int(round(float(value)))
+    return value
+
+
 def mutate_money_span(
     text: str,
     *,
@@ -255,6 +272,7 @@ def mutate_money_span(
     value, _ = extracted
     mutated = mutate_number(value, strategy=strategy, rng=rng)
     assert isinstance(mutated, Number)
+    mutated = _normalize_money_value(mutated)
     chosen_format, chosen_pad = _normalize_format_strategy(
         mutated, format_strategy, rng
     )
@@ -305,6 +323,8 @@ def mutate_money_spans(
     )
     if isinstance(mutated_values, tuple):
         mutated_values = mutated_values[0]
+
+    mutated_values = [_normalize_money_value(v) for v in mutated_values]
 
     chosen_format, chosen_pad = _normalize_format_strategy(
         mutated_values[0], format_strategy, rng
