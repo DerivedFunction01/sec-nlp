@@ -215,7 +215,7 @@ TAX_HAVEN_CODES = {
 MAJOR_CURRENCIES = {
     "USD": {
         "symbols": ["$"],
-        "names": ["dollar", "dollars"],
+        "names": ["dollar", "dollars", "US dollar", "US dollars"],
         "prefix": True,
         "adj": "american",
     },
@@ -294,7 +294,7 @@ MAJOR_CURRENCIES = {
     },
     "MXN": {
         "symbols": ["Mex$"],
-        "names": ["mexican peso"],
+        "names": ["mexican peso", "mexican pesos", "pesos", "peso"],
         "prefix": True,
         "adj": "mexican",
     },
@@ -306,9 +306,8 @@ MAJOR_CURRENCIES = {
     },
     "ARS": {
         "symbols": ["$"],
-        "names": ["peso", "pesos"],
+        "names": ["peso", "pesos", "argentina peso", "argentina pesos"],
         "prefix": True,
-        "amb_names": ["peso", "pesos"],
         "adj": "argentine",
     },
     "IDR": {
@@ -334,14 +333,12 @@ MAJOR_CURRENCIES = {
         "symbols": ["﷼", "SR"],
         "names": ["riyal", "riyals"],
         "prefix": True,
-        "amb_names": ["riyal", "riyals"],
         "adj": "saudi",
     },
     "TRY": {
         "symbols": ["₺"],
         "names": ["lira"],
         "prefix": True,
-        "amb_names": ["lira"],
         "adj": "turkish",
     },
     "NZD": {
@@ -366,14 +363,12 @@ MAJOR_CURRENCIES = {
         "symbols": ["د.إ", "AED"],
         "names": ["dirham", "dirhams"],
         "prefix": True,
-        "amb_names": ["dirham", "dirhams"],
         "adj": "emirati",
     },
     "ILS": {
         "symbols": ["₪"],
         "names": ["shekel", "shekels", "new shekel"],
         "prefix": True,
-        "amb_names": ["shekel", "shekels"],
         "adj": "israeli",
     },
     "THB": {"symbols": ["฿"], "names": ["baht"], "prefix": True, "adj": "thai"},
@@ -389,7 +384,7 @@ MAJOR_CURRENCIES = {
         "suffix": True,
         "adj": "czech",
     },
-    "HUF": {"symbols": ["Ft"], "names": ["forint"], "suffix": True, "adj": "hungarian"},
+    "HUF": {"symbols": [], "names": ["forint"], "suffix": True, "adj": "hungarian"},
     "RON": {
         "symbols": ["lei"],
         "names": ["leu", "lei"],

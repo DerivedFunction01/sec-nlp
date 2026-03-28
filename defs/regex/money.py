@@ -17,7 +17,7 @@ _amb_names: list[str] = []
 for code, props in MAJOR_CURRENCIES.items():
     _codes.append(re.escape(code))
     for sym in props.get("symbols", []):
-        _symbols.append(re.escape(sym))
+        if len(sym) > 0: _symbols.append(re.escape(sym))
     adj = props.get("adj")
     if adj:
         _adjs.append(re.escape(adj))
@@ -28,42 +28,68 @@ for code, props in MAJOR_CURRENCIES.items():
         else:
             _unamb_names.append(re.escape(name))
 
-_UNAMB_NAMES = build_alternation(_unamb_names)  # safe alone: "dollar", "euro"
-_AMB_NAMES = build_alternation(_amb_names)  # only safe with adj: "pound", "yen"
-
+_UNAMB_NAMES = build_alternation(_unamb_names)
+_AMB_NAMES = build_alternation(_amb_names)
 _SYMBOLS = build_alternation(_symbols)
-_CODES = build_alternation(_codes)
 _ADJS = build_alternation(_adjs)
+
+# Word-bounded codes: prevents "EUR" matching inside "Euro"
+_CODES = r"(?:" + "|".join(_codes) + r")\b"
 
 _NUM = r"\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+"
 _SCALE = r"(?:k|m|b|t|thousand|million|billion|trillion)"
 _NUM_WITH_SCALE = rf"(?:{_NUM})(?:\s*{_SCALE})?"
 
-# Examples matched:
-#   $5, €2.5m, USD 10, 10 USD, 10 dollars, US dollars 10, British pounds 5
+# --------------------------------------------------------------------------
+# Individual sub-patterns (each independently testable / tweakable)
+# --------------------------------------------------------------------------
+
+# -$10, -€2.5m
+_NEG_SYMBOL = rf"-\s*(?:{_SYMBOLS})\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
+
+# -USD 10, -EUR (10)
+_NEG_CODE = rf"-\s*{_CODES}\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
+
+# ($10), $(10)  — opening paren required, closing optional
+_PAREN_SYMBOL = rf"\(\s*(?:{_SYMBOLS})\s*{_NUM_WITH_SCALE}\s*\)?"
+
+# $10, €2.5m, $(10)
+_SYMBOL_PREFIX = rf"(?:{_SYMBOLS})\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
+
+# USD 10, EUR (10)
+_CODE_PREFIX = rf"{_CODES}\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
+
+# 10 USD, (10) EUR
+_NUM_CODE_SUFFIX = rf"\(?\s*{_NUM_WITH_SCALE}\s*\)?\s*{_CODES}"
+
+# 10 dollars, 10 million euros
+_NUM_UNAMB_NAME = rf"\(?\s*{_NUM_WITH_SCALE}\s*\)?\s*(?:{_UNAMB_NAMES})"
+
+# british pounds 5, japanese yen 10
+_ADJ_AMB_NAME_PREFIX = (
+    rf"(?:{_ADJS})\s+(?:{_AMB_NAMES})\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
+)
+
+# 5 british pounds
+_ADJ_AMB_NAME_SUFFIX = (
+    rf"\(?\s*{_NUM_WITH_SCALE}\s*\)?\s*(?:{_ADJS})\s+(?:{_AMB_NAMES})"
+)
+
+# --------------------------------------------------------------------------
+# Combined pattern — order matters: more specific before more general
+# --------------------------------------------------------------------------
 MONEY_RE = re.compile(
     rf"(?:"
-    # Negative with minus sign: -$10, -USD 10
-    rf"-\s*(?:{_SYMBOLS})\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
-    rf"|-\s*(?:{_CODES})\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
-    rf"|"
-    # Parenthetical negative or plain symbol prefix: ($10), $10, $(10)
-    rf"(?:\()\s*(?:{_SYMBOLS})\s*{_NUM_WITH_SCALE}\s*(?:\))?"
-    rf"|"
-    rf"(?:{_SYMBOLS})\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
-    rf"|"
-    # Code prefix: USD 10, EUR (10)
-    rf"(?:{_CODES})\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?" rf"|"
-    # Number + code suffix: 10 USD, (10) EUR
-    rf"\(?\s*{_NUM_WITH_SCALE}\s*\)?\s*(?:{_CODES})" rf"|"
-    # Number + scale + unambiguous name: 10 dollars, 10 million euros
-    rf"\(?\s*{_NUM_WITH_SCALE}\s*\)?\s*(?:{_UNAMB_NAMES})" rf"|"
-    # Number + scale + code + scale: 10 million USD (scale before code)
-    rf"\(?\s*{_NUM_WITH_SCALE}\s*\)?\s*(?:{_CODES})" rf"|"
-    # Adj + ambiguous name + number: british pounds 5, japanese yen 10
-    rf"(?:{_ADJS})\s+(?:{_AMB_NAMES})\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?" rf"|"
-    # Adj + ambiguous name (suffix number): 5 british pounds
-    rf"\(?\s*{_NUM_WITH_SCALE}\s*\)?\s*(?:{_ADJS})\s+(?:{_AMB_NAMES})" rf")",
+    rf"{_NEG_SYMBOL}"
+    rf"|{_NEG_CODE}"
+    rf"|{_PAREN_SYMBOL}"
+    rf"|{_SYMBOL_PREFIX}"
+    rf"|{_CODE_PREFIX}"
+    rf"|{_NUM_CODE_SUFFIX}"
+    rf"|{_NUM_UNAMB_NAME}"
+    rf"|{_ADJ_AMB_NAME_PREFIX}"
+    rf"|{_ADJ_AMB_NAME_SUFFIX}"
+    rf")",
     re.IGNORECASE,
 )
 
@@ -96,14 +122,20 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
 
     for m in PRICE_OF_RE.finditer(text):
         money_span = m.span("money")
-        spans.append((m.group("money"), money_span[0], money_span[1], LABELS.MONEY.value))
+        spans.append(
+            (m.group("money"), money_span[0], money_span[1], LABELS.MONEY.value)
+        )
 
     for m in PRICE_PER_RE.finditer(text):
         money_span = m.span("money")
-        spans.append((m.group("money"), money_span[0], money_span[1], LABELS.MONEY.value))
+        spans.append(
+            (m.group("money"), money_span[0], money_span[1], LABELS.MONEY.value)
+        )
 
     for m in PRICE_SLASH_RE.finditer(text):
         money_span = m.span("money")
-        spans.append((m.group("money"), money_span[0], money_span[1], LABELS.MONEY.value))
+        spans.append(
+            (m.group("money"), money_span[0], money_span[1], LABELS.MONEY.value)
+        )
 
     return spans
