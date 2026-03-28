@@ -1,7 +1,7 @@
 import re
 import difflib
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 from defs.regex_lib import CONSEC_DIGIT_RE, build_alternation, build_regex
 import pandas as pd
 COMPANY_TOKEN = "the Company"
@@ -439,7 +439,7 @@ class CompanyNameReplacer:
             name = candidate
         return name
 
-    def _resolve_company_name(self, company_name: Optional[str], cik: Optional[str]) -> str:
+    def _resolve_company_name(self, company_name: Optional[str], cik: Optional[Union[str, int]]) -> str:
         if company_name:
             return company_name
         if not cik:
@@ -449,7 +449,7 @@ class CompanyNameReplacer:
             return ""
         return self._cik_to_name.get(str(cik).strip(), "")
 
-    def replace(self, text: str, company_name: Optional[str] = None, cik: Optional[str] = None) -> str:
+    def replace(self, text: str, company_name: Optional[str] = None, cik: Optional[Union[str, int]] = None) -> str:
         if not text:
             return ""
 
@@ -566,7 +566,7 @@ _COMPANY_NAME_REPLACER = CompanyNameReplacer()
 _NUMERIC_FIRM_CLEANER = NumericFirmCleaner()
 
 
-def clean_text(text: str, cik: Optional[str] = None) -> str:
+def clean_text(text: str, cik: Optional[Union[str, int]] = None) -> str:
     text = _TEXT_CLEANER.clean(text)
     text = _COMPANY_NAME_REPLACER.replace(text, cik=cik)
     text = _NUM_NORMALIZER.normalize(text)
