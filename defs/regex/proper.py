@@ -1,9 +1,8 @@
 from __future__ import annotations
 import re
-from defs.regex_lib import build_alternation
+from defs.regex_lib import NUMBER_RANGE_STR, build_alternation, build_regex
 from defs.labels import LABELS
 from defs.text_cleaner import _NUMERIC_FIRM_CLEANER
-
 
 
 # =============================================================================
@@ -89,9 +88,15 @@ _OTHER_PROPER_NUM = [
     r"\b10[-\s]?K405\b",
     r"\b10[-\s]?KSB\b",
     r"\b10[-\s]?KSB40\b",
-    r"Forever\s+21",
+    r"\bForever\s+21\b",
 ]
 
+TITLE_PROPER_NUM = [
+    rf"Locals?\s+{NUMBER_RANGE_STR}",
+    r"Propositions?\s+{NUMBER_RANGE_STR}",
+    r"[Bb]ranch(?:es)?\s+{NUMBER_RANGE_STR}",
+    r"Chapters?\s+{NUMBER_RANGE_STR}",
+]
 # =============================================================================
 # COMBINED PATTERN
 # =============================================================================
@@ -105,6 +110,7 @@ PROPER_NUM_RE = re.compile(
     re.IGNORECASE,
 )
 
+TITLE_PROPER_NUM_RE = build_regex(TITLE_PROPER_NUM)
 
 def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
@@ -121,5 +127,6 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
 
     for m in PROPER_NUM_RE.finditer(text):
         results.append((m.group(0), m.start(), m.end(), LABELS.PROPER_NUM.value))
-
+    for m in TITLE_PROPER_NUM_RE.finditer(text):
+        results.append((m.group(0), m.start(), m.end(), LABELS.PROPER_NUM.value))
     return results
