@@ -148,6 +148,7 @@ _PHONE_FORMATS: dict[str, tuple] = {
     "IT": (
         r"39",
         rf"0?\d{{1,4}}{_SEP}\d{{4,8}}",
+        True,  # requires_country_code
     ),
     "JP": (
         r"81",
@@ -172,6 +173,7 @@ _PHONE_FORMATS: dict[str, tuple] = {
     "AU": (
         r"61",
         rf"0?\d{_OPT_SEP}\d{{4}}{_SEP}\d{{4}}",
+        True,  # requires_country_code
     ),
     "MX": (
         r"52",
