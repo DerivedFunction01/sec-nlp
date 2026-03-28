@@ -1,26 +1,10 @@
 from __future__ import annotations
 import re
-import pandas as pd
 from defs.regex_lib import build_alternation
 from defs.labels import LABELS
+from defs.text_cleaner import _NUMERIC_FIRM_CLEANER
 
 
-# =============================================================================
-# NUMERIC FIRM NAMES
-# =============================================================================
-def _load_numeric_firms(path: str = "data/numeric_firm_names.csv") -> list[str]:
-    try:
-        df = pd.read_csv(path)
-        # Assume first column is the firm name
-        col = df.columns[0]
-        return df[col].dropna().astype(str).str.strip().tolist()
-    except Exception as e:
-        print(f"⚠️  Could not load numeric firms from {path}: {e}")
-        return []
-
-
-_NUMERIC_FIRMS_RAW = _load_numeric_firms()
-_NUMERIC_FIRMS_ESCAPED = [re.escape(f) for f in _NUMERIC_FIRMS_RAW]
 
 # =============================================================================
 # EQUITY INDICES
@@ -105,16 +89,14 @@ _OTHER_PROPER_NUM = [
     r"\b10[-\s]?K405\b",
     r"\b10[-\s]?KSB\b",
     r"\b10[-\s]?KSB40\b",
+    r"Forever\s+21",
 ]
 
 # =============================================================================
 # COMBINED PATTERN
 # =============================================================================
-# Note: numeric firms use sort_longest_first to prevent partial matches
-# (e.g. "7 Eleven" before "7")
 _all_patterns = (
-    _NUMERIC_FIRMS_ESCAPED  # longest-first sort handles partial match risk
-    + [EQ_INDEX]  # already specific enough, order matters less
+    [EQ_INDEX]  # already specific enough, order matters less
     + _OTHER_PROPER_NUM
 )
 
@@ -131,4 +113,13 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
     if not text:
         return []
-    return [(m.group(0), m.start(), m.end(), LABELS.PROPER_NUM.value) for m in PROPER_NUM_RE.finditer(text)]
+
+    results = []
+    numeric_firm_spans = _NUMERIC_FIRM_CLEANER.mask_numeric_names(text, mask_text=False)
+    for start, end, match_text in numeric_firm_spans:
+        results.append((match_text, start, end, LABELS.PROPER_NUM.value))
+
+    for m in PROPER_NUM_RE.finditer(text):
+        results.append((m.group(0), m.start(), m.end(), LABELS.PROPER_NUM.value))
+
+    return results

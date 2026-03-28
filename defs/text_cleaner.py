@@ -566,54 +566,48 @@ class NumericFirmCleaner:
 
         return text
 
-    def mask_numeric_names(self, text: str) -> tuple[str, dict[str, str]]:
+    def mask_numeric_names(self, text: str, mask_text: bool = True):
+        if not mask_text:
+            if not text:
+                return []
+            spans_found = []
+            if self.numeric_firms_regex:
+                for m in self.numeric_firms_regex.finditer(text):
+                    val = m.group(0)
+                    if val[0].isupper() or val[0].isdigit():
+                        spans_found.append((m.start(), m.end(), val))
+            if self._numeric_firm_list:
+                matches = list(self.candidate_pattern.finditer(text))
+                if matches:
+                    candidates = pd.Series([m.group(0) for m in matches])
+                    spans = [m.span() for m in matches]
+                    firm_series = pd.Series(self._numeric_firm_list)
+                    for i, candidate in enumerate(candidates):
+                        if len(candidate) < 2:
+                            continue
+                        c_start, c_end = spans[i]
+                        if any(not (c_end <= s or c_start >= e) for s, e, _ in spans_found):
+                            continue
+                        cand_lower = candidate.lower()
+                        ratios = firm_series.apply(
+                            lambda f: difflib.SequenceMatcher(None, cand_lower, f.lower()).ratio()
+                        )
+                        if ratios.max() >= 0.85:
+                            spans_found.append((c_start, c_end, candidate))
+            return sorted(spans_found, key=lambda x: x[0])
+
         if not text:
             return "", {}
 
         mapping = {}
         counter = 0
+        spans = self.mask_numeric_names(text, mask_text=False)
 
-        def repl_exact(m):
-            nonlocal counter
-            val = m.group(0)
-            if val[0].isupper() or val[0].isdigit():
-                placeholder = f"__NUMERIC_FIRM_{counter}__"
-                mapping[placeholder] = val
-                counter += 1
-                return placeholder
-            return val
-
-        if self.numeric_firms_regex:
-            text = self.numeric_firms_regex.sub(repl_exact, text)
-
-        if self._numeric_firm_list:
-            matches = list(self.candidate_pattern.finditer(text))
-            if matches:
-                candidates = pd.Series([m.group(0) for m in matches])
-                spans = [m.span() for m in matches]
-
-                firm_series = pd.Series(self._numeric_firm_list)
-
-                replacements = []
-                for i, candidate in enumerate(candidates):
-                    if len(candidate) < 2:
-                        continue
-                    cand_lower = candidate.lower()
-                    ratios = firm_series.apply(
-                        lambda f: difflib.SequenceMatcher(
-                            None, cand_lower, f.lower()
-                        ).ratio()
-                    )
-                    if ratios.max() >= 0.85:
-                        replacements.append((spans[i], candidate))
-
-                for (start, end), candidate in sorted(
-                    replacements, key=lambda x: x[0][0], reverse=True
-                ):
-                    placeholder = f"__NUMERIC_FIRM_{counter}__"
-                    mapping[placeholder] = candidate
-                    counter += 1
-                    text = text[:start] + placeholder + text[end:]
+        for start, end, candidate in sorted(spans, key=lambda x: x[0], reverse=True):
+            placeholder = f"__NUMERIC_FIRM_{counter}__"
+            mapping[placeholder] = candidate
+            text = text[:start] + placeholder + text[end:]
+            counter += 1
 
         return text, mapping
 
