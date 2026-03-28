@@ -420,7 +420,9 @@ IMPERIAL_UNITS: dict[str, dict] = {
 def _derive_area_terms(name: str, aliases: list[str], abbrev: str | None) -> list[str]:
     terms: list[str] = []
     for n in [name] + aliases:
-        terms += [f"square {n}", f"sq {n}"]
+        forms = [n, f"{n}s"]
+        for form in forms:
+            terms += [f"square {form}", f"sq {form}"]
         if abbrev:
             terms += [f"sq {abbrev}", f"{abbrev}2"]
     return terms
@@ -431,7 +433,9 @@ def _derive_volume_terms(
 ) -> list[str]:
     terms: list[str] = []
     for n in [name] + aliases:
-        terms += [f"cubic {n}", f"cu {n}"]
+        forms = [n, f"{n}s"]
+        for form in forms:
+            terms += [f"cubic {form}", f"cu {form}"]
         if abbrev:
             terms += [f"cu {abbrev}", f"{abbrev}3"]
     return terms
@@ -565,10 +569,19 @@ UNITS_BY_DIMENSION, UNITS_FLAT = build_all_units()
 
 
 UNITS: list[str] = UNITS_FLAT
+UNITS_COMPACT: list[str] = [
+    term.replace(" ", "")
+    for term in UNITS_FLAT
+    if " " in term or len(term) <= 3 or any(ch.isdigit() for ch in term)
+]
 
 _UNIT_PATTERN = build_alternation(UNITS)
+_COMPACT_UNIT_PATTERN = build_alternation(UNITS_COMPACT)
 QUANTITY_RE = re.compile(
     rf"\b({NUMBER_RANGE_STR})\s+(?:{_UNIT_PATTERN})\b", re.IGNORECASE
+)
+QUANTITY_COMPACT_RE = re.compile(
+    rf"\b({NUMBER_RANGE_STR})(?:{_COMPACT_UNIT_PATTERN})\b", re.IGNORECASE
 )
 
 
@@ -584,5 +597,11 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
         results.append(
             (text[orig_start:orig_end], orig_start, orig_end, LABELS.QUANTITY.value)
         )
+
+    for m in QUANTITY_COMPACT_RE.finditer(stripped):
+        orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
+        candidate = (text[orig_start:orig_end], orig_start, orig_end, LABELS.QUANTITY.value)
+        if not any(not (orig_end <= s or orig_start >= e) for _, s, e, _ in results):
+            results.append(candidate)
 
     return results
