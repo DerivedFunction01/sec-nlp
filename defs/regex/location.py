@@ -1,6 +1,7 @@
 from __future__ import annotations
 import re
 from typing import Optional
+from defs.regex.entity import COMMON_COMMODITIES
 from defs.regex_lib import (
     NUMBER_RANGE_STR,
     build_compound,
@@ -106,7 +107,7 @@ PHYSICAL_COMPOUNDS: set[str] = {
                 r"supply",
                 r"assembly",
             ]
-            + INDUSTRY_PREFIX_TERMS_FLAT
+            + INDUSTRY_PREFIX_TERMS_FLAT + COMMON_COMMODITIES
         ),
         PHYSICAL_LOCATION_TERMS,
     ),
