@@ -35,7 +35,7 @@ class TextCleaner:
     # Links https or www
     cleanup_patterns = [
         (re.compile(r"(?:\b\d{1,3}\s*)?<PAGE>(?:\s*\d{1,3}\b)?", re.IGNORECASE), r""),
-        (re.compile(r"(?<!\d)[-–—|*•]\s*\d{1,3}\s*[-–—|*•](?!\d)"), r""),
+        (re.compile(r"(?<!\d)[-–—|*•_#]+\s*\d{1,3}\s*[-–—|*•_#]+(?!\d)"), r""), # Markdown artifacts
         (
             re.compile(
                 r"(?:"
