@@ -734,6 +734,14 @@ _YEAR_PRONE_TERMS = [
 ]
 _YEAR_PRONE_RE = build_regex(_YEAR_PRONE_TERMS)
 
+_IMMEDIATE_COUNT_VERBS = [
+    r"have", r"had", r"has", r"having", r"are", r"is", r"were", r"was"
+]
+_IMMEDIATE_COUNT_VERB_RE = re.compile(
+    rf"\b(?:{'|'.join(_IMMEDIATE_COUNT_VERBS)})\s+$",
+    re.IGNORECASE
+)
+
 def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
     Extract ENTITY_COUNT spans from text using entity-specific rules.
@@ -745,8 +753,11 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     stripped, pos_map = strip_angle_brackets(text)
     spans: list[tuple[str, int, int, str]] = []
 
-    def _is_year_like(num_str: str, entity_text: str, is_fi: bool = False) -> bool:
+    def _is_year_like(num_str: str, entity_text: str, pre_context: str, is_fi: bool = False) -> bool:
 
+        if _IMMEDIATE_COUNT_VERB_RE.search(pre_context):
+            return False
+            
         try:
             num_val_str = num_str.split('-')[0]
             num_val = int(float(num_val_str))
@@ -762,7 +773,8 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     for pat in [FINANCIAL_INSTRUMENT_COUNT_RE, ENTITY_COUNT_RE, ENTITY_STANDALONE_RE, BARGAINING_UNIT_COUNT_RE]:
         is_fi = pat is FINANCIAL_INSTRUMENT_COUNT_RE
         for m in pat.finditer(stripped):
-            if _is_year_like(m.group(1), m.group(2), is_fi):
+            pre_context = stripped[:m.start()]
+            if _is_year_like(m.group(1), m.group(2), pre_context, is_fi):
                 continue
             orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
             spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.ENTITY_COUNT.value))

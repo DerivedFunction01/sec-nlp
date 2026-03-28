@@ -196,6 +196,15 @@ _COUNT_INDICATING_ADJ = [
 ]
 _COUNT_CONTEXT_RE = build_regex(_COUNT_INDICATING_ADJ)
 
+# Verbs that appear immediately before a number, proving it's a count
+_IMMEDIATE_COUNT_VERBS = [
+    r"have", r"had", r"has", r"having", r"are", r"is", r"were", r"was"
+]
+_IMMEDIATE_COUNT_VERB_RE = re.compile(
+    rf"\b(?:{'|'.join(_IMMEDIATE_COUNT_VERBS)})\s+$",
+    re.IGNORECASE
+)
+
 # =============================================================================
 # SHARE COUNT PATTERNS
 # Both directions:
@@ -310,7 +319,8 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
                     # Check for strong signals that it IS a count.
                     is_a_count = (
                         _COUNT_VERB_RE.search(pre_match_context) or
-                        _COUNT_CONTEXT_RE.search(match_text)
+                        _COUNT_CONTEXT_RE.search(match_text) or
+                        _IMMEDIATE_COUNT_VERB_RE.search(pre_match_context)
                     )
 
                     # If it's not clearly a count, assume it's a year (or part of a plan name) and skip.
