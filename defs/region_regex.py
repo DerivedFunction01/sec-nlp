@@ -431,7 +431,7 @@ MAJOR_CURRENCIES = {
         "adj": "chilean",
     },
     "PEN": {
-        "symbols": ["S/"],
+        "symbols": [],
         "names": ["sol", "peruvian sol"],
         "prefix": True,
         "amb_names": ["sol"],
