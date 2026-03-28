@@ -98,7 +98,7 @@ ADDRESS_COMPONENT_TERMS: list[str] = [
 # COMPILED PATTERNS
 # =============================================================================
 
-ZIP_CODE_RE = re.compile(r"\b\d{5}(?:[- ]\d{4})?\b")
+ZIP_CODE_RE = re.compile(r"<\d{5}>(?:[- ](?:<\d{4}>|\d{4}))?|<\d{5}-\d{4}>")
 
 _street_terms = build_alternation(STREET_TERMS)
 _unit_terms = build_alternation(UNIT_TERMS)
@@ -376,10 +376,13 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     raw: list[tuple[int, int, str, str]] = []
     address_label = LABELS.ADDRESS.value
 
-    for pat in (STREET_ADDRESS_RE, UNIT_RE, ADDRESS_COMPONENT_RE, ZIP_CODE_RE):
+    for pat in (STREET_ADDRESS_RE, UNIT_RE, ADDRESS_COMPONENT_RE):
         for m in pat.finditer(stripped):
             orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
             raw.append((orig_start, orig_end, address_label, _GRP_ADDRESS))
+
+    for m in ZIP_CODE_RE.finditer(text):
+        raw.append((m.start(), m.end(), address_label, _GRP_ADDRESS))
 
     for pat in (PHONE_NUMBER_RE, PHONE_WORDS_BEFORE_RE, PHONE_WORDS_AFTER_RE):
         for m in pat.finditer(stripped):
