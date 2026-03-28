@@ -47,6 +47,7 @@ PHYSICAL_LOCATION_TERMS: set[str] = {
     r"farms?",
     r"ranches?",
     r"fields?",
+    r"fisher(?:y|ies)",
     # General
     r"sites?",
     r"locations?",
