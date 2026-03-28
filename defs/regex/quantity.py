@@ -29,6 +29,7 @@ SI_UNITS: dict[str, dict] = {
         "aliases": ["meter"],
         "abbrev": "m",
         "prefixes": ["kilo", "hecto", "centi"],
+        "factor_to_base": 1.0,
         "derive_area": True,  # generates square metre, km2, etc.
         "derive_volume": True,  # generates cubic metre, m3, etc.
         "suppress_base_abbrev": True,  # bare "m" is too ambiguous in 10-K context
@@ -39,6 +40,7 @@ SI_UNITS: dict[str, dict] = {
         "abbrev": "g",
         "prefixes": ["kilo", "mega", "milli"],
         "extra": ["tonne", "tonnes", "metric ton", "metric tons"],
+        "factor_to_base": 1.0,
         "suppress_base_abbrev": True,
     },
     "temperature": {
@@ -53,12 +55,14 @@ SI_UNITS: dict[str, dict] = {
             "centigrade",
             "degree centigrade",
         ],
+        "factor_to_base": 1.0,
     },
     "volume": {
         "name": "litre",
         "aliases": ["liter"],
         "abbrev": "L",
         "prefixes": ["kilo", "mega", "giga", "milli", "hecto"],
+        "factor_to_base": 1.0,
         "suppress_base_abbrev": True,
     },
     "energy": {
@@ -66,6 +70,7 @@ SI_UNITS: dict[str, dict] = {
         "aliases": [],
         "abbrev": "J",
         "prefixes": ["kilo", "mega", "giga"],
+        "factor_to_base": 1.0,
         "suppress_base_abbrev": True,
     },
     "power": {
@@ -74,6 +79,7 @@ SI_UNITS: dict[str, dict] = {
         "abbrev": "W",
         "prefixes": ["kilo", "mega", "giga"],
         "compounds": [("hour", "h")],  # kilowatt-hour -> kWh
+        "factor_to_base": 1.0,
         "suppress_base_abbrev": True,
     },
     "pressure": {
@@ -81,12 +87,14 @@ SI_UNITS: dict[str, dict] = {
         "aliases": [],
         "abbrev": "Pa",
         "prefixes": ["kilo", "mega"],
+        "factor_to_base": 1.0,
     },
     "electric_current": {
         "name": "ampere",
         "aliases": ["amp"],
         "abbrev": "A",
         "prefixes": ["kilo", "milli"],
+        "factor_to_base": 1.0,
         "suppress_base_abbrev": True,
     },
     "voltage": {
@@ -94,6 +102,7 @@ SI_UNITS: dict[str, dict] = {
         "aliases": [],
         "abbrev": "V",
         "prefixes": ["kilo", "mega", "milli"],
+        "factor_to_base": 1.0,
         "suppress_base_abbrev": True,
     },
     "data": {
@@ -101,6 +110,7 @@ SI_UNITS: dict[str, dict] = {
         "aliases": ["bit"],
         "abbrev": "B",
         "prefixes": ["kilo", "mega", "giga", "tera", "peta"],
+        "factor_to_base": 1.0,
         "suppress_base_abbrev": True,
     },
 }
@@ -113,35 +123,116 @@ SI_UNITS: dict[str, dict] = {
 IMPERIAL_UNITS: dict[str, dict] = {
     "length": {
         "units": [
-            {"name": "inch", "plural": "inches", "abbrev": None},
-            {"name": "foot", "plural": "feet", "abbrev": "ft"},
-            {"name": "yard", "plural": "yards", "abbrev": "yd"},
-            {"name": "mile", "plural": "miles", "abbrev": "mi"},
-            {"name": "nautical mile", "plural": "nautical miles", "abbrev": "nm"},
-            {"name": "furlong", "plural": "furlongs", "abbrev": None},
-            {"name": "board foot", "plural": "board feet", "abbrev": "bf"},
-            {"name": "linear foot", "plural": "linear feet", "abbrev": "lf"},
+            {
+                "name": "inch",
+                "plural": "inches",
+                "abbrev": None,
+                "factor_to_base": 0.0254,
+            },
+            {
+                "name": "foot",
+                "plural": "feet",
+                "abbrev": "ft",
+                "factor_to_base": 0.3048,
+            },
+            {
+                "name": "yard",
+                "plural": "yards",
+                "abbrev": "yd",
+                "factor_to_base": 0.9144,
+            },
+            {
+                "name": "mile",
+                "plural": "miles",
+                "abbrev": "mi",
+                "factor_to_base": 1609.344,
+            },
+            {
+                "name": "nautical mile",
+                "plural": "nautical miles",
+                "abbrev": "nm",
+                "factor_to_base": 1852.0,
+            },
+            {
+                "name": "furlong",
+                "plural": "furlongs",
+                "abbrev": None,
+                "factor_to_base": 201.168,
+            },
+            {
+                "name": "board foot",
+                "plural": "board feet",
+                "abbrev": "bf",
+                "factor_to_base": 0.002359737216,
+            },
+            {
+                "name": "linear foot",
+                "plural": "linear feet",
+                "abbrev": "lf",
+                "factor_to_base": 0.3048,
+            },
         ],
         "derive_area": True,
         "derive_volume": True,
     },
     "mass": {
         "units": [
-            {"name": "ounce", "plural": "ounces", "abbrev": "oz"},
-            {"name": "pound", "plural": "pounds", "abbrev": "lb"},
+            {
+                "name": "ounce",
+                "plural": "ounces",
+                "abbrev": "oz",
+                "factor_to_base": 28.349523125,
+            },
+            {
+                "name": "pound",
+                "plural": "pounds",
+                "abbrev": "lb",
+                "factor_to_base": 453.59237,
+            },
             {
                 "name": "ton",
                 "plural": "tons",
                 "abbrev": None,
                 "extra": ["short ton", "short tons", "long ton", "long tons"],
+                "factor_to_base": 907184.74,
             },
-            {"name": "hundredweight", "plural": "hundredweights", "abbrev": "cwt"},
-            {"name": "bale", "plural": "bales", "abbrev": "bl"},
-            {"name": "grain", "plural": "grains", "abbrev": "gr"},
-            {"name": "dram", "plural": "drams", "abbrev": "dr"},
-            {"name": "slug", "plural": "slugs", "abbrev": "sl"},
+            {
+                "name": "hundredweight",
+                "plural": "hundredweights",
+                "abbrev": "cwt",
+                "factor_to_base": 45359.237,
+            },
+            {
+                "name": "bale",
+                "plural": "bales",
+                "abbrev": "bl",
+                "factor_to_base": 22679.6185,
+            },
+            {
+                "name": "grain",
+                "plural": "grains",
+                "abbrev": "gr",
+                "factor_to_base": 0.06479891,
+            },
+            {
+                "name": "dram",
+                "plural": "drams",
+                "abbrev": "dr",
+                "factor_to_base": 1.7718451953125,
+            },
+            {
+                "name": "slug",
+                "plural": "slugs",
+                "abbrev": "sl",
+                "factor_to_base": 14593.90294,
+            },
             # sacks
-            {"name": "sack", "plural": "sacks", "abbrev": "sc"},
+            {
+                "name": "sack",
+                "plural": "sacks",
+                "abbrev": "sc",
+                "factor_to_base": 45359.237,
+            },
         ],
     },
     "temperature": {
@@ -151,36 +242,89 @@ IMPERIAL_UNITS: dict[str, dict] = {
                 "plural": None,
                 "abbrev": "°F",
                 "extra": ["degrees fahrenheit"],
+                "factor_to_base": 1.0,
             },
         ],
     },
     "volume": {
         "units": [
-            {"name": "gallon", "plural": "gallons", "abbrev": "gal"},
-            {"name": "quart", "plural": "quarts", "abbrev": "qt"},
-            {"name": "pint", "plural": "pints", "abbrev": "pt"},
-            {"name": "fluid ounce", "plural": "fluid ounces", "abbrev": "fl oz"},
+            {
+                "name": "gallon",
+                "plural": "gallons",
+                "abbrev": "gal",
+                "factor_to_base": 3.785411784,
+            },
+            {
+                "name": "quart",
+                "plural": "quarts",
+                "abbrev": "qt",
+                "factor_to_base": 0.946352946,
+            },
+            {
+                "name": "pint",
+                "plural": "pints",
+                "abbrev": "pt",
+                "factor_to_base": 0.473176473,
+            },
+            {
+                "name": "fluid ounce",
+                "plural": "fluid ounces",
+                "abbrev": "fl oz",
+                "factor_to_base": 0.0295735295625,
+            },
             {
                 "name": "barrel",
                 "plural": "barrels",
                 "abbrev": "bbl",
                 "extra": ["bbl/d"],
+                "factor_to_base": 158.987294928,
             },
-            {"name": "bushel", "plural": "bushels", "abbrev": None},
-            {"name": "peck", "plural": "pecks", "abbrev": None},
-            {"name": "tablespoon", "plural": "tablespoons", "abbrev": "tbsp"},
-            {"name": "teaspoon", "plural": "teaspoons", "abbrev": "tsp"},
+            {
+                "name": "bushel",
+                "plural": "bushels",
+                "abbrev": None,
+                "factor_to_base": 35.23907016688,
+            },
+            {
+                "name": "peck",
+                "plural": "pecks",
+                "abbrev": None,
+                "factor_to_base": 8.80976754172,
+            },
+            {
+                "name": "tablespoon",
+                "plural": "tablespoons",
+                "abbrev": "tbsp",
+                "factor_to_base": 0.01478676478125,
+            },
+            {
+                "name": "teaspoon",
+                "plural": "teaspoons",
+                "abbrev": "tsp",
+                "factor_to_base": 0.00492892159375,
+            },
         ],
     },
     "area": {
         "units": [
-            {"name": "acre", "plural": "acres", "abbrev": None},
-            {"name": "hectare", "plural": "hectares", "abbrev": "ha"},
+            {
+                "name": "acre",
+                "plural": "acres",
+                "abbrev": None,
+                "factor_to_base": 4046.8564224,
+            },
+            {
+                "name": "hectare",
+                "plural": "hectares",
+                "abbrev": "ha",
+                "factor_to_base": 10000.0,
+            },
             {
                 "name": "square inch",
                 "plural": "square inches",
                 "abbrev": "in2",
                 "extra": ["sq in"],
+                "factor_to_base": 0.00064516,
             },
         ],
     },
@@ -191,27 +335,78 @@ IMPERIAL_UNITS: dict[str, dict] = {
                 "plural": None,
                 "abbrev": None,
                 "extra": ["mmbtu", "mmbtu/h"],
+                "factor_to_base": 1055.05585262,
             },
-            {"name": "therm", "plural": "therms", "abbrev": None},
-            {"name": "dekatherm", "plural": "dekatherms", "abbrev": "dth"},
+            {
+                "name": "therm",
+                "plural": "therms",
+                "abbrev": None,
+                "factor_to_base": 105_505_585.262,
+            },
+            {
+                "name": "dekatherm",
+                "plural": "dekatherms",
+                "abbrev": "dth",
+                "factor_to_base": 1_055_055_852.62,
+            },
             # foot pound
-            {"name": "foot[- ]pound", "plural": "foot[- ]pounds", "abbrev": "fp"},
+            {
+                "name": "foot[- ]pound",
+                "plural": "foot[- ]pounds",
+                "abbrev": "fp",
+                "factor_to_base": 1.3558179483314,
+            },
         ],
     },
     "power": {
         "units": [
-            {"name": "horsepower", "plural": None, "abbrev": "hp"},
+            {
+                "name": "horsepower",
+                "plural": None,
+                "abbrev": "hp",
+                "factor_to_base": 745.6998715822702,
+            },
         ],
     },
     "gas_volume": {
         "units": [
-            {"name": "mcf", "plural": None, "abbrev": None},
-            {"name": "mmcf", "plural": None, "abbrev": None},
-            {"name": "bcf", "plural": None, "abbrev": None},
-            {"name": "standard cubic foot", "plural": "standard cubic feet", "abbrev": "scf"},
-            {"name": "gpm", "plural": None, "abbrev": None},
+            {
+                "name": "mcf",
+                "plural": None,
+                "abbrev": None,
+                "factor_to_base": 28.316846592,
+            },
+            {
+                "name": "mmcf",
+                "plural": None,
+                "abbrev": None,
+                "factor_to_base": 28_316.846592,
+            },
+            {
+                "name": "bcf",
+                "plural": None,
+                "abbrev": None,
+                "factor_to_base": 28_316_846.592,
+            },
+            {
+                "name": "standard cubic foot",
+                "plural": "standard cubic feet",
+                "abbrev": "scf",
+                "factor_to_base": 0.028316846592,
+            },
+            {
+                "name": "gpm",
+                "plural": None,
+                "abbrev": None,
+                "factor_to_base": 0.003785411784,
+            },
             # stb
-            {"name": "stock tank barrel", "plural": "stock tank barrels", "abbrev": "stb"},
+            {
+                "name": "stock tank barrel",
+                "plural": "stock tank barrels",
+                "abbrev": "stb",
+                "factor_to_base": 158.987294928,
+            },
         ],
     },
 }
