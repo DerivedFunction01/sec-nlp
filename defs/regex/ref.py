@@ -73,6 +73,7 @@ EXHIBIT_NOUNS = [
     r"addenda?",
     r"addendums?",
     r"files?",
+    r"documents?",
 ]
 
 _STANDARDS_FRAGMENT = build_alternation(STANDARDS_TERMS)
@@ -120,9 +121,16 @@ _EXHIBIT_PATTERN = (
     r")*"
 )
 
+# Matches: refer to Section 3.01, see document 123
+_UNKNOWN_REF_PATTERN = (
+    r"(?:refer\s+to|see)\s+"
+    r"(?:[a-zA-Z][\w-]*\s+){1,2}"  # 1-2 words like "document", "the plan"
+    rf"{_NUM_ID}{_PAREN_SUFFIX}"
+)
+
 # --- COMBINED REFERENCE PATTERN ---
 REFERENCE_RE = re.compile(
-    rf"\b(?:{_STANDARD_ID_PATTERN}|{_EXHIBIT_PATTERN}|{_SHORT_PAREN_REF}|{_EXHIBIT_PREFIX_PATTERN})",
+    rf"\b(?:{_UNKNOWN_REF_PATTERN}|{_STANDARD_ID_PATTERN}|{_EXHIBIT_PATTERN}|{_SHORT_PAREN_REF}|{_EXHIBIT_PREFIX_PATTERN})",
     re.IGNORECASE,
 )
 

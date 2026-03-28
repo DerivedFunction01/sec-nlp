@@ -49,6 +49,9 @@ class TextCleaner:
         ),
         # toc style . . . . . 5 (at least 4 dots (optional spaces between dots) then a number)
         (re.compile(r"(?:\.\s*){4,}\d{1,3}", re.IGNORECASE), r""),
+        # "1. Employee Agreement" (starting bullets in the beginning of a text string)
+        (re.compile(r"^\s*\d+\.\d+\s+(?=[A-Z])"), r""),
+        (re.compile(r"^\s*\d+[*).*#]\s+"), r""),
     ]
     def __init__(self):
         pass
@@ -57,7 +60,7 @@ class TextCleaner:
         if not text:
             return ""
         for pattern, replacement in self.cleanup_patterns:
-            text = pattern.sub(replacement, text)
+            text = pattern.sub(replacement, text.strip())
         return clean_spaces_and_punctuation(text)
 
 class NumberNormalizer:
