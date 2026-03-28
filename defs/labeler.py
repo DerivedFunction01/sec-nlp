@@ -46,7 +46,6 @@ def process_match(
     max_emp_count: Optional[int] = None,
 ):
     text = clean_text(text, cik)
-    print(text)
     all_spans: list[tuple[str, int, int, str, int]] = []
 
     context_kwargs = {
