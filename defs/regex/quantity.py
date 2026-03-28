@@ -1,8 +1,12 @@
 from __future__ import annotations
 import re
+import random
+from typing import Literal, Optional, Sequence
+
 from defs.labels import LABELS
-from defs.regex_lib import NUMBER_RANGE_STR, build_alternation
+from defs.regex_lib import build_alternation
 from defs.text_cleaner import remap_span, strip_angle_brackets
+from defs.number import Number, Strategy, mutate_number, mutate_numbers, format_number
 
 
 SI_PREFIXES: dict[str, str] = {
@@ -577,12 +581,224 @@ UNITS_COMPACT: list[str] = [
 
 _UNIT_PATTERN = build_alternation(UNITS)
 _COMPACT_UNIT_PATTERN = build_alternation(UNITS_COMPACT)
+_QUANTITY_NUMBER_CORE_STR = r"(?:\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+)"
+_QUANTITY_RANGE_SEP_STR = build_alternation(
+    [
+        r"-",
+        r"–",
+        r"—",
+        r"to",
+        r"and",
+        r"(?:out\s+)?of(?:\s+[A-Za-z][\w'-]*){0,5}",
+        r"through",
+    ]
+)
+_QUANTITY_NUMBER_RANGE_STR = rf"{_QUANTITY_NUMBER_CORE_STR}(?:\s*{_QUANTITY_RANGE_SEP_STR}\s*{_QUANTITY_NUMBER_CORE_STR})?"
 QUANTITY_RE = re.compile(
-    rf"\b({NUMBER_RANGE_STR})\s+(?:{_UNIT_PATTERN})\b", re.IGNORECASE
+    rf"(?<!\d,)\b({_QUANTITY_NUMBER_RANGE_STR})\s+(?:{_UNIT_PATTERN})\b",
+    re.IGNORECASE,
 )
 QUANTITY_COMPACT_RE = re.compile(
-    rf"\b({NUMBER_RANGE_STR})(?:{_COMPACT_UNIT_PATTERN})\b", re.IGNORECASE
+    rf"(?<!\d,)\b({_QUANTITY_NUMBER_RANGE_STR})(?:{_COMPACT_UNIT_PATTERN})\b",
+    re.IGNORECASE,
 )
+
+_QUANTITY_NUMERIC_CORE_RE = re.compile(r"(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+)")
+_QUANTITY_PREFIX_RE = re.compile(rf"^(?P<num>{_QUANTITY_NUMBER_RANGE_STR})")
+
+QuantityFormatStrategy = Literal[
+    "random",
+    "raw",
+    "commas",
+    "magnitude_long",
+    "magnitude_short",
+    "magnitude_financial",
+]
+
+_QUANTITY_FORMATS_SMALL = ("raw", "commas")
+_QUANTITY_FORMATS_MEDIUM = ("commas", "magnitude_long")
+_QUANTITY_FORMATS_LARGE = ("commas", "magnitude_long", "magnitude_short", "magnitude_financial")
+
+
+def extract_numeric_values(text: str) -> list[Number]:
+    """
+    Extract numeric values from a quantity span or fragment.
+
+    Only the leading numeric prefix is considered so unit suffixes like `m2`
+    are not mistaken for extra values.
+    """
+    if not text:
+        return []
+
+    m = _QUANTITY_PREFIX_RE.match(text)
+    if not m:
+        return []
+
+    values: list[Number] = []
+    for num_match in _QUANTITY_NUMERIC_CORE_RE.finditer(m.group("num")):
+        raw = num_match.group("num")
+        cleaned = raw.replace(",", "")
+        try:
+            value = float(cleaned)
+        except ValueError:
+            continue
+        values.append(int(value) if value.is_integer() else value)
+    return values
+
+
+def _replace_numeric_cores(text: str, replacements: Sequence[str]) -> str:
+    prefix_match = _QUANTITY_PREFIX_RE.match(text)
+    if not prefix_match:
+        return text
+
+    prefix = prefix_match.group("num")
+    suffix = text[prefix_match.end("num") :]
+    it = iter(replacements)
+
+    def repl(match: re.Match[str]) -> str:
+        try:
+            return next(it)
+        except StopIteration:
+            return match.group(0)
+
+    replaced_prefix = _QUANTITY_NUMERIC_CORE_RE.sub(repl, prefix)
+    return replaced_prefix + suffix
+
+
+def _pick_quantity_format(value: Number, rng: random.Random) -> str:
+    magnitude = abs(float(value))
+    if magnitude < 1_000:
+        return rng.choice(_QUANTITY_FORMATS_SMALL)
+    if magnitude < 100_000:
+        return rng.choice(_QUANTITY_FORMATS_MEDIUM)
+    return rng.choice(_QUANTITY_FORMATS_LARGE)
+
+
+def _normalize_format_strategy(
+    value: Number,
+    format_strategy: QuantityFormatStrategy,
+    rng: random.Random,
+) -> str:
+    if format_strategy != "random":
+        return format_strategy
+    return _pick_quantity_format(value, rng)
+
+
+def mutate_quantity_span(
+    text: str,
+    *,
+    rng: Optional[random.Random] = None,
+    strategy: Strategy = "random",
+    format_strategy: QuantityFormatStrategy = "random",
+    allow_negative: bool = False,
+) -> str:
+    """
+    Mutate the numeric portion of a single quantity span and reinsert it.
+
+    The unit surface form is preserved exactly as extracted.
+    """
+    if rng is None:
+        rng = random.Random()
+
+    values = extract_numeric_values(text)
+    if not values:
+        return text
+
+    if len(values) == 1:
+        mutated_values = [
+            mutate_number(
+                values[0],
+                strategy=strategy,
+                int_only=False,
+                allow_zero=False,
+                allow_negative=allow_negative,
+                rng=rng,
+            )
+        ]
+    else:
+        mutated_values = mutate_numbers(
+            values,
+            strategy=strategy,
+            int_only=False,
+            allow_zero=False,
+            allow_negative=allow_negative,
+            rng=rng,
+        )
+        if isinstance(mutated_values, tuple):
+            mutated_values = mutated_values[0]
+    
+    assert isinstance(mutated_values[0], Number)
+    chosen_format = _normalize_format_strategy(mutated_values[0], format_strategy, rng)
+    formatted = [
+        format_number(
+            v,
+            strategy=chosen_format,  # type: ignore[arg-type]
+            numeric_only=False,
+        )
+        for v in mutated_values
+        if isinstance(v, Number)
+    ]
+    return _replace_numeric_cores(text, formatted)
+
+
+def mutate_quantity_spans(
+    spans: Sequence[str],
+    *,
+    rng: Optional[random.Random] = None,
+    strategy: Strategy = "random",
+    format_strategy: QuantityFormatStrategy = "random",
+    allow_negative: bool = False,
+) -> list[str]:
+    """
+    Mutate a batch of quantity spans.
+
+    A single formatting choice is used for the full batch so related examples
+    stay visually coherent.
+    """
+    if rng is None:
+        rng = random.Random()
+
+    values: list[Number] = []
+    per_span_counts: list[int] = []
+    for span in spans:
+        vals = extract_numeric_values(span)
+        per_span_counts.append(len(vals))
+        values.extend(vals)
+
+    if not values:
+        return list(spans)
+
+    mutated_values = mutate_numbers(
+        values,
+        strategy=strategy,
+        int_only=False,
+        allow_zero=False,
+        allow_negative=allow_negative,
+        rng=rng,
+    )
+    if isinstance(mutated_values, tuple):
+        mutated_values = mutated_values[0]
+
+    chosen_format = _normalize_format_strategy(mutated_values[0], format_strategy, rng)
+
+    out: list[str] = []
+    idx = 0
+    for span, count in zip(spans, per_span_counts):
+        if count == 0:
+            out.append(span)
+            continue
+        formatted = [
+            format_number(
+                v,
+                strategy=chosen_format,  # type: ignore[arg-type]
+                numeric_only=False,
+            )
+            for v in mutated_values[idx : idx + count]
+        ]
+        idx += count
+        out.append(_replace_numeric_cores(span, formatted))
+
+    return out
 
 
 def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
