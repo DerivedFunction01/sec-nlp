@@ -20,7 +20,7 @@ ORGANIZATIONAL_TERMS = {
     add_restrictions(r"ships?",lookbehinds=[r"to"]),
     r"vessels?",
     r"freights?",
-    r"unions",
+    r"unions?",
     r"partnerships?",
     r"ventures?",
     r"competitors?",
@@ -692,9 +692,23 @@ _ENTITY_FILLER = build_alternation(
     ] + COMMON_COMMODITIES
 )
 _ENTITY_FILLER_GAP = rf"(?:{_ENTITY_FILLER}\s*(?:and|or|,)?\s*){{0,4}}"
+_FUNCTION_WORDS = build_alternation(
+    [
+        r"of",
+        r"our",
+        r"(?:company|registrant)(?:'?s)?",
+        r"the",
+        r"an",
+        r"a",
+        r"out",
+        r"that",
+        r"this",
+    ]
+)
+_FUNCTION_WORD_GAP = rf"(?:{_FUNCTION_WORDS}\s+){{0,3}}"
 _ENTITY_GAP = r"(?:[^\W\d][\w\.-]*\s+){0,1}"
 ENTITY_COUNT_RE = re.compile(
-    rf"\b({NUMBER_PATTERN_STR})\s+({_ENTITY_FILLER_GAP}{_ENTITY_GAP}"
+    rf"\b({NUMBER_PATTERN_STR})\s+{_FUNCTION_WORD_GAP}({_ENTITY_FILLER_GAP}{_ENTITY_GAP}"
     rf"(?:{_ENTITY_TERM_PATTERN}))"
     rf"(?!\s+(?:{_GENERIC_WORKER_PATTERN})\b)\b",
     re.IGNORECASE,
