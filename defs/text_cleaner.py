@@ -52,6 +52,8 @@ class TextCleaner:
             ),
             r"",
         ),
+        # strip leading symbols
+        (re.compile(r"^\s*(?:[|*•_#]\s*){1,}"), r""),
         # toc style . . . . . 5 (at least 4 dots (optional spaces between dots) then a number)
         (re.compile(r"(?:[._]\s*){4,}\d{1,3}(?!,)\b", re.IGNORECASE), r""),
         (re.compile(rf"^\s*\d+\s*(?:[{SAFE_PUNCT}]\s*){{1,}}\s+"), r""),
