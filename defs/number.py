@@ -250,8 +250,8 @@ def mutate_numbers(
     *,
     strategy: Strategy = "random",
     int_only: bool = True,
-    allow_zero: bool = True,
-    allow_negative: bool = True,
+    allow_zero: bool = False,
+    allow_negative: bool = False,
     rng: Optional[random.Random] = None,
     return_plan: bool = False,
 ) -> list[Number] | tuple[list[Number], NumberMutationPlan]:

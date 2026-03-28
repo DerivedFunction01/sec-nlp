@@ -1,7 +1,11 @@
 import re
+import random
+from typing import Literal, Optional, Sequence
+
 from defs.regex_lib import build_alternation
 from defs.labels import LABELS
 from defs.region_regex import MAJOR_CURRENCIES
+from defs.number import Number, Strategy, mutate_number, mutate_numbers, format_number
 
 # =============================================================================
 # MONEY REGEX (uses region_regex currency definitions)
@@ -112,6 +116,21 @@ MONEY_RE = re.compile(
     re.IGNORECASE,
 )
 
+_NUMERIC_CORE_RE = re.compile(r"(?P<num>\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+)")
+
+MoneyFormatStrategy = Literal[
+    "random",
+    "raw",
+    "commas",
+    "magnitude_long",
+    "magnitude_short",
+    "magnitude_financial",
+]
+
+_MONEY_FORMATS_SMALL = ("raw", "commas")
+_MONEY_FORMATS_MEDIUM = ("commas", "magnitude_long")
+_MONEY_FORMATS_LARGE = ("commas", "magnitude_long", "magnitude_short", "magnitude_financial")
+
 PRICE_OF_RE = re.compile(
     rf"\bprice\s+of\s+(?:the\s+)?(?P<money>{MONEY_RE.pattern})",
     re.IGNORECASE,
@@ -158,3 +177,153 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
         )
 
     return spans
+
+def extract_numeric_value(text: str) -> tuple[int | float, str] | None:
+    """
+    Extract the first numeric literal from a money span.
+
+    Returns (value, matched_text) or None if no numeric core is found.
+    """
+    if not text:
+        return None
+
+    m = _NUMERIC_CORE_RE.search(text)
+    if not m:
+        return None
+
+    raw = m.group("num")
+    value = float(raw.replace(",", ""))
+    if value.is_integer():
+        return int(value), raw
+    return value, raw
+
+
+def _replace_first_numeric(text: str, new_value: str) -> str:
+    def repl(match: re.Match[str]) -> str:
+        return new_value
+
+    return _NUMERIC_CORE_RE.sub(repl, text, count=1)
+
+
+def _pick_money_format(value: int | float, rng: random.Random) -> tuple[str, bool]:
+    """
+    Choose a money formatting style that still looks natural.
+
+    Words are intentionally excluded.
+    Returns (strategy, pad_magnitude_decimals).
+    """
+    magnitude = abs(float(value))
+    pad_magnitude_decimals = rng.random() < 0.5
+
+    if magnitude < 1_000:
+        return rng.choice(_MONEY_FORMATS_SMALL), False
+    if magnitude < 100_000:
+        return rng.choice(_MONEY_FORMATS_MEDIUM), pad_magnitude_decimals
+    return rng.choice(_MONEY_FORMATS_LARGE), pad_magnitude_decimals
+
+
+def _normalize_format_strategy(
+    value: int | float,
+    format_strategy: MoneyFormatStrategy,
+    rng: random.Random,
+) -> tuple[str, bool]:
+    if format_strategy != "random":
+        return format_strategy, False
+    return _pick_money_format(value, rng)
+
+
+def mutate_money_span(
+    text: str,
+    *,
+    rng: Optional[random.Random] = None,
+    strategy: Strategy = "random",
+    format_strategy: MoneyFormatStrategy = "random",
+    pad_magnitude_decimals: bool = False,
+) -> str:
+    """
+    Mutate the numeric portion of a single money span and reinsert it.
+    """
+    if rng is None:
+        rng = random.Random()
+
+    extracted = extract_numeric_value(text)
+    if extracted is None:
+        return text
+
+    value, _ = extracted
+    mutated = mutate_number(value, strategy=strategy, rng=rng)
+    assert isinstance(mutated, Number)
+    chosen_format, chosen_pad = _normalize_format_strategy(
+        mutated, format_strategy, rng
+    )
+    formatted = format_number(
+        mutated,
+        strategy=chosen_format,  # type: ignore
+        numeric_only=True,
+        pad_magnitude_decimals=pad_magnitude_decimals or chosen_pad,
+    )
+    return _replace_first_numeric(text, formatted)
+
+
+def mutate_money_spans(
+    spans: Sequence[str],
+    *,
+    rng: Optional[random.Random] = None,
+    strategy: Strategy = "random",
+    format_strategy: MoneyFormatStrategy = "random",
+    pad_magnitude_decimals: bool = False,
+) -> list[str]:
+    """
+    Mutate a batch of money spans.
+
+    When strategy="random", a single paragraph-level strategy is chosen inside
+    defs.number.mutate_numbers so related spans stay coherent.
+    """
+    if rng is None:
+        rng = random.Random()
+
+    values: list[int | float] = []
+    for span in spans:
+        extracted = extract_numeric_value(span)
+        if extracted is None:
+            continue
+        value, raw = extracted
+        values.append(value)
+
+    if not values:
+        return list(spans)
+
+    mutated_values = mutate_numbers(
+        values,
+        strategy=strategy,
+        int_only=False,
+        allow_zero=False,
+        allow_negative=False,
+        rng=rng,
+    )
+    if isinstance(mutated_values, tuple):
+        mutated_values = mutated_values[0]
+
+    chosen_format, chosen_pad = _normalize_format_strategy(
+        mutated_values[0], format_strategy, rng
+    )
+
+    out: list[str] = []
+    idx = 0
+    for span in spans:
+        extracted = extract_numeric_value(span)
+        if extracted is None:
+            out.append(span)
+            continue
+
+        mutated = mutated_values[idx]
+        idx += 1
+        formatted = format_number(
+            mutated,
+            strategy=chosen_format, # type: ignore
+            numeric_only=True,
+            pad_magnitude_decimals=pad_magnitude_decimals or chosen_pad,
+        )
+        out.append(_replace_first_numeric(span, formatted))
+
+    return out
