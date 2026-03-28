@@ -217,7 +217,7 @@ PHONE_NUMBER_RE = re.compile(
     re.IGNORECASE,
 )
 
-_PHONE_WORDS = [r"phone", r"telephone", r"facsimile", r"fax", r"mobile", r"cell number", r"cellphone"]
+_PHONE_WORDS = [r"phone", r"telephone", r"facsimile", r"fax", r"mobile phone", r"cell number", r"cellphone"]
 _PHONE_ENDING = [r"line", r"number", r"no.?", r"num.?", r"phone"]
 
 _phone_words_alt = build_alternation(_PHONE_WORDS)
