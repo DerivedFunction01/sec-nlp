@@ -2203,10 +2203,8 @@
     "region": "Europe",
     "code": "EU",
     "phrases": [
-      "european u",
       "european union",
       "eurozone",
-      "eur",
       "euro"
     ],
     "locations": []
@@ -4380,11 +4378,7 @@
       "chinese",
       "prc",
       "p.r.c.",
-      "people's republic of china",
-      "yuan",
-      "renminbi",
-      "rmb",
-      "cny"
+      "people's republic of china"
     ],
     "locations": [
       {
