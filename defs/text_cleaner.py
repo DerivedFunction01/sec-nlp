@@ -1,10 +1,9 @@
 import re
-import csv
 import difflib
 from pathlib import Path
 from typing import Optional
 from defs.regex_lib import CONSEC_DIGIT_RE, build_alternation, build_regex
-
+import pandas as pd
 COMPANY_TOKEN = "the Company"
 
 SPACE_RE = re.compile(r"\s+")
@@ -375,7 +374,6 @@ class CompanyNameReplacer:
         if not self.cik_path.exists():
             self._cik_to_name = {}
             return
-        import pandas as pd  # type: ignore
         df = pd.read_parquet(self.cik_path)
 
         if "cik" not in df.columns or "name" not in df.columns:
@@ -439,11 +437,6 @@ class CompanyNameReplacer:
 
 
 class NumericFirmCleaner:
-    """
-    Replaces numeric firm names (e.g., "Seven Eleven", "3M") with COMPANY_TOKEN
-    so they aren't converted to numbers during normalization.
-    """
-
     def __init__(self):
         self.candidate_pattern = re.compile(
             r"\b[A-Z1-9][\w\-\']*(?:\s+(?:&|and|of|the|[A-Z][\w\-\']+))*\b"
@@ -457,43 +450,42 @@ class NumericFirmCleaner:
         if not file_path.exists():
             return
 
-        numeric_names = set()
-        numeric_list = []
-
-        try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    name = row.get("core_name")
-                    if not name:
-                        continue
-                    name = name.strip()
-                    if len(name) < 3:
-                        continue
-
-                    clean_name = re.sub(r"[^\w\s]", "", name)
-                    tokens = clean_name.split()
-                    prefixes = {name}
-                    if len(tokens) > 2:
-                        parts = name.split()
-                        for i in range(2, len(parts)):
-                            prefix = " ".join(parts[:i])
-                            prefix_lower = prefix.lower()
-                            if prefix_lower.endswith((" of", " and", " &", " for")):
-                                continue
-                            prefixes.add(prefix)
-
-                    for p in prefixes:
-                        numeric_names.add(p)
-                        numeric_list.append(p)
+        try:  
+            df = pd.read_csv(file_path, encoding="utf-8")
         except Exception:
             return
 
+        if "core_name" not in df.columns:
+            return
+
+        # Clean and filter
+        df = df.dropna(subset=["core_name"])
+        df["core_name"] = df["core_name"].astype(str).str.strip()
+        df = df[df["core_name"].str.len() >= 3]
+
+        numeric_names = set()
+        numeric_list = []
+
+        for name in df["core_name"]:
+            parts = str(name).strip().split()
+            prefixes = {name}
+            if len(parts) > 2:
+                for i in range(2, len(parts)):
+                    prefix = " ".join(parts[:i])
+                    if prefix.lower().endswith((" of", " and", " &", " for")):
+                        continue
+                    prefixes.add(prefix)
+
+            for p in prefixes:
+                numeric_names.add(p)
+                numeric_list.append(p)
+
         self._numeric_firm_list = numeric_list
         if numeric_names:
-            sorted_names = sorted(list(numeric_names), key=len, reverse=True)
+            sorted_names = sorted(numeric_names, key=len, reverse=True)
             self.numeric_firms_regex = re.compile(
-                r"\b(?:" + "|".join(sorted_names) + r")\b", re.IGNORECASE
+                r"\b(?:" + "|".join(re.escape(n) for n in sorted_names) + r")\b",
+                re.IGNORECASE,
             )
 
     def clean_numeric_names(self, text: str) -> str:
@@ -501,35 +493,40 @@ class NumericFirmCleaner:
             return ""
 
         if self.numeric_firms_regex:
-            def repl(m):
-                val = m.group(0)
-                if val[0].isupper() or val[0].isdigit():
-                    return COMPANY_TOKEN
-                return val
-            text = self.numeric_firms_regex.sub(repl, text)
+            text = self.numeric_firms_regex.sub(
+                lambda m: (
+                    COMPANY_TOKEN
+                    if (m.group(0)[0].isupper() or m.group(0)[0].isdigit())
+                    else m.group(0)
+                ),
+                text,
+            )
 
         if self._numeric_firm_list:
             matches = list(self.candidate_pattern.finditer(text))
-            replacements = []
+            if matches:
+                candidates = pd.Series([m.group(0) for m in matches])
+                spans = [m.span() for m in matches]
 
-            for m in matches:
-                candidate = m.group(0)
-                if len(candidate) < 2:
-                    continue
+                firm_series = pd.Series(self._numeric_firm_list)
 
-                cand_lower = candidate.lower()
-                for firm_name in self._numeric_firm_list:
-                    firm_lower = firm_name.lower()
-                    ratio = difflib.SequenceMatcher(None, cand_lower, firm_lower).ratio()
-                    if ratio >= 0.85:
-                        replacements.append(m.span())
-                        break
+                replacements = []
+                for i, candidate in enumerate(candidates):
+                    if len(candidate) < 2:
+                        continue
+                    cand_lower = candidate.lower()
+                    ratios = firm_series.apply(
+                        lambda f: difflib.SequenceMatcher(
+                            None, cand_lower, f.lower()
+                        ).ratio()
+                    )
+                    if ratios.max() >= 0.85:
+                        replacements.append(spans[i])
 
-            for start, end in sorted(replacements, reverse=True):
-                text = text[:start] + COMPANY_TOKEN + text[end:]
+                for start, end in sorted(replacements, reverse=True):
+                    text = text[:start] + COMPANY_TOKEN + text[end:]
 
         return text
-
 
 _NUM_NORMALIZER = NumberNormalizer()
 _COMPANY_NAME_REPLACER = CompanyNameReplacer()

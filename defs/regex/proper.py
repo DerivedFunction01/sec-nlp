@@ -13,7 +13,7 @@ def _load_numeric_firms(path: str = "data/numeric_firm_names.csv") -> list[str]:
         df = pd.read_csv(path)
         # Assume first column is the firm name
         col = df.columns[0]
-        return df[col].dropna().str.strip().tolist()
+        return df[col].dropna().astype(str).str.strip().tolist()
     except Exception as e:
         print(f"⚠️  Could not load numeric firms from {path}: {e}")
         return []
