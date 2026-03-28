@@ -50,11 +50,13 @@ def build_alternation(items: List[str], sort_longest_first: bool = True) -> str:
 
 
 def add_restrictions(
-    base: str,
+    base: str | list[str] | set[str],
     lookaheads: Optional[List[str]] = None,
     lookbehinds: Optional[List[str]] = None,
     lookahead_sep: Optional[str] = "[- ]",
 ) -> str:
+    if isinstance(base, (list, set)):
+        base = to_build_alternation(base)
     pattern = base
     if lookbehinds:
         for lb in lookbehinds:
