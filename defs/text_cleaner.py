@@ -35,7 +35,10 @@ class TextCleaner:
     # Links https or www
     cleanup_patterns = [
         (re.compile(r"(?:\b\d{1,3}\s*)?<PAGE>(?:\s*\d{1,3}\b)?", re.IGNORECASE), r""),
-        (re.compile(r"(?<!\d)[-–—|*•_#]+\s*\d{1,3}\s*[-–—|*•_#]+(?!\d)"), r""), # Markdown artifacts
+        (
+            re.compile(r"(?<!\d)[-–—|*•_#]+\s*\d{1,3}\s*[-–—|*•_#]+(?!\d)"),
+            r"",
+        ),  # Markdown artifacts
         (
             re.compile(
                 r"(?:"
@@ -51,9 +54,9 @@ class TextCleaner:
         ),
         # toc style . . . . . 5 (at least 4 dots (optional spaces between dots) then a number)
         (re.compile(r"(?:[._]\s*){4,}\d{1,3}", re.IGNORECASE), r""),
+        (re.compile(rf"^\s*\d+\s*(?:[{SAFE_PUNCT}]\s*){{1,}}\s+"), r""),
         # "1. Employee Agreement" (starting bullets in the beginning of a text string)
         (re.compile(rf"^\s*\d{{1,3}}\.\d{{1,3}}\s+(?=[A-Z{SAFE_PUNCT}])"), r""),
-        (re.compile(rf"^\s*\d+\s*[{SAFE_PUNCT}]\s+"), r""),
     ]
     def __init__(self):
         pass
