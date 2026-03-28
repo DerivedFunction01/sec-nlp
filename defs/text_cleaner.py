@@ -57,6 +57,7 @@ class TextCleaner:
         (re.compile(rf"^\s*\d+\s*(?:[{SAFE_PUNCT}]\s*){{1,}}\s+"), r""),
         # "1. Employee Agreement" (starting bullets in the beginning of a text string)
         (re.compile(rf"^\s*\d{{1,3}}\.\d{{1,3}}\s+(?=[A-Z{SAFE_PUNCT}])"), r""),
+        (re.compile(r"\b[Uu]s\b"), COMPANY_TOKEN) # Us, us vs US
     ]
     def __init__(self):
         pass

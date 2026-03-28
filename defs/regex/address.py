@@ -3,6 +3,7 @@ import re
 from defs.regex_lib import build_alternation, make_gap
 from defs.labels import LABELS
 from defs.text_cleaner import remap_span, strip_angle_brackets
+from defs.region_regex import RegionMatcher
 
 
 # =============================================================================
@@ -103,6 +104,17 @@ ZIP_CODE_RE = re.compile(r"<\d{5}>(?:[- ](?:<\d{4}>|\d{4}))?|<\d{5}-\d{4}>")
 _street_terms = build_alternation(STREET_TERMS)
 _unit_terms = build_alternation(UNIT_TERMS)
 _address_terms = build_alternation(ADDRESS_COMPONENT_TERMS)
+
+RegionMatcher._compile()
+_region_patterns = [pat.pattern[2:-2] for pat in RegionMatcher.location_regexes]
+_REGION_PATTERN = "|".join(_region_patterns)
+
+_zip_hints = build_alternation([r"zip\s*codes?", r"zip", r"postal\s*codes?"])
+
+ADDRESS_CONTEXT_RE = re.compile(
+    rf"\b(?:{_street_terms}|{_unit_terms}|{_address_terms}|{_REGION_PATTERN}|{_zip_hints})\b",
+    re.IGNORECASE,
+)
 
 STREET_ADDRESS_RE = re.compile(
     rf"\b\d{{1,6}}[A-Za-z]{{0,2}}\s+[A-Za-z0-9][\w\s\-']{{1,40}}\s+(?:{_street_terms})\b",
@@ -285,14 +297,6 @@ _MERGE_GAP = 15
 
 TITLE_CASE_WORDS_RE = re.compile(r"\b[A-Z][a-z]+(?:[\s,]+[A-Z][a-z]+)*\b")
 STATE_ABBR_RE = re.compile(r"\b[A-Z]{2,4}\b")
-# =============================================================================
-# SPAN MERGING
-# =============================================================================
-
-_MERGE_GAP = 15
-
-TITLE_CASE_WORDS_RE = re.compile(r"\b[A-Z][a-z]+(?:[\s,]+[A-Z][a-z]+)*\b")
-STATE_ABBR_RE = re.compile(r"\b[A-Z]{2,4}\b")
 
 # Merge-group constants
 _GRP_ADDRESS = "ADDRESS"
@@ -382,7 +386,18 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
             raw.append((orig_start, orig_end, address_label, _GRP_ADDRESS))
 
     for m in ZIP_CODE_RE.finditer(text):
-        raw.append((m.start(), m.end(), address_label, _GRP_ADDRESS))
+        # Check 60 chars before and 20 chars after for context
+        start_window = max(0, m.start() - 60)
+        end_window = min(len(text), m.end() + 20)
+        window_text = text[start_window:end_window]
+        
+        # Mask out the zip code itself to prevent it from accidentally satisfying context rules
+        match_start_in_window = m.start() - start_window
+        match_end_in_window = m.end() - start_window
+        window_text_masked = window_text[:match_start_in_window] + " " * (match_end_in_window - match_start_in_window) + window_text[match_end_in_window:]
+        
+        if ADDRESS_CONTEXT_RE.search(window_text_masked) or STATE_ABBR_RE.search(window_text_masked):
+            raw.append((m.start(), m.end(), address_label, _GRP_ADDRESS))
 
     for pat in (PHONE_NUMBER_RE, PHONE_WORDS_BEFORE_RE, PHONE_WORDS_AFTER_RE):
         for m in pat.finditer(stripped):
