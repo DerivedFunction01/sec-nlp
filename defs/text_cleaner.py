@@ -26,6 +26,39 @@ def clean_spaces_and_punctuation(text: str) -> str:
     text = HANGING_APOSTROPHE_RE.sub(r"'\1", text)
     return text
 
+class TextCleaner:
+    """
+    Minimal text cleaning stripping misc content
+    """
+    # Links https or www
+    cleanup_patterns = [
+        (re.compile(r"(?:\b\d{1,3}\s*)?<PAGE>(?:\s*\d{1,3}\b)?", re.IGNORECASE), r""),
+        (re.compile(r"(?<!\d)-\s*\d{1,3}\s*-(?!\d)", re.IGNORECASE), r""),
+        (
+            re.compile(
+                r"(?:"
+                r'https?://[^\s<>"\'()]+(?<![.,;:!?])'  # standard http/https URLs
+                r'|www\.[^\s<>"\'()]+(?<![.,;:!?])'  # www. without scheme
+                r"|[a-zA-Z0-9\-]+\."  # bare domain
+                r"(?:com|org|net|io|co|uk|edu|gov|me|dev|ai|app)"
+                r'(?:/[^\s<>"\'()]*[^\s<>"\'().,;:!?])?'
+                r")",
+                re.IGNORECASE,
+            ),
+            r"",
+        ),
+        # toc style . . . . . 5 (at least 4 dots (optional spaces between dots) then a number)
+        (re.compile(r"(?:\.\s*){4,}\d{1,3}", re.IGNORECASE), r""),
+    ]
+    def __init__(self):
+        pass
+
+    def clean(self, text: str) -> str:
+        if not text:
+            return ""
+        for pattern, replacement in self.cleanup_patterns:
+            text = pattern.sub(replacement, text)
+        return clean_spaces_and_punctuation(text)
 
 class NumberNormalizer:
     """
@@ -527,13 +560,14 @@ class NumericFirmCleaner:
                     text = text[:start] + COMPANY_TOKEN + text[end:]
 
         return text
-
+_TEXT_CLEANER = TextCleaner()
 _NUM_NORMALIZER = NumberNormalizer()
 _COMPANY_NAME_REPLACER = CompanyNameReplacer()
 _NUMERIC_FIRM_CLEANER = NumericFirmCleaner()
 
 
 def clean_text(text: str, cik: Optional[str] = None) -> str:
+    text = _TEXT_CLEANER.clean(text)
     text = _COMPANY_NAME_REPLACER.replace(text, cik=cik)
     text = _NUM_NORMALIZER.normalize(text)
     return text.strip()
