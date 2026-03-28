@@ -90,7 +90,18 @@ def process_match(text: str, cik: Optional[Union[str, int]] = None, max_emp_coun
         for match_text, start, end, label in extracted:
             if not any(not (end <= s or start >= e) for _, s, e, _, _ in all_spans):
                 # Slice from original text so the real characters are preserved
-                all_spans.append((text[start:end], start, end, label, tier))
+                span_text = text[start:end].replace("<", "").replace(">", "")
+                all_spans.append((span_text, start, end, label, tier))
 
     all_spans.sort(key=lambda x: x[1])
-    return [(t, s, e, l) for t, s, e, l, _ in all_spans]
+
+    # Create a reverse map to translate indices to match the text without angle brackets
+    reverse_map = []
+    stripped_idx = 0
+    for char in text:
+        reverse_map.append(stripped_idx)
+        if char not in "<>":
+            stripped_idx += 1
+    reverse_map.append(stripped_idx)  # Cover the length of the string
+
+    return [(t, reverse_map[s], reverse_map[e], l) for t, s, e, l, _ in all_spans]
