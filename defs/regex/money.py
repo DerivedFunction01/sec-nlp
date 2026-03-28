@@ -59,9 +59,10 @@ for _code in _codes:
 
 _CODES = r"(?:" + "|".join(_safe_codes) + r")"
 
-_NUM = r"\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+"
+_NUM = r"\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+"
 _SCALE = r"(?:k|m|mm|b|t|thousand|million|billion|trillion)"
-_NUM_WITH_SCALE = rf"(?:{_NUM})(?:\s*{_SCALE})?"
+_NUM_CORE = rf"(?:{_NUM})"
+_NUM_WITH_SCALE = rf"(?:\(?\s*{_NUM_CORE}(?:\s*{_SCALE})?\s*\)?|\(?\s*{_NUM_CORE}\s*\)?\s*{_SCALE})"
 
 # --------------------------------------------------------------------------
 # Individual sub-patterns (each independently testable / tweakable)
@@ -116,7 +117,7 @@ MONEY_RE = re.compile(
     re.IGNORECASE,
 )
 
-_NUMERIC_CORE_RE = re.compile(r"(?P<num>\d{1,3}(?:,\d{3})*(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+)")
+_NUMERIC_CORE_RE = re.compile(r"(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+)")
 
 MoneyFormatStrategy = Literal[
     "random",
@@ -153,28 +154,29 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     if not text:
         return []
 
+    from defs.text_cleaner import remap_span, strip_angle_brackets
+
+    stripped, pos_map = strip_angle_brackets(text)
     spans: list[tuple[str, int, int, str]] = []
 
-    for m in MONEY_RE.finditer(text):
-        spans.append((m.group(0), m.start(), m.end(), LABELS.MONEY.value))
+    for m in MONEY_RE.finditer(stripped):
+        orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
+        spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.MONEY.value))
 
-    for m in PRICE_OF_RE.finditer(text):
+    for m in PRICE_OF_RE.finditer(stripped):
         money_span = m.span("money")
-        spans.append(
-            (m.group("money"), money_span[0], money_span[1], LABELS.MONEY.value)
-        )
+        orig_start, orig_end = remap_span(pos_map, money_span[0], money_span[1])
+        spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.MONEY.value))
 
-    for m in PRICE_PER_RE.finditer(text):
+    for m in PRICE_PER_RE.finditer(stripped):
         money_span = m.span("money")
-        spans.append(
-            (m.group("money"), money_span[0], money_span[1], LABELS.MONEY.value)
-        )
+        orig_start, orig_end = remap_span(pos_map, money_span[0], money_span[1])
+        spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.MONEY.value))
 
-    for m in PRICE_SLASH_RE.finditer(text):
+    for m in PRICE_SLASH_RE.finditer(stripped):
         money_span = m.span("money")
-        spans.append(
-            (m.group("money"), money_span[0], money_span[1], LABELS.MONEY.value)
-        )
+        orig_start, orig_end = remap_span(pos_map, money_span[0], money_span[1])
+        spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.MONEY.value))
 
     return spans
 

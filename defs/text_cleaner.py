@@ -146,6 +146,7 @@ class NumberNormalizer:
 
     _all_words = (
         list(num_words.keys()) + list(multipliers.keys()) + list(fractions.keys())
+        + ["point", "and"]
     )
     _word_pattern = build_alternation([re.escape(w) for w in _all_words])
     number_phrase_pattern = re.compile(
@@ -200,8 +201,14 @@ class NumberNormalizer:
         "billion": 1_000_000_000,
         "trillion": 1_000_000_000_000,
     }
+    scale_words = "|".join(scale_map.keys())
+    scale_after_paren_pattern = re.compile(
+        rf"(?P<open>\()?\s*(?P<num>\d+(?:\.\d+)?)\s*\)\s*(?P<scale>{scale_words})",
+        re.IGNORECASE,
+    )
     scale_pattern = re.compile(
-        rf"\b(\d+(?:\.\d+)?)\s+({'|'.join(scale_map.keys())})\b", re.IGNORECASE
+        rf"(?P<open>\()?\s*(?P<num>\d+(?:\.\d+)?)\s+(?P<scale>{scale_words})\s*(?P<close>\))?",
+        re.IGNORECASE,
     )
     _fraction_words = "|".join(
         list(fractions.keys())
@@ -249,11 +256,13 @@ class NumberNormalizer:
         result = numerator * denominator
         return f"{result * 100:g}%"
 
-    def _scale_replacer(self, match):
+    def _scale_replacer(self, match, wrap_parens: bool = False):
         try:
-            number = float(match.group(1))
-            multiplier = self.scale_map.get(match.group(2).lower(), 1)
+            number = float(match.group("num"))
+            multiplier = self.scale_map.get(match.group("scale").lower(), 1)
             value = number * multiplier
+            if wrap_parens or match.groupdict().get("open") or match.groupdict().get("close"):
+                return f"({int(value) if value.is_integer() else value})"
             if value.is_integer():
                 return f"{int(value)}"
             return f"{value}"
@@ -280,10 +289,55 @@ class NumberNormalizer:
             if not is_safe:
                 return text
 
+        if "point" in words:
+            point_idx = words.index("point")
+            int_words = [w for w in words[:point_idx] if w != "and"]
+            frac_words = [w for w in words[point_idx + 1 :] if w != "and"]
+            scale = 1
+
+            if frac_words and frac_words[-1] in self.multipliers:
+                scale = self.multipliers[frac_words[-1]]
+                frac_words = frac_words[:-1]
+
+            if not int_words or not frac_words:
+                return text
+
+            total_value = 0
+            current_chunk = 0
+            for word in int_words:
+                if word == "and":
+                    continue
+                if word in self.num_words:
+                    current_chunk += self.num_words[word]
+                elif word in self.multipliers:
+                    mult = self.multipliers[word]
+                    if mult < 1000:
+                        current_chunk = (current_chunk if current_chunk else 1) * mult
+                    else:
+                        total_value += (current_chunk if current_chunk else 1) * mult
+                        current_chunk = 0
+                else:
+                    return text
+            total_value += current_chunk
+
+            frac_digits: list[str] = []
+            for word in frac_words:
+                if word not in self.num_words:
+                    return text
+                frac_digits.append(str(self.num_words[word]))
+
+            try:
+                value = float(f"{total_value}.{''.join(frac_digits)}") * scale
+            except ValueError:
+                return text
+            return f"{int(value)}" if value.is_integer() else f"{value}"
+
         if len(words) >= 2:
             for i in range(len(words) - 1):
                 word = words[i]
                 next_word = words[i + 1]
+                if word == "and" or next_word == "and":
+                    continue
                 if word in self.num_words:
                     if next_word.endswith("ths"):
                         base = next_word[:-3]
@@ -303,6 +357,8 @@ class NumberNormalizer:
         fraction_value = 0.0
 
         for word in words:
+            if word == "and":
+                continue
             if word in self.num_words:
                 current_chunk += self.num_words[word]
             elif word in self.multipliers:
@@ -370,7 +426,10 @@ class NumberNormalizer:
         # Commas in numbers
         text = self.comma_pattern.sub("", text)
 
-        # Scale expansion (e.g., 2 million -> 2000000)
+        # Scale expansion (e.g., 2 million -> 2000000, (2) million -> (2000000))
+        text = self.scale_after_paren_pattern.sub(
+            lambda m: self._scale_replacer(m, wrap_parens=True), text
+        )
         text = self.scale_pattern.sub(self._scale_replacer, text)
 
         # Collapse duplicates like "15 (15)"

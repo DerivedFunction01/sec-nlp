@@ -45,8 +45,10 @@ def process_match(
     text: str,
     cik: Optional[Union[str, int]] = None,
     max_emp_count: Optional[int] = None,
+    print_cleaned: bool = False,
 ):
     text = clean_text(text, cik)
+    if print_cleaned: print(text)
     all_spans: list[tuple[str, int, int, str, int]] = []
 
     context_kwargs = {
