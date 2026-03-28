@@ -120,11 +120,62 @@ DURATION = re.compile(
     re.IGNORECASE,
 )
 # Clock time: 12:30 PM, 9:00 AM, 23:59, etc.
+# Common timezone abbreviations
+TIMEZONE_ABBREVS = [
+    # UTC / GMT
+    "UTC",
+    "GMT",
+    # US
+    "ET",
+    "EST",
+    "EDT",
+    "CT",
+    "CST",
+    "CDT",
+    "MT",
+    "MST",
+    "MDT",
+    "PT",
+    "PST",
+    "PDT",
+    "AKT",
+    "AKST",
+    "AKDT",  # Alaska
+    "HT",
+    "HST",
+    "HDT",  # Hawaii
+    # Europe
+    "CET",
+    "CEST",  # Central European
+    "EET",
+    "EEST",  # Eastern European
+    "WET",
+    "WEST",  # Western European
+    "BST",  # British Summer Time
+    # Asia / Pacific
+    "IST",  # India
+    "JST",  # Japan
+    "KST",  # Korea
+    "CST",  # China (conflicts with US Central — order carefully)
+    "SGT",  # Singapore
+    "HKT",  # Hong Kong
+    "AEST",
+    "AEDT",  # Australia Eastern
+    "AWST",  # Australia Western
+    "NZST",
+    "NZDT",  # New Zealand
+    # Other
+    "AST",  # Atlantic
+    "BRT",  # Brazil
+]
+_TZ_STR = build_alternation(TIMEZONE_ABBREVS)
+_AMPM_STR = r"[AP]M"
+_TZ_OR_AMPM_STR = rf"(?:{_AMPM_STR}|{_TZ_STR})"
+
 CLOCK_TIME = re.compile(
-    r"\b(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?(?:\s*[AP]M)?\b",
+    rf"\b(?:[01]?\d|2[0-3]):[0-5]\d(?::[0-5]\d)?\s*{_TZ_OR_AMPM_STR}\b",
     re.IGNORECASE,
 )
-
 
 OCLOCK_TIME = re.compile(
     rf"\b(?:\d{{1,2}})\s+o'?clock\b",
