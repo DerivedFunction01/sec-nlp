@@ -12,7 +12,7 @@ from defs.regex_lib import (
     SENTENCE_SPLIT_RE,
 )
 from defs.labels import LABELS
-from defs.regex.labor import INDUSTRY_PREFIX_TERMS_FLAT, _WORKER_CONTEXT_RE
+from defs.regex.labor import INDUSTRY_PREFIX_TERMS_FLAT, _WORKER_CONTEXT_RE, GENERIC_WORKER_TERMS
 from defs.region_regex import RegionMatcher
 from defs.text_cleaner import remap_span, strip_angle_brackets
 
@@ -155,8 +155,10 @@ _FUNCTION_WORD_GAP = rf"(?:{_FUNCTION_WORDS}\s+){{0,3}}"
 
 _LOCATION_RE = build_regex(_LOCATION_TERMS)
 
+_GENERIC_WORKER_PATTERN = build_alternation(list(GENERIC_WORKER_TERMS))
+
 LOCATION_COUNT_RE = re.compile(
-    rf"\b{NUMBER_RANGE_STR}\s+{_FUNCTION_WORD_GAP}{_LOCATION_FILLER_GAP}{_OPTIONAL_WORD_BEFORE}\s*{_LOCATION_FILLER_GAP}{_LOCATION_TERM_PATTERN}\b",
+    rf"\b{NUMBER_RANGE_STR}\s+{_FUNCTION_WORD_GAP}{_LOCATION_FILLER_GAP}{_OPTIONAL_WORD_BEFORE}\s*{_LOCATION_FILLER_GAP}{_LOCATION_TERM_PATTERN}\b(?!\s+(?:{_GENERIC_WORKER_PATTERN})\b)",
     re.IGNORECASE,
 )
 
