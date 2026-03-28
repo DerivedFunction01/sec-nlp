@@ -34,9 +34,9 @@ MONTHS = [
     "Nov",
     "Dec",
 ]
-
+_YR = r"(?:19|20)\d{2}"
 _MONTH_STR = build_alternation(MONTHS) + r"[a-z]*\.?"
-_YEAR_STR = r"<?(?:19|20)\d{2}>?"
+_YEAR_STR = rf"<?{_YR}(?:-(?:{_YR}|\d{2}))?>?"
 _FISCAL_YEAR_NUM_STR = rf"(?:{_YEAR_STR}|\d{{2}})"
 _DAY_STR = r"\d{1,2}(?:st|nd|rd|th)?"
 _OPT_COMMA = r"(?:,)?"
@@ -75,7 +75,7 @@ SLASH_DATE = re.compile(
     r"\b",
 )
 
-YEAR_RANGE = re.compile(rf"\b({_YEAR_STR})-(\d{{2}})\b")
+YEAR_RANGE = re.compile(rf"\b({_YEAR_STR})-((?:{_YEAR_STR}|\d{{2}}))\b")
 
 # Bare year — ONLY matches when wrapped in <> by the upstream normalizer.
 DATE_YEAR = re.compile(r"<(?:19|20)\d{2}>")
