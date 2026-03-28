@@ -213,6 +213,9 @@ _ENTITY_INDICATOR_TERMS = [
     r"instruments?",
     r"programs?",
     r"plans?",
+    r"polic(?:y|ies)",
+    r"trusts?",
+    r"grants?",
 ]
 _ENTITY_POST_MATCH_RE = re.compile(
     rf"^[\s\-]+(?:{'|'.join(_ENTITY_INDICATOR_TERMS)})\b",

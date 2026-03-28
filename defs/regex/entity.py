@@ -45,6 +45,9 @@ PRODUCT_TERMS = {
     r"agreements?",
     r"permits?",
     r"instruments?",
+    r"polic(?:y|ies)",
+    r"trusts?",
+    r"grants?",
 }
 
 
@@ -733,6 +736,9 @@ _YEAR_PRONE_TERMS = [
     r"ventures?",
     r"partnerships?",
     r"plans?",
+    r"polic(?:y|ies)",
+    r"trusts?",
+    r"grants?",
 ]
 _YEAR_PRONE_RE = build_regex(_YEAR_PRONE_TERMS)
 
