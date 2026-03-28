@@ -18,7 +18,7 @@ ORGANIZATIONAL_TERMS = {
     r"helicopters?",
     r"jets?",
     # not to ship, but ship/vessel
-    add_restrictions(r"ships?",lookbehinds=[r"to"]),
+    add_restrictions(r"ships?", lookbehinds=[r"to"]),
     r"vessels?",
     r"freights?",
     r"unions?",
@@ -33,6 +33,9 @@ ORGANIZATIONAL_TERMS = {
     r"distributors?",
     r"agenc(?:y|ies)",
     r"programs?",
+    r"famil(?:y|ies)",
+    r"parents?",
+    r"students?",
 }
 
 PRODUCT_TERMS = {
