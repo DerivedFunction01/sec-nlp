@@ -48,6 +48,7 @@ GUIDANCE_OBJECT_TYPES = [
     r"Sections?",
     r"Subsections?",
     r"Issue",
+    r"Release",
 ]
 
 # --- EXHIBIT / DOCUMENT REFERENCE NOUNS ---
@@ -74,6 +75,7 @@ EXHIBIT_NOUNS = [
     r"addendums?",
     r"files?",
     r"documents?",
+    r"no.",
 ]
 
 _STANDARDS_FRAGMENT = build_alternation(STANDARDS_TERMS)
