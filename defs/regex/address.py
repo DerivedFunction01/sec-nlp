@@ -72,6 +72,7 @@ STREET_TERMS: list[str] = [
     r"jct\.?",
     r"center",
     r"ctr\.?",
+    r"station",
 ]
 UNIT_TERMS: list[str] = [
     r"floors?",
@@ -90,6 +91,7 @@ ADDRESS_COMPONENT_TERMS: list[str] = [
     r"routes?",
     r"highways?",
     r"interstate",
+    r"station",
 ]
 
 # =============================================================================
