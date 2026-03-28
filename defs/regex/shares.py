@@ -4,6 +4,7 @@ import re
 from defs.labels import LABELS
 from defs.regex_lib import (
     NUMBER_RANGE_STR,
+    add_restrictions,
     build_regex,
     build_compound,
     to_build_alternation,
@@ -215,7 +216,7 @@ _ENTITY_INDICATOR_TERMS = [
     r"plans?",
     r"polic(?:y|ies)",
     r"trusts?",
-    r"grants?",
+    add_restrictions([r"grants?", r"awards?"], lookaheads=[r"to"])
 ]
 _ENTITY_POST_MATCH_RE = re.compile(
     rf"^[\s\-]+(?:{'|'.join(_ENTITY_INDICATOR_TERMS)})\b",
