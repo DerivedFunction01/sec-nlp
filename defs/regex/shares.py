@@ -160,6 +160,43 @@ _UNAMBIGUOUS_RE = build_regex(_UNAMBIGUOUS_SHARE_TERMS)
 _PARAGRAPH_RELIABLE_RE = build_regex(_PARAGRAPH_RELIABLE_TERMS)
 
 # =============================================================================
+# YEAR vs. COUNT DISAMBIGUATION
+# =============================================================================
+
+# Terms that strongly indicate a number is a count, not a year.
+_COUNT_INDICATING_VERBS = [
+    r"issu(?:ing|ed|es)",  # issue
+    r"issuable",  # adjective only
+    r"grant(?:ing|ed|s)",  # grant
+    r"repurchas(?:ing|ed|es)",  # repurchase
+    r"sell(?:ing|s)?",  # sell/selling/sells
+    r"sold",  # irregular past
+    r"acquir(?:ing|ed|es)",  # acquire
+    r"authoriz(?:ing|ed|es)",  # authorize
+    r"exercis(?:ing|ed|es)",  # exercise
+    r"convert(?:ing|ed|s)",  # convert
+    r"redeem(?:ing|ed|s)",  # redeem
+    r"surrender(?:ing|ed|s)",  # surrender
+    r"cancel(?:l)?(?:ing|ed|s)",  # cancel/cancelled/canceling
+    r"award(?:ing|ed|s)",  # award
+    r"sett(?:l)?(?:ing|ed|es)",  # settle/settled/settling
+    r"deliver(?:ing|ed|s)",  # deliver
+    r"exchang(?:ing|ed|es)",  # exchange
+]
+
+# Looks for a verb in the ~5 words before the number match starts.
+_COUNT_VERB_RE = re.compile(
+    rf"\b(?:{'|'.join(_COUNT_INDICATING_VERBS)})\s+(?:of|the|our|an|a|as)?\s*(?:[^\s]+\s+){{0,4}}$",
+    re.IGNORECASE
+)
+
+# Adjectives/phrases inside the match that indicate a count.
+_COUNT_INDICATING_ADJ = [
+    "outstanding", "vested", "unvested", "diluted", "weighted average"
+]
+_COUNT_CONTEXT_RE = build_regex(_COUNT_INDICATING_ADJ)
+
+# =============================================================================
 # SHARE COUNT PATTERNS
 # Both directions:
 #   "issued 1,000,000 shares of common stock"
@@ -252,10 +289,36 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
         has_sentence_equity = bool(_EQUITY_CONTEXT_RE.search(sentence))
 
         for m in SHARE_COUNT_RE.finditer(sentence):
+            num_str = ""
             if m.group(1):
                 num_start, num_end = m.start(1), m.end(1)
+                num_str = m.group(1)
             else:
                 num_start, num_end = m.start(2), m.end(2)
+                num_str = m.group(2)
+
+            # --- YEAR vs COUNT DISAMBIGUATION ---
+            try:
+                num_val_str = num_str.replace(',', '').split('-')[0]
+                num_val = int(float(num_val_str))
+
+                # If number could be a year, apply disambiguation logic.
+                if 1970 <= num_val <= 2050:
+                    match_text = m.group(0)
+                    pre_match_context = sentence[:m.start()]
+
+                    # Check for strong signals that it IS a count.
+                    is_a_count = (
+                        _COUNT_VERB_RE.search(pre_match_context) or
+                        _COUNT_CONTEXT_RE.search(match_text)
+                    )
+
+                    # If it's not clearly a count, assume it's a year (or part of a plan name) and skip.
+                    if not is_a_count:
+                        continue
+            except (ValueError, IndexError):
+                pass
+            # --- END DISAMBIGUATION ---
 
             match_text = m.group(0)
             is_unambiguous = bool(_UNAMBIGUOUS_RE.search(match_text))
