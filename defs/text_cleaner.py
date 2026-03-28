@@ -334,9 +334,11 @@ class NumberNormalizer:
         if not text:
             return ""
         text = CONSEC_DIGIT_RE.sub(r"<\1>", text)
+        
         # Preserve numeric firm names before any number conversion
+        numeric_firm_map = {}
         if self.numeric_firm_cleaner:
-            text = self.numeric_firm_cleaner.clean_numeric_names(text)
+            text, numeric_firm_map = self.numeric_firm_cleaner.mask_numeric_names(text)
 
         # Hyphenated fractions like "three-fourths"
         text = self.hyphenated_fraction_pattern.sub(
@@ -366,6 +368,9 @@ class NumberNormalizer:
         text = self.percent_pattern.sub("%", text)
         text = self.percent_range_pattern.sub(r"\1% to \2%", text)
         text = self.percent_space_pattern.sub(r"\1%", text)
+
+        if self.numeric_firm_cleaner:
+            text = self.numeric_firm_cleaner.unmask_numeric_names(text, numeric_firm_map)
 
         return clean_spaces_and_punctuation(text)
 
@@ -560,6 +565,65 @@ class NumericFirmCleaner:
                     text = text[:start] + COMPANY_TOKEN + text[end:]
 
         return text
+
+    def mask_numeric_names(self, text: str) -> tuple[str, dict[str, str]]:
+        if not text:
+            return "", {}
+
+        mapping = {}
+        counter = 0
+
+        def repl_exact(m):
+            nonlocal counter
+            val = m.group(0)
+            if val[0].isupper() or val[0].isdigit():
+                placeholder = f"__NUMERIC_FIRM_{counter}__"
+                mapping[placeholder] = val
+                counter += 1
+                return placeholder
+            return val
+
+        if self.numeric_firms_regex:
+            text = self.numeric_firms_regex.sub(repl_exact, text)
+
+        if self._numeric_firm_list:
+            matches = list(self.candidate_pattern.finditer(text))
+            if matches:
+                candidates = pd.Series([m.group(0) for m in matches])
+                spans = [m.span() for m in matches]
+
+                firm_series = pd.Series(self._numeric_firm_list)
+
+                replacements = []
+                for i, candidate in enumerate(candidates):
+                    if len(candidate) < 2:
+                        continue
+                    cand_lower = candidate.lower()
+                    ratios = firm_series.apply(
+                        lambda f: difflib.SequenceMatcher(
+                            None, cand_lower, f.lower()
+                        ).ratio()
+                    )
+                    if ratios.max() >= 0.85:
+                        replacements.append((spans[i], candidate))
+
+                for (start, end), candidate in sorted(
+                    replacements, key=lambda x: x[0][0], reverse=True
+                ):
+                    placeholder = f"__NUMERIC_FIRM_{counter}__"
+                    mapping[placeholder] = candidate
+                    counter += 1
+                    text = text[:start] + placeholder + text[end:]
+
+        return text, mapping
+
+    def unmask_numeric_names(self, text: str, mapping: dict[str, str]) -> str:
+        if not text or not mapping:
+            return text
+        for placeholder, original in mapping.items():
+            text = text.replace(placeholder, original)
+        return text
+
 _TEXT_CLEANER = TextCleaner()
 _NUM_NORMALIZER = NumberNormalizer()
 _COMPANY_NAME_REPLACER = CompanyNameReplacer()
@@ -568,7 +632,6 @@ _NUMERIC_FIRM_CLEANER = NumericFirmCleaner()
 
 def clean_text(text: str, cik: Optional[Union[str, int]] = None) -> str:
     text = _TEXT_CLEANER.clean(text)
-    text = _COMPANY_NAME_REPLACER.replace(text, cik=cik)
     text = _NUM_NORMALIZER.normalize(text)
     return text.strip()
 
