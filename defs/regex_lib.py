@@ -54,13 +54,14 @@ def add_restrictions(
     lookaheads: Optional[List[str]] = None,
     lookbehinds: Optional[List[str]] = None,
     lookahead_sep: Optional[str] = "[- ]",
+    lookbehind_sep: Optional[str] = "[- ]",
 ) -> str:
     if isinstance(base, (list, set)):
         base = to_build_alternation(base)
     pattern = base
     if lookbehinds:
         for lb in lookbehinds:
-            pattern = f"(?<!{lb}[- ]){pattern}"
+            pattern = f"(?<!{lb}{lookbehind_sep}){pattern}"
     if lookaheads:
         la_pattern = build_alternation(lookaheads)
         pattern = f"{pattern}(?!{lookahead_sep}{la_pattern})"
@@ -203,7 +204,13 @@ SENTENCE_SPLIT_RE2 = re.compile(
 )
 
 YEAR_RE = re.compile(r"\b(19\d{2}|20\d{2})\b")
-CONSEC_DIGIT_RE = re.compile(r"\b(\d{4,5}(?:\.\d+)*(?:-\d+)*)\b")
+CONSEC_DIGIT_RE = re.compile(
+    rf"\b{add_restrictions(
+        r"(\d{4,5}(?:\.\d+)*(?:-\d+)*)",
+        lookbehinds=[r"\-", r"\.", r"\)", r"\]"],
+        lookahead_sep=r""
+    )}\b"
+)
 
 # Reusable range fragments for numeric regexes
 NUMBER_PATTERN_STR = r"\d+(?:\.\d+)?"
