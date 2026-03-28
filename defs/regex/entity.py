@@ -108,6 +108,7 @@ AMBIGUOUS_TERMS = {
     r"networks?",  
     r"channels?",  
     r"portfolios?",
+    r'types?',
 }
 
 GENERIC_COUNT_NOUNS = {
