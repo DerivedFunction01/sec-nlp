@@ -208,7 +208,8 @@ CONSEC_DIGIT_RE = re.compile(
     rf"\b{add_restrictions(
         r"(\d{4,5}(?:\.\d+)*(?:-\d+)*)",
         lookbehinds=[r"\-", r"\.", r"\)", r"\]"],
-        lookahead_sep=r""
+        lookahead_sep=r"",
+        lookbehind_sep=r""
     )}\b"
 )
 
