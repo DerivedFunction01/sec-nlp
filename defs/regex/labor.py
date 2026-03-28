@@ -11,6 +11,7 @@ from defs.regex_lib import (
     build_regex,
     to_build_alternation,
     SENTENCE_SPLIT_RE,
+    closest_distance_in_segment,
 )
 from defs.text_cleaner import remap_span, strip_angle_brackets
 
@@ -432,6 +433,20 @@ _DEPT_IN_RE = re.compile(
     re.IGNORECASE,
 )
 
+from defs.region_regex import RegionMatcher
+RegionMatcher._compile()
+_region_patterns = [pat.pattern[2:-2] for pat in RegionMatcher.location_regexes]
+_REGION_PATTERN = "|".join(_region_patterns)
+
+# Match "[num] in [Region/Country]" (e.g. "5 in the US", "2 in China")
+_NUM_IN_REGION_RE = re.compile(
+    rf"\b({NUMBER_PATTERN_STR})\s+in\s+(?:the\s+)?(?:{_REGION_PATTERN})\b",
+    re.IGNORECASE
+)
+
+from defs.regex.location import _LOCATION_TERMS
+_LOCATION_RE = build_regex(_LOCATION_TERMS)
+
 
 # Heuristic: treat large counts as labor without requiring local worker context.
 _LABOR_CONTEXT_THRESHOLD = 1000
@@ -757,6 +772,16 @@ def extract_spans(text: str, max_emp_count: Optional[int] = None) -> list[tuple[
             for m in PRONOUN_RE.finditer(sentence):
                 num_val = _number_value(next((g for g in m.groups() if g), ""))
                 _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
+
+            # Disambiguate "[num] in [Region]" between Labor and Location
+            for m in _NUM_IN_REGION_RE.finditer(sentence):
+                num_val = _number_value(m.group(1))
+
+                # If there is any worker context in the sentence, this pattern refers to LABOR.
+                # This gives LABOR priority over LOCATION for this ambiguous pattern.
+                if has_worker_context:
+                    if not _overlaps_existing(sent_start + m.start(), sent_start + m.end()):
+                        _add_span(sent_start + m.start(), sent_start + m.end(), num_val)
 
         # If sentence is labor-heavy, tag large standalone numbers
         if _LABOR_CONTEXT_RE.search(sentence):
