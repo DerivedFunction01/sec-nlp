@@ -205,6 +205,20 @@ _IMMEDIATE_COUNT_VERB_RE = re.compile(
     re.IGNORECASE
 )
 
+# Terms that indicate the span is an entity count, not a share count, when appearing immediately after.
+_ENTITY_INDICATOR_TERMS = [
+    r"contracts?",
+    r"agreements?",
+    r"arrangements?",
+    r"instruments?",
+    r"programs?",
+    r"plans?",
+]
+_ENTITY_POST_MATCH_RE = re.compile(
+    rf"^[\s\-]+(?:{'|'.join(_ENTITY_INDICATOR_TERMS)})\b",
+    re.IGNORECASE
+)
+
 # =============================================================================
 # SHARE COUNT PATTERNS
 # Both directions:
@@ -272,11 +286,11 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     spans: list[tuple[str, int, int, str]] = []
     span_set: set[tuple[int, int]] = set()
 
-    def _add_span(match_text: str, start: int, end: int) -> None:
+    def _add_span(match_text: str, start: int, end: int, label: str = LABELS.SHARE.value) -> None:
         if (start, end) in span_set:
             return
         span_set.add((start, end))
-        spans.append((match_text, start, end, LABELS.SHARE.value))
+        spans.append((match_text, start, end, label))
 
     # Paragraph / sentence iterators run on stripped text so their offsets
     # are in stripped-coordinate space and can be passed directly to remap_span.
@@ -334,13 +348,21 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
             is_unambiguous = bool(_UNAMBIGUOUS_RE.search(match_text))
             is_para_reliable = bool(_PARAGRAPH_RELIABLE_RE.search(match_text))
 
+            m_end_adj = m.end()
+            label = LABELS.SHARE.value
+            
+            post_match = _ENTITY_POST_MATCH_RE.match(sentence[m.end():])
+            if post_match:
+                label = LABELS.ENTITY_COUNT.value
+                m_end_adj += post_match.end()
+
             # Remap the full match span back to original text coordinates
             orig_start, orig_end = remap_span(
-                pos_map, sent_start + m.start(), sent_start + m.end()
+                pos_map, sent_start + m.start(), sent_start + m_end_adj
             )
 
             if is_unambiguous or is_para_reliable:
-                _add_span(text[orig_start:orig_end], orig_start, orig_end)
+                _add_span(text[orig_start:orig_end], orig_start, orig_end, label)
             else:
                 if has_sentence_equity:
                     eq_matches = list(_EQUITY_CONTEXT_RE.finditer(sentence))
@@ -348,6 +370,6 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
                         sentence, num_start, num_end, eq_matches
                     )
                     if dist is not None:
-                        _add_span(text[orig_start:orig_end], orig_start, orig_end)
+                        _add_span(text[orig_start:orig_end], orig_start, orig_end, label)
 
     return spans
