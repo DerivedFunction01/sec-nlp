@@ -391,4 +391,11 @@ MAJOR_CURRENCIES = {
         "suffix": True,
         "adj": "romanian",
     },
+    # South Africa
+    "ZAR": {
+        "symbols": ["R$"],
+        "names": ["rand"],
+        "suffix": True,
+        "adj": "south african",
+    },
 }
