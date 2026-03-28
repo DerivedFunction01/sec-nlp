@@ -941,16 +941,16 @@ def _pick_quantity_unit(
         if str(entry["surface"]).lower() != current_surface.lower()
     ]
     if not candidates:
-        return current_surface, float(current_entry["factor_to_base"])
+        return current_surface, float(current_entry["factor_to_base"]) # type: ignore
 
     same_style = [entry for entry in candidates if bool(entry["compact"]) == current_compact]
     pool = same_style or candidates
     if reference_value is not None:
-        source_factor = float(current_entry["factor_to_base"])
+        source_factor = float(current_entry["factor_to_base"]) # type: ignore
         ref_abs = abs(float(reference_value))
         scored: list[tuple[float, dict[str, object]]] = []
         for entry in pool:
-            target_factor = float(entry["factor_to_base"])
+            target_factor = float(entry["factor_to_base"]) # type: ignore
             converted = ref_abs * source_factor / target_factor if target_factor else ref_abs
             if 0.1 <= converted < 10_000:
                 score = 0.0
@@ -964,7 +964,24 @@ def _pick_quantity_unit(
         chosen = rng.choice(best_pool)
     else:
         chosen = rng.choice(pool)
-    return str(chosen["surface"]), float(chosen["factor_to_base"])
+    return str(chosen["surface"]), float(chosen["factor_to_base"]) # type: ignore
+
+
+def _convert_quantity_values(
+    values: Sequence[Number],
+    *,
+    source_factor: float,
+    target_factor: float,
+) -> list[Number]:
+    """
+    Convert numeric values from the source unit into the target unit.
+
+    Conversion happens before mutation so the mutator works in the target unit
+    space, which keeps the downstream float handling simpler.
+    """
+    if source_factor == target_factor:
+        return [float(v) for v in values]
+    return [float(v) * source_factor / target_factor for v in values]
 
 
 def mutate_quantity_span(
@@ -1005,15 +1022,20 @@ def mutate_quantity_span(
             target_surface, target_factor = picked
             source_entry = _lookup_unit_entry(unit_surface)
             if source_entry is not None:
-                source_factor = float(source_entry["factor_to_base"])
+                source_factor = float(source_entry["factor_to_base"]) # type: ignore
+            # Convert first, then mutate in the target unit space.
+            values = _convert_quantity_values(
+                values,
+                source_factor=source_factor,
+                target_factor=target_factor,
+            )
+
+    values = [_round_quantity_value(v) for v in values]
 
     if len(values) == 1:
-        transformed_values = [values[0]]
-        if mutate_unit and source_factor != target_factor:
-            transformed_values = [float(values[0]) * source_factor / target_factor]
         mutated_values = [
             mutate_number(
-                transformed_values[0],
+                values[0],
                 strategy=strategy,
                 int_only=False,
                 allow_zero=False,
@@ -1022,11 +1044,8 @@ def mutate_quantity_span(
             )
         ]
     else:
-        transformed_values = values
-        if mutate_unit and source_factor != target_factor:
-            transformed_values = [float(v) * source_factor / target_factor for v in values]
         mutated_values = mutate_numbers(
-            transformed_values,
+            values,
             strategy=strategy,
             int_only=False,
             allow_zero=False,
@@ -1036,7 +1055,7 @@ def mutate_quantity_span(
         if isinstance(mutated_values, tuple):
             mutated_values = mutated_values[0]
 
-    mutated_values = [_round_quantity_value(v) for v in mutated_values]
+    mutated_values = [_round_quantity_value(v) for v in mutated_values if isinstance(v, Number)]
 
     assert isinstance(mutated_values[0], Number)
     chosen_format = _normalize_format_strategy(mutated_values[0], format_strategy, rng)
