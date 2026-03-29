@@ -5,7 +5,7 @@ from typing import Optional, Union
 from defs.regex_lib import CONSEC_DIGIT_RE, build_alternation, build_regex
 import pandas as pd
 from defs.region_regex import MAJOR_CURRENCIES
-from defs.regex.money import MONEY_RE
+
 from string import punctuation as punct
 COMPANY_TOKEN = "the Company"
 SAFE_PUNCT = re.escape(punct)
@@ -66,6 +66,7 @@ class TextCleaner:
         pass
 
     def clean(self, text: str) -> str:
+        from defs.regex.money import MONEY_RE
         if not text:
             return ""
         for pattern, replacement in self.cleanup_patterns:
