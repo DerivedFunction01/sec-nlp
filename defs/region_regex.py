@@ -312,7 +312,7 @@ MAJOR_CURRENCIES = {
     },
     "ARS": {
         "symbols": ["$"],
-        "names": ["peso", "pesos", "argentina peso", "argentina pesos"],
+        "names": ["peso", "pesos", "argentine peso", "argentine pesos"],
         "prefix": True,
         "adj": "argentine",
     },
@@ -568,74 +568,6 @@ def _titlecase_surface(term: str) -> str:
         else:
             titled.append(part[:1].upper() + part[1:].lower())
     return "".join(titled)
-
-
-def _nation_location_terms(nation_code: str) -> List[str]:
-    nation = NATION_BY_CODE.get(nation_code.upper())
-    if nation is None:
-        return []
-    terms = [_titlecase_surface(nation.name)]
-    terms.extend(
-        _titlecase_surface(phrase)
-        for phrase in nation.phrases
-        if phrase and _is_plain_surface(phrase)
-    )
-    return _unique_preserve_order(terms)
-
-
-def _build_currency_location_terms(
-    currency_code: str,
-    *,
-    exclude_nation_codes: set[str] | None = None,
-) -> List[str]:
-    """
-    Build common country/region terms associated with a currency code.
-
-    This is intentionally a presentation-oriented helper for mutation and does
-    not affect the core currency matcher.
-    """
-    nation_codes = [
-        nation_code
-        for nation_code, currency_codes in NATION_TO_CURRENCY_CODES.items()
-        if currency_code.upper() in currency_codes
-        and (exclude_nation_codes is None or nation_code.upper() not in exclude_nation_codes)
-    ]
-
-    terms: List[str] = []
-    for nation_code in nation_codes:
-        terms.extend(_nation_location_terms(nation_code))
-    return _unique_preserve_order(terms)
-
-
-def duplicate_euro_locations() -> List[str]:
-    """
-    Return the eurozone location terms used to align currency swaps.
-
-    The result includes country names and common adjectival forms such as
-    Germany/German, France/French, and so on.
-    """
-    return _build_currency_location_terms("EUR", exclude_nation_codes={"EU"})
-
-
-def build_currency_location_terms() -> dict[str, List[str]]:
-    """
-    Build currency-code -> location-term lists for mutation helpers.
-
-    The currency entries remain canonical; this just derives the location
-    surface forms used for contextual rewriting.
-    """
-    out: dict[str, List[str]] = {}
-    for currency_code in MAJOR_CURRENCIES:
-        if currency_code == "EUR":
-            out[currency_code] = duplicate_euro_locations()
-        else:
-            out[currency_code] = _build_currency_location_terms(currency_code)
-    return out
-
-
-CURRENCY_LOCATION_TERMS = build_currency_location_terms()
-for _currency_code, _terms in CURRENCY_LOCATION_TERMS.items():
-    MAJOR_CURRENCIES[_currency_code]["locations"] = _terms
 
 
 def get_compatible_currency_codes(nation_code: str) -> set[str]:

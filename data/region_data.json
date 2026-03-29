@@ -2203,9 +2203,7 @@
     "region": "Europe",
     "code": "EU",
     "phrases": [
-      "european union",
-      "eurozone",
-      "euro"
+      "european union"
     ],
     "locations": []
   },
@@ -3551,9 +3549,7 @@
     "code": "RU",
     "phrases": [
       "russia",
-      "russian",
-      "ruble",
-      "rub"
+      "russian"
     ],
     "locations": [
       {
@@ -3842,7 +3838,6 @@
     "phrases": [
       "switzerland",
       "swiss",
-      "chf",
       "schweiz",
       "suisse",
       "svizzera"
@@ -3906,7 +3901,6 @@
     "phrases": [
       "turkey",
       "turkish",
-      "lira",
       "türkiye",
       "turkiye"
     ],
@@ -4015,8 +4009,6 @@
       "britain",
       "united kingdom",
       "(?<!new[- ])england",
-      "sterling",
-      "gbp",
       "british(?![- ](?:columbia|virgin))"
     ],
     "locations": [
@@ -4535,8 +4527,6 @@
     "phrases": [
       "india",
       "indian",
-      "rupee",
-      "inr",
       "lakh",
       "crore"
     ],
@@ -4635,8 +4625,6 @@
     "phrases": [
       "japan",
       "japanese",
-      "yen",
-      "jpy",
       "nihon",
       "nippon"
     ],
@@ -5083,7 +5071,6 @@
     "code": "KR",
     "phrases": [
       "south korea",
-      "krw",
       "(?<!north[- ])(?:korean|korea)"
     ],
     "locations": [
@@ -5479,8 +5466,6 @@
     "phrases": [
       "brazil",
       "bra(?:z|s)ilian",
-      "reais",
-      "brl",
       "Brasil"
     ],
     "locations": [
@@ -6674,9 +6659,7 @@
     "code": "IL",
     "phrases": [
       "israel",
-      "israeli",
-      "shekel",
-      "ils"
+      "israeli"
     ],
     "locations": [
       {
@@ -7221,9 +7204,7 @@
     "code": "SA",
     "phrases": [
       "saudi arabia",
-      "saudi",
-      "riyal",
-      "sar"
+      "saudi"
     ],
     "locations": [
       {
@@ -7309,9 +7290,7 @@
     "code": "ZA",
     "phrases": [
       "south africa",
-      "south african",
-      "rand",
-      "zar"
+      "south african"
     ],
     "locations": [
       {
@@ -7541,9 +7520,7 @@
     "code": "AE",
     "phrases": [
       "uae",
-      "emirates",
-      "dirham",
-      "aed"
+      "emirates"
     ],
     "locations": [
       {
