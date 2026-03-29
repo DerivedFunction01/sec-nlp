@@ -3,7 +3,7 @@ import re
 import random
 from typing import Literal, Optional, Sequence
 
-from defs.regex_lib import build_alternation
+from defs.regex_lib import build_alternation, build_compound, build_regex
 from defs.labels import LABELS
 from defs.regex.entity import FINANCIAL_INSTRUMENTS
 from defs.region_regex import MAJOR_CURRENCIES
@@ -329,6 +329,13 @@ def _find_currency_surface(text: str) -> tuple[re.Match[str], dict[str, object]]
             return match, entry
     return None
 
+_FX_RATE_RE = build_regex(
+    build_compound(
+        prefix=[r"exchange", r"currency", r"forward", r"spot", r"cross"],
+        core=[r"rates?", r"prices?", r"points?", r"benchmarks?"],
+    ),
+    use_sep=False,
+)
 
 def _is_bracketed_year_like(text: str, start: int, end: int) -> bool:
     """Return True when a year-like span is really part of an FX/rate mention."""
@@ -358,9 +365,8 @@ def _is_bracketed_year_like(text: str, start: int, end: int) -> bool:
         return True
     if re.search(r"\b[A-Z]{3}\s*/\s*[A-Z]{3}\b", window):
         return True
-    if re.search(r"\b(?:exchange|currency|forward)\s+rate\b", window, re.IGNORECASE):
+    if _FX_RATE_RE.search(window):
         return True
-
     return False
 
 
