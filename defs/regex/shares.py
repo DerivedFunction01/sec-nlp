@@ -1,5 +1,7 @@
 from __future__ import annotations
 import re
+import random
+from typing import Optional, Sequence
 
 from defs.labels import LABELS
 from defs.regex_lib import (
@@ -13,6 +15,7 @@ from defs.regex_lib import (
 )
 
 from defs.text_cleaner import remap_span, strip_angle_brackets
+from defs.number import Number, Strategy, format_number, mutate_number, mutate_numbers
 
 # =============================================================================
 # SHARE TERMS
@@ -245,6 +248,151 @@ SHARE_COUNT_RE = build_regex(
 # =============================================================================
 # EXTRACT SPANS
 # =============================================================================
+
+
+_SHARE_NUMERIC_CORE_RE = re.compile(
+    r"(?P<num>\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+)"
+)
+
+
+def extract_numeric_values(text: str) -> list[Number]:
+    """
+    Extract numeric values from a share span or fragment.
+
+    Numeric cores can appear before or after the share term, so we scan the
+    whole span and only keep the number fragments themselves.
+    """
+    if not text:
+        return []
+
+    values: list[Number] = []
+    for num_match in _SHARE_NUMERIC_CORE_RE.finditer(text):
+        raw = num_match.group("num").replace(",", "")
+        try:
+            value = float(raw)
+        except ValueError:
+            continue
+        values.append(int(value) if value.is_integer() else value)
+    return values
+
+
+def _replace_numeric_cores(text: str, replacements: Sequence[str]) -> str:
+    """
+    Replace numeric cores in a share span while preserving separators.
+    """
+    it = iter(replacements)
+
+    def repl(match: re.Match[str]) -> str:
+        try:
+            return next(it)
+        except StopIteration:
+            return match.group(0)
+
+    return _SHARE_NUMERIC_CORE_RE.sub(repl, text)
+
+
+def mutate_share_span(
+    text: str,
+    *,
+    rng: Optional[random.Random] = None,
+    strategy: Strategy = "random",
+    allow_negative: bool = False,
+) -> str:
+    """
+    Mutate the numeric portion of a single share span and reinsert it.
+
+    This keeps the surface form simple: the share/unit text stays intact and
+    only the numeric core changes.
+    """
+    if rng is None:
+        rng = random.Random()
+
+    values = extract_numeric_values(text)
+    if not values:
+        return text
+
+    if len(values) == 1:
+        mutated_values = [
+            mutate_number(
+                values[0],
+                strategy=strategy,
+                int_only=True,
+                allow_zero=False,
+                allow_negative=allow_negative,
+                rng=rng,
+            )
+        ]
+    else:
+        mutated_values = mutate_numbers(
+            values,
+            strategy=strategy,
+            int_only=True,
+            allow_zero=False,
+            allow_negative=allow_negative,
+            rng=rng,
+        )
+        if isinstance(mutated_values, tuple):
+            mutated_values = mutated_values[0]
+
+    formatted = [
+        format_number(v, strategy="commas", numeric_only=True)
+        for v in mutated_values
+        if isinstance(v, Number)
+    ]
+    return _replace_numeric_cores(text, formatted)
+
+
+def mutate_share_spans(
+    spans: Sequence[str],
+    *,
+    rng: Optional[random.Random] = None,
+    strategy: Strategy = "random",
+    allow_negative: bool = False,
+) -> list[str]:
+    """
+    Mutate a batch of share spans.
+
+    A single numeric mutation strategy is chosen across the batch so related
+    examples stay coherent.
+    """
+    if rng is None:
+        rng = random.Random()
+
+    all_values: list[Number] = []
+    per_span_counts: list[int] = []
+    for span in spans:
+        vals = extract_numeric_values(span)
+        per_span_counts.append(len(vals))
+        all_values.extend(vals)
+
+    if not all_values:
+        return list(spans)
+
+    mutated_values = mutate_numbers(
+        all_values,
+        strategy=strategy,
+        int_only=True,
+        allow_zero=False,
+        allow_negative=allow_negative,
+        rng=rng,
+    )
+    if isinstance(mutated_values, tuple):
+        mutated_values = mutated_values[0]
+
+    out: list[str] = []
+    idx = 0
+    for span, count in zip(spans, per_span_counts):
+        if count == 0:
+            out.append(span)
+            continue
+        formatted = [
+            format_number(v, strategy="commas", numeric_only=True)
+            for v in mutated_values[idx : idx + count]
+        ]
+        idx += count
+        out.append(_replace_numeric_cores(span, formatted))
+
+    return out
 
 
 def _iter_sentences(src: str) -> list[tuple[int, int, str]]:
