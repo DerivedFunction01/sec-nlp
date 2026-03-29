@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional, Union
 from defs.regex_lib import CONSEC_DIGIT_RE, build_alternation, build_regex
 import pandas as pd
+from defs.region_regex import MAJOR_CURRENCIES
 from defs.regex.money import MONEY_RE
 from string import punctuation as punct
 COMPANY_TOKEN = "the Company"
@@ -202,6 +203,16 @@ class NumberNormalizer:
         "trillion": 1_000_000_000_000,
     }
     scale_words = "|".join(scale_map.keys())
+    _currency_symbols: list[str] = []
+    for _props in MAJOR_CURRENCIES.values():
+        for _sym in _props.get("symbols", []):
+            if _sym:
+                _currency_symbols.append(re.escape(_sym))
+    _currency_symbol_pattern = build_alternation(sorted(set(_currency_symbols), key=len, reverse=True))
+    currency_symbol_scale_pattern = re.compile(
+        rf"(?P<num>\d+(?:,\d{{3}})+(?:\.\d+)?|\d+(?:\.\d+)?|\.\d+)\s*(?P<sym>{_currency_symbol_pattern})\s*(?P<scale>{scale_words})\b",
+        re.IGNORECASE,
+    )
     scale_after_paren_pattern = re.compile(
         rf"(?P<open>\()?\s*(?P<num>\d+(?:\.\d+)?)\s*\)\s*(?P<scale>{scale_words})",
         re.IGNORECASE,
@@ -266,6 +277,18 @@ class NumberNormalizer:
             if value.is_integer():
                 return f"{int(value)}"
             return f"{value}"
+        except ValueError:
+            return match.group(0)
+
+    def _currency_symbol_scale_replacer(self, match):
+        try:
+            number = float(match.group("num").replace(",", ""))
+            multiplier = self.scale_map.get(match.group("scale").lower(), 1)
+            value = number * multiplier
+            symbol = match.group("sym")
+            if value.is_integer():
+                return f"{symbol}{int(value)}"
+            return f"{symbol}{value}"
         except ValueError:
             return match.group(0)
 
@@ -404,6 +427,11 @@ class NumberNormalizer:
     def normalize(self, text: str) -> str:
         if not text:
             return ""
+        # Canonicalize money-like forms before generic digit protection so
+        # "42.7 € million" becomes a normal prefix-style money string.
+        text = self.currency_symbol_scale_pattern.sub(
+            self._currency_symbol_scale_replacer, text
+        )
         text = CONSEC_DIGIT_RE.sub(r"<\1>", text)
         
         # Preserve numeric firm names before any number conversion
