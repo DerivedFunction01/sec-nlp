@@ -13,7 +13,7 @@ SAMPLES = [
     "We generated revenue in USD and shipped from Shenzhen, China.",
     "The firm mentioned Japanese yen, Tokyo, and Japanese operations.",
     (
-        "We manage FX risk through forward contracts, cross-currency swaps, and "
+        "We manage FX risk through Euro forward contracts, cross-currency swaps, and "
         "derivatives tied to exchange rates between the euro, dollar, yen, and "
         "renminbi. As of quarter end, EUR/USD was 1.09, USD/JPY was 152.40, "
         "GBP/EUR was 1.17, and CNY/USD was 0.14. A German subsidiary in Munich "

@@ -254,7 +254,6 @@ MAJOR_CURRENCIES = {
         "symbols": ["₹"],
         "names": ["rupee", "rupees"],
         "suffix": True,
-        "amb_names": ["rupee", "rupees"],
         "adj": "indian",
     },
     "CAD": {
@@ -279,14 +278,12 @@ MAJOR_CURRENCIES = {
         "symbols": ["kr"],
         "names": ["krona", "kronor"],
         "suffix": True,
-        "amb_names": ["krona", "kronor"],
         "adj": "swedish",
     },
     "NOK": {
         "symbols": ["kr"],
         "names": ["krone", "kroner"],
         "suffix": True,
-        "amb_names": ["krone", "kroner"],
         "adj": "norwegian",
     },
     "DKK": {

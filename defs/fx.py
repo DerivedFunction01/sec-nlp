@@ -164,8 +164,17 @@ def _currency_terms(currency_code: str) -> dict[str, list[str]]:
     adj = props.get("adj")
     if adj and _is_plain_surface(adj):
         out["adjective"] = [_titlecase_surface(str(adj))]
-        amb_names = [name for name in props.get("amb_names", []) if name and _is_plain_surface(name)]
-        out["adj_name"] = [_titlecase_surface(f"{str(adj)} {name}") for name in amb_names]
+        adj_title = _titlecase_surface(str(adj))
+        adj_names: list[str] = []
+        for name in props.get("names", []):
+            if not name or not _is_plain_surface(name):
+                continue
+            name_title = _titlecase_surface(name)
+            if " " in name.strip():
+                adj_names.append(name_title)
+            else:
+                adj_names.append(_titlecase_surface(f"{adj_title} {name_title}"))
+        out["adj_name"] = _unique_preserve_order(adj_names)
     return out
 
 
@@ -211,6 +220,39 @@ def _pick_surface(candidates: Iterable[str], source_surface: str, rng: random.Ra
     if prefix_matches:
         return rng.choice(prefix_matches)
     return rng.choice(pool)
+
+
+def _surface_is_plural_like(surface: str) -> bool:
+    words = re.findall(r"[A-Za-z]+", surface)
+    if not words:
+        return False
+    tail = words[-1].lower()
+    if tail in {"us"}:
+        return False
+    return tail.endswith("s")
+
+
+def _rank_currency_candidates(
+    candidates: Iterable[str],
+    source_surface: str,
+    *,
+    prefer_full_name: bool = False,
+) -> list[str]:
+    pool = _unique_preserve_order(candidates)
+    if not pool:
+        return []
+
+    source_plural = _surface_is_plural_like(source_surface)
+    same_number = [term for term in pool if _surface_is_plural_like(term) == source_plural]
+    if same_number:
+        pool = same_number
+
+    if prefer_full_name:
+        full_name = [term for term in pool if " " in term]
+        if full_name:
+            pool = full_name + [term for term in pool if term not in full_name]
+
+    return pool
 
 
 def _format_currency_surface(surface: str) -> str:
@@ -511,10 +553,13 @@ def _replacement_for_hit(hit: FXHit, target: FXBundle, rng: random.Random) -> st
         )
     if hit.kind == "currency_adj_name":
         candidates = target.currency_terms.get("adj_name", ()) or target.currency_terms.get("name", ())
-        return _format_currency_surface(_pick_surface(candidates, hit.surface, rng))
+        ranked = _rank_currency_candidates(candidates, hit.surface, prefer_full_name=True)
+        return _format_currency_surface(_pick_surface(ranked, hit.surface, rng))
     if hit.kind == "currency_name":
-        chosen = _pick_surface(target.currency_terms.get("name", (hit.surface,)), hit.surface, rng)
-        return _format_currency_surface(_strip_leading_adjective(chosen, target.adjective_terms))
+        candidates = target.currency_terms.get("adj_name", ()) + target.currency_terms.get("name", ())
+        ranked = _rank_currency_candidates(candidates, hit.surface, prefer_full_name=True)
+        chosen = _pick_surface(ranked, hit.surface, rng)
+        return _format_currency_surface(chosen)
     return hit.surface
 
 
