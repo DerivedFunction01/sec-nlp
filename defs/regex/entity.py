@@ -150,6 +150,8 @@ FINANCIAL_INSTRUMENTS = {
         r"master",
         r"netting",
         r"public",
+        r"fx",
+        r"forex",
     },
 }
 _FI_PREFIX_PATTERN = build_alternation(list(FINANCIAL_INSTRUMENTS["prefix"]) + COMMON_COMMODITIES)

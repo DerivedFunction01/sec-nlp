@@ -232,7 +232,7 @@ _FI_CONTEXT_TERMS = sorted(
         list(FINANCIAL_INSTRUMENTS["prefix"])
         + list(FINANCIAL_INSTRUMENTS["core"])
         + list(FINANCIAL_INSTRUMENTS["ending"])
-        + [r"denominated", r"coupon", r"strike", r"notional", r"fx", r"spot"]
+        + [r"denominated", r"coupon", r"strike", r"notional", r"fx", r"spot", r"forex"]
     ),
     key=len,
     reverse=True,
