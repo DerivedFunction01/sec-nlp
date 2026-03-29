@@ -449,7 +449,7 @@ MAJOR_CURRENCIES = {
     },
     "HUF": {
         "exact_symbols": ["Ft"],
-        "names": ["forint"],
+        "names": ["hungarian forint", "hungarian forints", "forint", "forints"],
         "suffix": True,
         "adj": "hungarian",
     },
