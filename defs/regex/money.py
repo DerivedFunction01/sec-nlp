@@ -128,13 +128,15 @@ for _code, _props in MAJOR_CURRENCIES.items():
                 }
             )
 
-_CURRENCY_SURFACES.sort(key=lambda entry: len(entry["surface"]), reverse=True)
+_CURRENCY_SURFACES.sort(
+    key=lambda entry: len(entry["surface"]), reverse=True  #  type: ignore
+)
 for _entry in _CURRENCY_SURFACES:
-    _entry["pattern"] = _surface_regex(_entry["surface"])
+    _entry["pattern"] = _surface_regex(_entry["surface"])  #  type: ignore
 
 _CURRENCY_SURFACES_BY_KIND: dict[str, list[dict[str, object]]] = {}
 for _entry in _CURRENCY_SURFACES:
-    _CURRENCY_SURFACES_BY_KIND.setdefault(_entry["kind"], []).append(_entry)
+    _CURRENCY_SURFACES_BY_KIND.setdefault(_entry["kind"], []).append(_entry) # type: ignore
 
 _CURRENCY_DATA_BY_CODE = MAJOR_CURRENCIES
 
