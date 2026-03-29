@@ -240,21 +240,29 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
 
     for m in MONEY_RE.finditer(stripped):
         orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
+        if _is_bracketed_year_like(text, orig_start, orig_end):
+            continue
         spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.MONEY.value))
 
     for m in PRICE_OF_RE.finditer(stripped):
         money_span = m.span("money")
         orig_start, orig_end = remap_span(pos_map, money_span[0], money_span[1])
+        if _is_bracketed_year_like(text, orig_start, orig_end):
+            continue
         spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.MONEY.value))
 
     for m in PRICE_PER_RE.finditer(stripped):
         money_span = m.span("money")
         orig_start, orig_end = remap_span(pos_map, money_span[0], money_span[1])
+        if _is_bracketed_year_like(text, orig_start, orig_end):
+            continue
         spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.MONEY.value))
 
     for m in PRICE_SLASH_RE.finditer(stripped):
         money_span = m.span("money")
         orig_start, orig_end = remap_span(pos_map, money_span[0], money_span[1])
+        if _is_bracketed_year_like(text, orig_start, orig_end):
+            continue
         spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.MONEY.value))
 
     return spans
@@ -294,6 +302,40 @@ def _find_currency_surface(text: str) -> tuple[re.Match[str], dict[str, object]]
         if match is not None:
             return match, entry
     return None
+
+
+def _is_bracketed_year_like(text: str, start: int, end: int) -> bool:
+    """Return True when a year-like span is really part of an FX/rate mention."""
+    span_text = text[start:end]
+    numeric = _NUMERIC_CORE_RE.search(span_text)
+    if numeric is None:
+        return False
+
+    raw = numeric.group("num").replace(",", "")
+    try:
+        value = float(raw)
+    except ValueError:
+        return False
+
+    if not value.is_integer():
+        return False
+
+    year = int(value)
+    if year < 1900 or year > 2099:
+        return False
+
+    window_start = max(0, start - 32)
+    window_end = min(len(text), end + 48)
+    window = text[window_start:window_end]
+
+    if re.search(_CODES, window):
+        return True
+    if re.search(r"\b[A-Z]{3}\s*/\s*[A-Z]{3}\b", window):
+        return True
+    if re.search(r"\b(?:exchange|currency|forward)\s+rate\b", window, re.IGNORECASE):
+        return True
+
+    return False
 
 
 def _pick_currency_name(props: dict, value: int | float, rng: random.Random) -> str | None:
