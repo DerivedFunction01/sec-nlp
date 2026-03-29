@@ -5,6 +5,7 @@ from typing import Literal, Optional, Sequence
 
 from defs.regex_lib import build_alternation
 from defs.labels import LABELS
+from defs.regex.entity import FINANCIAL_INSTRUMENTS
 from defs.region_regex import MAJOR_CURRENCIES
 from defs.number import Number, Strategy, mutate_number, mutate_numbers, format_number
 
@@ -224,6 +225,20 @@ PRICE_SLASH_RE = re.compile(
     re.IGNORECASE,
 )
 
+_FI_CONTEXT_TERMS = sorted(
+    set(
+        list(FINANCIAL_INSTRUMENTS["core"])
+        + list(FINANCIAL_INSTRUMENTS["ending"])
+        + [r"denominated", r"coupon", r"strike", r"notional"]
+    ),
+    key=len,
+    reverse=True,
+)
+_FI_CONTEXT_RE = re.compile(
+    rf"^\s*(?:[-\s,]*)(?:{'|'.join(_FI_CONTEXT_TERMS)})\b",
+    re.IGNORECASE,
+)
+
 
 def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
     """
@@ -242,12 +257,16 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
         orig_start, orig_end = remap_span(pos_map, m.start(), m.end())
         if _is_bracketed_year_like(text, orig_start, orig_end):
             continue
+        if _has_financial_instrument_suffix(text, orig_end):
+            continue
         spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.MONEY.value))
 
     for m in PRICE_OF_RE.finditer(stripped):
         money_span = m.span("money")
         orig_start, orig_end = remap_span(pos_map, money_span[0], money_span[1])
         if _is_bracketed_year_like(text, orig_start, orig_end):
+            continue
+        if _has_financial_instrument_suffix(text, orig_end):
             continue
         spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.MONEY.value))
 
@@ -256,12 +275,16 @@ def extract_spans(text: str) -> list[tuple[str, int, int, str]]:
         orig_start, orig_end = remap_span(pos_map, money_span[0], money_span[1])
         if _is_bracketed_year_like(text, orig_start, orig_end):
             continue
+        if _has_financial_instrument_suffix(text, orig_end):
+            continue
         spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.MONEY.value))
 
     for m in PRICE_SLASH_RE.finditer(stripped):
         money_span = m.span("money")
         orig_start, orig_end = remap_span(pos_map, money_span[0], money_span[1])
         if _is_bracketed_year_like(text, orig_start, orig_end):
+            continue
+        if _has_financial_instrument_suffix(text, orig_end):
             continue
         spans.append((text[orig_start:orig_end], orig_start, orig_end, LABELS.MONEY.value))
 
@@ -336,6 +359,11 @@ def _is_bracketed_year_like(text: str, start: int, end: int) -> bool:
         return True
 
     return False
+
+
+def _has_financial_instrument_suffix(text: str, end: int) -> bool:
+    tail = text[end : min(len(text), end + 48)]
+    return bool(_FI_CONTEXT_RE.search(tail))
 
 
 def _pick_currency_name(props: dict, value: int | float, rng: random.Random) -> str | None:
