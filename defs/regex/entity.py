@@ -6,6 +6,7 @@ from defs.regex.shares import _EQUITY_CONTEXT_RE
 from defs.regex_lib import NUMBER_PATTERN_STR, NUMBER_RANGE_STR, SENTENCE_SPLIT_RE, add_restrictions, build_alternation, build_compound
 from defs.labels import LABELS
 from defs.regex.labor import _DISPUTE_TERMS, _RISK_PHRASES, GENERIC_WORKER_TERMS, WORKER_TERMS
+from defs.region_regex import MAJOR_CURRENCIES
 
 # Unambiguously ENTITY_COUNT
 ORGANIZATIONAL_TERMS = {
@@ -155,6 +156,25 @@ _FI_PREFIX_PATTERN = build_alternation(list(FINANCIAL_INSTRUMENTS["prefix"]) + C
 _FI_CORE_PATTERN = build_alternation(list(FINANCIAL_INSTRUMENTS["core"]))
 _FI_ENDING_PATTERN = build_alternation(list(FINANCIAL_INSTRUMENTS["ending"]))
 
+_CURRENCY_FI_TERMS: list[str] = []
+for _code, _props in MAJOR_CURRENCIES.items():
+    if _code:
+        _CURRENCY_FI_TERMS.append(rf"\b{re.escape(_code)}\b")
+    for _term in _props.get("symbols", []):
+        if _term:
+            if any(ch.isalpha() for ch in _term):
+                _CURRENCY_FI_TERMS.append(rf"(?<!\w){re.escape(_term)}(?!\w)")
+            else:
+                _CURRENCY_FI_TERMS.append(re.escape(_term))
+    for _term in _props.get("names", []):
+        if _term:
+            _CURRENCY_FI_TERMS.append(rf"(?<!\w){re.escape(_term)}(?!\w)")
+    for _term in _props.get("amb_names", []):
+        if _term:
+            _CURRENCY_FI_TERMS.append(rf"(?<!\w){re.escape(_term)}(?!\w)")
+
+_CURRENCY_FI_PATTERN = build_alternation(_CURRENCY_FI_TERMS)
+
 # Any word that belongs to the FI vocabulary (prefix | core), repeated 0-6 times
 # Free words (non-digit) allowed anywhere in the modifier chain
 _FI_FREE_GAP = r"(?:[A-Za-z][\w]*[-\s]+){0,3}"
@@ -167,7 +187,7 @@ _FI_MODIFIER_GAP = (
 _FI_TERMINAL = rf"(?:{_FI_CORE_PATTERN}|{_FI_ENDING_PATTERN})"
 
 FINANCIAL_INSTRUMENT_COUNT_RE = re.compile(
-    rf"\b({NUMBER_RANGE_STR})\s+({_FI_MODIFIER_GAP}{_FI_TERMINAL})\b",
+    rf"\b({NUMBER_RANGE_STR})\s+(?:{_CURRENCY_FI_PATTERN}\s+)?({_FI_MODIFIER_GAP}{_FI_TERMINAL})\b",
     re.IGNORECASE,
 )
 

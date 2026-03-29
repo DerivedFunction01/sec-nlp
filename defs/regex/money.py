@@ -229,9 +229,10 @@ PRICE_SLASH_RE = re.compile(
 
 _FI_CONTEXT_TERMS = sorted(
     set(
-        list(FINANCIAL_INSTRUMENTS["core"])
+        list(FINANCIAL_INSTRUMENTS["prefix"])
+        + list(FINANCIAL_INSTRUMENTS["core"])
         + list(FINANCIAL_INSTRUMENTS["ending"])
-        + [r"denominated", r"coupon", r"strike", r"notional"]
+        + [r"denominated", r"coupon", r"strike", r"notional", r"fx", r"spot"]
     ),
     key=len,
     reverse=True,
