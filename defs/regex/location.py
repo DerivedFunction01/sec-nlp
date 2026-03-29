@@ -93,7 +93,7 @@ GEO_LOCATION_TERMS: set[str] = {
 LOCATION_TERMS: set[str] = PHYSICAL_LOCATION_TERMS | GEO_LOCATION_TERMS
 
 # Optional: build compound patterns for multi-word physical locations if needed
-from defs.regex.cp import COMMON_COMMODITIES
+from defs.cp import COMMON_COMMODITIES
 
 PHYSICAL_COMPOUNDS: set[str] = {
     build_compound(

@@ -1,7 +1,7 @@
 from __future__ import annotations
 import re
 from typing import Optional
-from defs.regex.cp import COMMODITY_CHAIN, COMMON_COMMODITIES
+from defs.cp import COMMODITY_CHAIN, COMMON_COMMODITIES
 from defs.regex.shares import _EQUITY_CONTEXT_RE
 from defs.regex_lib import NUMBER_PATTERN_STR, NUMBER_RANGE_STR, SENTENCE_SPLIT_RE, add_restrictions, build_alternation, build_compound
 from defs.labels import LABELS
