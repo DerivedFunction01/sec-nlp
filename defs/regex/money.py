@@ -13,7 +13,12 @@ from defs.number import Number, Strategy, mutate_number, mutate_numbers, format_
 # MONEY REGEX (uses region_regex currency definitions)
 # =============================================================================
 
-_symbols: list[str] = []
+_prefix_symbols: list[str] = []
+_prefix_amb_symbols: list[str] = []
+_prefix_exact_symbols: list[str] = []
+_suffix_symbols: list[str] = []
+_suffix_amb_symbols: list[str] = []
+_suffix_exact_symbols: list[str] = []
 _codes: list[str] = []
 _adjs: list[str] = []
 
@@ -22,9 +27,32 @@ _amb_names: list[str] = []
 
 for code, props in MAJOR_CURRENCIES.items():
     _codes.append(re.escape(code))
+    amb_symbols = set(props.get("amb_symbols", []))
+    suffix_currency = bool(props.get("suffix"))
+    for sym in props.get("exact_symbols", []):
+        if len(sym) > 0:
+            if suffix_currency:
+                _suffix_exact_symbols.append(re.escape(sym))
+            else:
+                _prefix_exact_symbols.append(re.escape(sym))
     for sym in props.get("symbols", []):
         if len(sym) > 0:
-            _symbols.append(re.escape(sym))
+            if sym in amb_symbols:
+                if suffix_currency:
+                    _suffix_amb_symbols.append(re.escape(sym))
+                else:
+                    _prefix_amb_symbols.append(re.escape(sym))
+            else:
+                if suffix_currency:
+                    _suffix_symbols.append(re.escape(sym))
+                else:
+                    _prefix_symbols.append(re.escape(sym))
+    for sym in props.get("amb_symbols", []):
+        if len(sym) > 0 and sym not in props.get("symbols", []):
+            if suffix_currency:
+                _suffix_amb_symbols.append(re.escape(sym))
+            else:
+                _prefix_amb_symbols.append(re.escape(sym))
     adj = props.get("adj")
     if adj:
         _adjs.append(re.escape(adj))
@@ -41,15 +69,71 @@ _ADJS = build_alternation(_adjs)
 
 _ALPHA_SYM_RE = re.compile(r"[A-Za-z]")
 
-_safe_symbols: list[str] = []
-for _sym in _symbols:
-    _unescaped = re.sub(r"\\(.)", r"\1", _sym)
-    if _ALPHA_SYM_RE.search(_unescaped):
-        _safe_symbols.append(rf"(?<!\w){_sym}(?!\w)")
-    else:
-        _safe_symbols.append(_sym)
+def _symbol_surface_pattern(
+    surface: str, *, ambiguous: bool = False, exact: bool = False
+) -> str:
+    escaped = re.escape(surface)
+    if exact:
+        return rf"(?<![\w/])(?-i:{escaped})(?![\w/])"
+    if ambiguous or "/" in surface:
+        return rf"(?<![\w/]){escaped}(?![\w/])"
+    if _ALPHA_SYM_RE.search(surface):
+        return rf"(?<!\w){escaped}(?!\w)"
+    return escaped
 
-_SYMBOLS = build_alternation(_safe_symbols)
+_safe_prefix_symbols: list[str] = []
+for _sym in _prefix_symbols:
+    _unescaped = re.sub(r"\\(.)", r"\1", _sym)
+    _safe_prefix_symbols.append(_symbol_surface_pattern(_unescaped))
+
+_safe_prefix_amb_symbols: list[str] = []
+for _sym in _prefix_amb_symbols:
+    _unescaped = re.sub(r"\\(.)", r"\1", _sym)
+    _safe_prefix_amb_symbols.append(_symbol_surface_pattern(_unescaped, ambiguous=True))
+
+_safe_prefix_exact_symbols: list[str] = []
+for _sym in _prefix_exact_symbols:
+    _unescaped = re.sub(r"\\(.)", r"\1", _sym)
+    _safe_prefix_exact_symbols.append(_symbol_surface_pattern(_unescaped, exact=True))
+
+_safe_suffix_symbols: list[str] = []
+for _sym in _suffix_symbols:
+    _unescaped = re.sub(r"\\(.)", r"\1", _sym)
+    _safe_suffix_symbols.append(_symbol_surface_pattern(_unescaped))
+
+_safe_suffix_amb_symbols: list[str] = []
+for _sym in _suffix_amb_symbols:
+    _unescaped = re.sub(r"\\(.)", r"\1", _sym)
+    _safe_suffix_amb_symbols.append(_symbol_surface_pattern(_unescaped, ambiguous=True))
+
+_safe_suffix_exact_symbols: list[str] = []
+for _sym in _suffix_exact_symbols:
+    _unescaped = re.sub(r"\\(.)", r"\1", _sym)
+    _safe_suffix_exact_symbols.append(_symbol_surface_pattern(_unescaped, exact=True))
+
+_PREFIX_SYMBOLS = build_alternation(_safe_prefix_symbols)
+_PREFIX_AMB_SYMBOLS = build_alternation(_safe_prefix_amb_symbols)
+_PREFIX_EXACT_SYMBOLS = build_alternation(_safe_prefix_exact_symbols)
+_SUFFIX_SYMBOLS = build_alternation(_safe_suffix_symbols)
+_SUFFIX_AMB_SYMBOLS = build_alternation(_safe_suffix_amb_symbols)
+_SUFFIX_EXACT_SYMBOLS = build_alternation(_safe_suffix_exact_symbols)
+
+
+def _combine_nonempty(*patterns: str) -> str:
+    items = [pattern for pattern in patterns if pattern]
+    if not items:
+        return r"(?!.)"
+    if len(items) == 1:
+        return items[0]
+    return rf"(?:{'|'.join(items)})"
+
+
+_PREFIX_SYMBOL_GROUP = _combine_nonempty(
+    _PREFIX_SYMBOLS, _PREFIX_AMB_SYMBOLS, _PREFIX_EXACT_SYMBOLS
+)
+_SUFFIX_SYMBOL_GROUP = _combine_nonempty(
+    _SUFFIX_SYMBOLS, _SUFFIX_AMB_SYMBOLS, _SUFFIX_EXACT_SYMBOLS
+)
 
 _safe_codes: list[str] = []
 for _code in _codes:
@@ -88,9 +172,12 @@ def _titlecase_currency_surface(surface: str) -> str:
 _CURRENCY_SURFACES: list[dict[str, object]] = []
 for _code, _props in MAJOR_CURRENCIES.items():
     _symbols_for_code = [sym for sym in _props.get("symbols", []) if sym]
+    _amb_symbols_for_code = [sym for sym in _props.get("amb_symbols", []) if sym]
+    _exact_symbols_for_code = [sym for sym in _props.get("exact_symbols", []) if sym]
     _names_for_code = [name for name in _props.get("names", []) if name]
     _adj = _props.get("adj")
     _amb_names = [name for name in _props.get("amb_names", []) if name]
+    _position = "suffix" if _props.get("suffix") else "prefix"
 
     for _sym in _symbols_for_code:
         _CURRENCY_SURFACES.append(
@@ -98,6 +185,27 @@ for _code, _props in MAJOR_CURRENCIES.items():
                 "code": _code,
                 "kind": "symbol",
                 "surface": _sym,
+                "position": _position,
+            }
+        )
+
+    for _sym in _amb_symbols_for_code:
+        _CURRENCY_SURFACES.append(
+            {
+                "code": _code,
+                "kind": "amb_symbol",
+                "surface": _sym,
+                "position": _position,
+            }
+        )
+
+    for _sym in _exact_symbols_for_code:
+        _CURRENCY_SURFACES.append(
+            {
+                "code": _code,
+                "kind": "exact_symbol",
+                "surface": _sym,
+                "position": _position,
             }
         )
 
@@ -150,16 +258,19 @@ _NUM_WITH_SCALE = rf"(?:\(?\s*{_NUM_CORE}(?:\s*{_SCALE})?\s*\)?|\(?\s*{_NUM_CORE
 # --------------------------------------------------------------------------
 
 # -$10, -€2.5m
-_NEG_SYMBOL = rf"-\s*(?:{_SYMBOLS})\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
+_NEG_SYMBOL = rf"-\s*{_PREFIX_SYMBOL_GROUP}\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
 
 # -USD 10, -EUR (10)
 _NEG_CODE = rf"-\s*{_CODES}\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
 
 # ($10), $(10)  — opening paren required, closing optional
-_PAREN_SYMBOL = rf"\(\s*(?:{_SYMBOLS})\s*{_NUM_WITH_SCALE}\s*\)?"
+_PAREN_SYMBOL = rf"\(\s*{_PREFIX_SYMBOL_GROUP}\s*{_NUM_WITH_SCALE}\s*\)?"
 
 # $10, €2.5m, $(10)
-_SYMBOL_PREFIX = rf"(?:{_SYMBOLS})\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
+_SYMBOL_PREFIX = rf"{_PREFIX_SYMBOL_GROUP}\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
+
+# 10 Ft, 100 kr, 100 S/
+_SYMBOL_SUFFIX = rf"\(?\s*{_NUM_WITH_SCALE}\s*\)?\s*{_SUFFIX_SYMBOL_GROUP}"
 
 # USD 10, EUR (10)
 _CODE_PREFIX = rf"{_CODES}\s*\(?\s*{_NUM_WITH_SCALE}\s*\)?"
@@ -191,6 +302,7 @@ MONEY_RE = re.compile(
     rf"|{_SYMBOL_PREFIX}"
     rf"|{_CODE_PREFIX}"
     rf"|{_NUM_CODE_SUFFIX}"
+    rf"|{_SYMBOL_SUFFIX}"
     rf"|{_NUM_UNAMB_NAME}"
     rf"|{_ADJ_AMB_NAME_PREFIX}"
     rf"|{_ADJ_AMB_NAME_SUFFIX}"
@@ -429,6 +541,7 @@ def _pick_replacement_currency(
 ) -> str | None:
     current_code = str(current_entry["code"])
     current_kind = str(current_entry["kind"])
+    current_position = str(current_entry.get("position", "prefix"))
 
     candidate_codes = [code for code in _CURRENCY_DATA_BY_CODE.keys() if code != current_code]
     if not candidate_codes:
@@ -438,8 +551,15 @@ def _pick_replacement_currency(
 
     for code in candidate_codes:
         props = _CURRENCY_DATA_BY_CODE[code]
-        if current_kind == "symbol":
-            symbols = [sym for sym in props.get("symbols", []) if sym]
+        if current_kind in {"symbol", "amb_symbol", "exact_symbol"}:
+            target_suffix = bool(props.get("suffix"))
+            if target_suffix != (current_position == "suffix"):
+                continue
+            symbols = [sym for sym in props.get("exact_symbols", []) if sym]
+            symbols += [sym for sym in props.get("symbols", []) if sym and sym not in symbols]
+            symbols += [
+                sym for sym in props.get("amb_symbols", []) if sym and sym not in symbols
+            ]
             if symbols:
                 return rng.choice(symbols)
         elif current_kind == "code":
@@ -455,7 +575,9 @@ def _pick_replacement_currency(
 
     for code in candidate_codes:
         props = _CURRENCY_DATA_BY_CODE[code]
-        symbols = [sym for sym in props.get("symbols", []) if sym]
+        symbols = [sym for sym in props.get("exact_symbols", []) if sym]
+        symbols += [sym for sym in props.get("symbols", []) if sym and sym not in symbols]
+        symbols += [sym for sym in props.get("amb_symbols", []) if sym and sym not in symbols]
         if symbols:
             return rng.choice(symbols)
         name = _pick_currency_name(props, value, rng)

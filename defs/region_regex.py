@@ -276,18 +276,21 @@ MAJOR_CURRENCIES = {
     },
     "SEK": {
         "symbols": ["kr"],
+        "amb_symbols": ["kr"],
         "names": ["krona", "kronor"],
         "suffix": True,
         "adj": "swedish",
     },
     "NOK": {
         "symbols": ["kr"],
+        "amb_symbols": ["kr"],
         "names": ["krone", "kroner"],
         "suffix": True,
         "adj": "norwegian",
     },
     "DKK": {
         "symbols": ["kr"],
+        "amb_symbols": ["kr"],
         "names": ["krone"],
         "suffix": True,
         "amb_names": ["krone"],
@@ -385,7 +388,12 @@ MAJOR_CURRENCIES = {
         "suffix": True,
         "adj": "czech",
     },
-    "HUF": {"symbols": [], "names": ["forint"], "suffix": True, "adj": "hungarian"},
+    "HUF": {
+        "exact_symbols": ["Ft"],
+        "names": ["forint"],
+        "suffix": True,
+        "adj": "hungarian",
+    },
     "RON": {
         "symbols": ["lei"],
         "names": ["leu", "lei"],
@@ -394,7 +402,7 @@ MAJOR_CURRENCIES = {
     },
     # South Africa
     "ZAR": {
-        "symbols": ["R$"],
+        "exact_symbols": ["R"],
         "names": ["rand", "south african rand"],
         "prefix": True,
         "amb_names": ["rand"],
@@ -432,7 +440,8 @@ MAJOR_CURRENCIES = {
         "adj": "chilean",
     },
     "PEN": {
-        "symbols": [],
+        "symbols": ["S/", "S/."],
+        "amb_symbols": ["S/", "S/."],
         "names": ["sol", "peruvian sol"],
         "prefix": True,
         "amb_names": ["sol"],
