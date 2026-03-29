@@ -240,16 +240,14 @@ MAJOR_CURRENCIES = {
     },
     "JPY": {
         "symbols": ["¥"],
-        "names": ["yen"],
+        "names": ["yen", "japanese yuan"],
         "prefix": True,
-        "amb_names": ["yen"],
         "adj": "japanese",
     },
     "CNY": {
         "symbols": ["¥"],
-        "names": ["yuan", "renminbi"],
+        "names": ["yuan", "renminbi", "chinese yuan"],
         "prefix": True,
-        "amb_names": ["yuan", "renminbi"],
         "adj": "chinese",
     },
     "INR": {

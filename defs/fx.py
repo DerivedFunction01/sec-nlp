@@ -213,6 +213,22 @@ def _pick_surface(candidates: Iterable[str], source_surface: str, rng: random.Ra
     return rng.choice(pool)
 
 
+def _format_currency_surface(surface: str) -> str:
+    """
+    Normalize currency words for presentation.
+
+    Symbols and ISO codes are preserved. Mixed-name surfaces like
+    "british pound" become "British Pound".
+    """
+    if not surface:
+        return surface
+    if len(surface) <= 3 and surface.isupper():
+        return surface
+    if surface in {sym for props in MAJOR_CURRENCIES.values() for sym in props.get("symbols", [])}:
+        return surface
+    return _titlecase_surface(surface)
+
+
 def _strip_leading_adjective(surface: str, adjectives: Iterable[str]) -> str:
     lower_surface = surface.lower().strip()
     for adjective in _unique_preserve_order(adjectives):
@@ -423,25 +439,47 @@ def _infer_source_nation_code(hits: list[FXHit]) -> str | None:
 
 def _pick_target_nation_code(
     source_nation_code: str | None,
+    source_currency_codes: set[str] | None,
     rng: random.Random,
     used_target_nations: set[str] | None = None,
+    used_target_currency_codes: set[str] | None = None,
 ) -> str:
-    candidates = [
-        nation_code
-        for nation_code in TARGET_NATION_CODES
-        if nation_code != source_nation_code
-        and (used_target_nations is None or nation_code not in used_target_nations)
-    ]
-    if not candidates:
-        candidates = [
-            nation_code
-            for nation_code in TARGET_NATION_CODES
-            if nation_code != source_nation_code
-        ]
-    if not candidates:
-        raise ValueError("No target nation codes available")
-    rng.shuffle(candidates)
-    return candidates[0]
+    def _candidates(
+        *,
+        respect_used_nations: bool,
+        respect_used_currencies: bool,
+        respect_source_currencies: bool,
+    ) -> list[str]:
+        candidates: list[str] = []
+        for nation_code in TARGET_NATION_CODES:
+            if nation_code == source_nation_code:
+                continue
+            if respect_used_nations and used_target_nations is not None and nation_code in used_target_nations:
+                continue
+            target_bundle = FX_BUNDLES[nation_code]
+            target_currency_code = target_bundle.currency_code
+            if respect_used_currencies and used_target_currency_codes is not None and target_currency_code in used_target_currency_codes:
+                continue
+            if respect_source_currencies and source_currency_codes and target_currency_code in source_currency_codes:
+                continue
+            candidates.append(nation_code)
+        rng.shuffle(candidates)
+        return candidates
+
+    for respect_used_nations, respect_used_currencies, respect_source_currencies in (
+        (True, True, True),
+        (True, False, True),
+        (True, False, False),
+        (False, False, False),
+    ):
+        candidates = _candidates(
+            respect_used_nations=respect_used_nations,
+            respect_used_currencies=respect_used_currencies,
+            respect_source_currencies=respect_source_currencies,
+        )
+        if candidates:
+            return candidates[0]
+    raise ValueError("No target nation codes available")
 
 
 def _group_key_for_hit(hit: FXHit) -> str:
@@ -450,6 +488,10 @@ def _group_key_for_hit(hit: FXHit) -> str:
     if hit.currency_code:
         return f"currency:{hit.currency_code}"
     return "misc"
+
+
+def _group_currency_codes(group_hits: list[FXHit]) -> set[str]:
+    return {hit.currency_code for hit in group_hits if hit.currency_code}
 
 
 def _replacement_for_hit(hit: FXHit, target: FXBundle, rng: random.Random) -> str:
@@ -464,13 +506,15 @@ def _replacement_for_hit(hit: FXHit, target: FXBundle, rng: random.Random) -> st
     if hit.kind == "currency_symbol":
         return _pick_surface(target.currency_terms.get("symbol", (hit.surface,)), hit.surface, rng)
     if hit.kind == "currency_adjective":
-        return _pick_surface(target.currency_terms.get("adjective", ()) or target.currency_terms.get("name", ()), hit.surface, rng)
+        return _format_currency_surface(
+            _pick_surface(target.currency_terms.get("adjective", ()) or target.currency_terms.get("name", ()), hit.surface, rng)
+        )
     if hit.kind == "currency_adj_name":
         candidates = target.currency_terms.get("adj_name", ()) or target.currency_terms.get("name", ())
-        return _pick_surface(candidates, hit.surface, rng)
+        return _format_currency_surface(_pick_surface(candidates, hit.surface, rng))
     if hit.kind == "currency_name":
         chosen = _pick_surface(target.currency_terms.get("name", (hit.surface,)), hit.surface, rng)
-        return _strip_leading_adjective(chosen, target.adjective_terms)
+        return _format_currency_surface(_strip_leading_adjective(chosen, target.adjective_terms))
     return hit.surface
 
 
@@ -497,6 +541,7 @@ def _suffix_currency_replacement(
         hit.surface,
         rng,
     )
+    suffix_token = _format_currency_surface(suffix_token)
     amount = amount_match.group("amount").strip()
     trailing = amount_match.group("trailing") or ""
     separator = trailing if trailing else " "
@@ -556,14 +601,24 @@ def mutate_fx_text(
         grouped_hits.setdefault(_group_key_for_hit(hit), []).append(hit)
 
     used_target_nations: set[str] = set()
+    used_target_currency_codes: set[str] = set()
     grouped_metadata: list[dict[str, object]] = []
     for group_key, group_hits in grouped_hits.items():
         source_nation_code = _infer_source_nation_code(group_hits)
+        source_currency_codes = _group_currency_codes(group_hits)
         if source_nation_code is None:
             source_nation_code = rng.choice(list(FX_BUNDLES.keys()))
-        target_nation_code = _pick_target_nation_code(source_nation_code, rng, used_target_nations)
+        target_nation_code = _pick_target_nation_code(
+            source_nation_code,
+            source_currency_codes,
+            rng,
+            used_target_nations,
+            used_target_currency_codes,
+        )
         used_target_nations.add(target_nation_code)
         target_bundle = FX_BUNDLES[target_nation_code]
+        if target_bundle.currency_code:
+            used_target_currency_codes.add(target_bundle.currency_code)
 
         group_replacements: list[dict[str, object]] = []
         group_skipped: list[dict[str, object]] = []
@@ -590,6 +645,7 @@ def mutate_fx_text(
                 "group": group_key,
                 "source_nation_code": source_nation_code,
                 "target_nation_code": target_nation_code,
+                "target_currency_code": target_bundle.currency_code,
                 "replacements": list(reversed(group_replacements)),
                 "skipped": list(reversed(group_skipped)),
             }
@@ -609,6 +665,7 @@ def mutate_fx_text(
     metadata = {
         "source_nation_code": grouped_metadata[0]["source_nation_code"] if grouped_metadata else None,
         "target_nation_code": grouped_metadata[0]["target_nation_code"] if grouped_metadata else None,
+        "target_currency_code": grouped_metadata[0]["target_currency_code"] if grouped_metadata else None,
         "groups": grouped_metadata,
         "exchange_rate_replacements": exchange_rate_replacements,
         "replacements": replacements,
