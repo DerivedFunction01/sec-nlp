@@ -76,6 +76,26 @@ def _build_nation(entry: dict) -> Nation:
     )
 
 
+def _build_bare_currency_default_map() -> dict[str, str]:
+    """
+    Map bare currency names to a default code.
+
+    This is intentionally conservative: it only includes single-token names
+    (so it skips forms like "south african rand"), and it keeps the first code
+    encountered in MAJOR_CURRENCIES for shared names like "peso" and "krona".
+    """
+    defaults: dict[str, str] = {}
+    for code, props in MAJOR_CURRENCIES.items():
+        for name in props.get("names", []):
+            if not name:
+                continue
+            bare = name.strip().lower()
+            if " " in bare:
+                continue
+            defaults.setdefault(bare, code)
+    return defaults
+
+
 def _group_by_region(raw: List[dict]) -> Dict[Region, List[Nation]]:
     mapping: Dict[Region, List[Nation]] = {region: [] for region in _REGION_ORDER}
     for entry in raw:
@@ -346,7 +366,8 @@ MAJOR_CURRENCIES = {
     },
     "BHD": {
         "symbols": ["BHD"],
-        "names": ["bahraini dinar", "bahraini dinars"],
+        "names": ["bahraini dinar", "bahraini dinars", "dinar", "dinars"],
+        "amb_names": ["dinar", "dinars"],
         "prefix": True,
         "adj": "bahraini",
     },
@@ -441,13 +462,13 @@ MAJOR_CURRENCIES = {
     },
     "IRR": {
         "symbols": ["IRR"],
-        "names": ["iranian rial", "iranian rials"],
+        "names": ["iranian rial", "iranian rials", "rials", "rial"],
         "prefix": True,
         "adj": "iranian",
     },
     "KZT": {
         "symbols": ["₸", "KZT"],
-        "names": ["kazakhstani tenge"],
+        "names": ["kazakhstani tenge", "tenge"],
         "prefix": True,
         "adj": "kazakhstani",
     },
@@ -459,7 +480,8 @@ MAJOR_CURRENCIES = {
     },
     "MUR": {
         "symbols": ["MUR"],
-        "names": ["mauritian rupee", "mauritian rupees"],
+        "names": ["mauritian rupee", "mauritian rupees", "rupee", "rupees"],
+        "amb_names": ["rupee", "rupees"],
         "suffix": True,
         "adj": "mauritian",
     },
@@ -485,7 +507,8 @@ MAJOR_CURRENCIES = {
     },
     "PHP": {
         "symbols": ["₱"],
-        "names": ["philippine peso", "philippine pesos"],
+        "names": ["philippine peso", "philippine pesos", "peso", "pesos"],
+        "amb_names": ["peso", "pesos"],
         "prefix": True,
         "adj": "philippine",
     },
@@ -498,18 +521,21 @@ MAJOR_CURRENCIES = {
     "NPR": {
         "symbols": ["NPR"],
         "names": ["nepalese rupee", "nepalese rupees"],
+        "amb_names": ["rupee", "rupees"],
         "suffix": True,
         "adj": "nepalese",
     },
     "COP": {
         "symbols": ["COL$"],
-        "names": ["colombian peso", "colombian pesos"],
+        "names": ["colombian peso", "colombian pesos", "peso", "pesos"],
+        "amb_names": ["peso", "pesos"],
         "prefix": True,
         "adj": "colombian",
     },
     "CLP": {
         "symbols": ["CLP$"],
-        "names": ["chilean peso", "chilean pesos"],
+        "names": ["chilean peso", "chilean pesos", "peso", "pesos"],
+        "amb_names": ["peso", "pesos"],
         "prefix": True,
         "adj": "chilean",
     },
@@ -535,19 +561,22 @@ MAJOR_CURRENCIES = {
     },
     "PKR": {
         "symbols": ["₨"],
-        "names": ["pakistani rupee", "pakistani rupees"],
+        "names": ["pakistani rupee", "pakistani rupees", "rupee", "rupees"],
+        "amb_names": ["rupee", "rupees"],
         "prefix": True,
         "adj": "pakistani",
     },
     "OMR": {
         "symbols": ["OMR", "ر.ع."],
-        "names": ["omani rial", "omani rials"],
+        "names": ["omani rial", "omani rials", "rial", "rials"],
+        "amb_names": ["rial", "rials"],
         "prefix": True,
         "adj": "omani",
     },
     "QAR": {
         "symbols": ["QAR", "ر.ق."],
-        "names": ["qatari rial", "qatari rials"],
+        "names": ["qatari rial", "qatari rials", "rial", "rials"],
+        "amb_names": ["rial", "rials"],
         "prefix": True,
         "adj": "qatari",
     },
@@ -559,7 +588,8 @@ MAJOR_CURRENCIES = {
     },
     "LKR": {
         "symbols": ["LKR"],
-        "names": ["sri lankan rupee", "sri lankan rupees"],
+        "names": ["sri lankan rupee", "sri lankan rupees", "rupee", "rupees"],
+        "amb_names": ["rupee", "rupees"],
         "suffix": True,
         "adj": "sri lankan",
     },
@@ -588,6 +618,11 @@ MAJOR_CURRENCIES = {
         "adj": "zimbabwean",
     },
 }
+
+# Bare currency name -> default code.
+# This is used for shared bare forms like "peso" / "pesos" and for common
+# one-word names like "yen" or "dollar" when no country context is present.
+BARE_CURRENCY_NAME_TO_DEFAULT_CODE: dict[str, str] = _build_bare_currency_default_map()
 
 # Nation code -> compatible currency codes.
 # This is intentionally separate from MAJOR_CURRENCIES so the matcher can use

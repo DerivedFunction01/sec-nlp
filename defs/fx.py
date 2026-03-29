@@ -6,7 +6,12 @@ from dataclasses import dataclass
 from typing import Iterable, Optional
 
 from defs.regex_lib import build_alternation
-from defs.region_regex import MAJOR_CURRENCIES, NATION_BY_CODE, NATION_TO_CURRENCY_CODES
+from defs.region_regex import (
+    BARE_CURRENCY_NAME_TO_DEFAULT_CODE,
+    MAJOR_CURRENCIES,
+    NATION_BY_CODE,
+    NATION_TO_CURRENCY_CODES,
+)
 
 
 _REGEX_META_RE = re.compile(r"[\^\$\*\+\?\{\}\[\]\\\|\(\)]")
@@ -342,6 +347,9 @@ def _build_term_index() -> tuple[
         add(currency_code, "currency_code", currency_code, currency_code=currency_code)
         for name in props.get("names", []):
             if name and _is_plain_surface(name):
+                bare_default_code = BARE_CURRENCY_NAME_TO_DEFAULT_CODE.get(name.lower())
+                if " " not in name.strip() and bare_default_code and bare_default_code != currency_code:
+                    continue
                 if name in amb_names:
                     adj = props.get("adj")
                     if adj and _is_plain_surface(str(adj)):
@@ -504,16 +512,18 @@ def _currency_to_nations(currency_code: str | None) -> list[str]:
 
 def _infer_source_nation_code(hits: list[FXHit]) -> str | None:
     weights: dict[str, int] = {}
+    explicit_nation_weights: dict[str, int] = {}
     for hit in hits:
-        candidates = []
         if hit.nation_code:
-            candidates.append(hit.nation_code)
-        candidates.extend(_currency_to_nations(hit.currency_code))
-        for nation_code in candidates:
-            weights[nation_code] = weights.get(nation_code, 0) + 1
-    if not weights:
-        return None
-    return max(weights.items(), key=lambda item: (item[1], -len(item[0])))[0]
+            explicit_nation_weights[hit.nation_code] = explicit_nation_weights.get(hit.nation_code, 0) + 1
+        else:
+            for nation_code in _currency_to_nations(hit.currency_code):
+                weights[nation_code] = weights.get(nation_code, 0) + 1
+    if explicit_nation_weights:
+        return max(explicit_nation_weights.items(), key=lambda item: (item[1], -len(item[0])))[0]
+    if weights:
+        return max(weights.items(), key=lambda item: (item[1], -len(item[0])))[0]
+    return None
 
 
 def _pick_target_nation_code(
