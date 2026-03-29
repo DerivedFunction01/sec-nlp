@@ -178,6 +178,14 @@ def _currency_terms(currency_code: str) -> dict[str, list[str]]:
     return out
 
 
+_CURRENCY_UNIT_SURFACES: set[str] = {
+    name.lower()
+    for props in MAJOR_CURRENCIES.values()
+    for name in props.get("names", [])
+    if name and _is_plain_surface(name)
+}
+
+
 def _currency_is_suffix(currency_code: str | None) -> bool:
     if not currency_code:
         return False
@@ -435,7 +443,36 @@ def find_fx_hits(text: str) -> list[FXHit]:
             continue
         selected.append(hit)
         cursor = hit.end
-    return selected
+
+    merged: list[FXHit] = []
+    idx = 0
+    while idx < len(selected):
+        hit = selected[idx]
+        next_hit = selected[idx + 1] if idx + 1 < len(selected) else None
+        if (
+            next_hit is not None
+            and hit.kind in {"adjective", "currency_adjective"}
+            and next_hit.kind in {"currency_name", "currency_adj_name"}
+            and next_hit.surface.lower() in _CURRENCY_UNIT_SURFACES
+            and text[hit.end:next_hit.start].strip(" -") == ""
+        ):
+            merged.append(
+                FXHit(
+                    start=hit.start,
+                    end=next_hit.end,
+                    surface=text[hit.start:next_hit.end],
+                    kind="currency_adj_name",
+                    nation_code=hit.nation_code or next_hit.nation_code,
+                    currency_code=next_hit.currency_code or hit.currency_code,
+                )
+            )
+            idx += 2
+            continue
+
+        merged.append(hit)
+        idx += 1
+
+    return merged
 
 
 def _find_exchange_rate_pairs(text: str, hits: list[FXHit]) -> list[tuple[FXHit, FXHit]]:

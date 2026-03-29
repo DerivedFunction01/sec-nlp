@@ -9,7 +9,7 @@ from defs.region_regex import MAJOR_CURRENCIES
 SAMPLES = [
     "The company operates in Poland, through its Polish subsidiary, and reports in Polish zloty.",
     "Europe, Germany, Euro, Munich, German",
-    "Korean won 500 british pounds of sand",
+    "Korean won 500 british pounds of sand with 10 north korean dollars",
     "We generated revenue in USD and shipped from Shenzhen, China.",
     "The firm mentioned Japanese yen, Tokyo, and Japanese operations.",
     (

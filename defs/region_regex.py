@@ -448,7 +448,6 @@ MAJOR_CURRENCIES = {
         "symbols": ["₦"],
         "names": ["naira", "nigerian naira"],
         "prefix": True,
-        "amb_names": ["naira"],
         "adj": "nigerian",
     },
     "PKR": {
