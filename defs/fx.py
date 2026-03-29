@@ -23,6 +23,274 @@ _AMOUNT_AFTER_CURRENCY_RE = re.compile(
     rf"^\s*(?P<amount>\(?\s*(?:{_NUM})(?:\s*{_SCALE_WORD})?\s*\)?)(?P<trailing>\s*)",
     re.IGNORECASE,
 )
+_AMOUNT_BEFORE_CURRENCY_RE = re.compile(
+    rf"(?P<amount>\(?\s*(?:{_NUM})(?:\s*{_SCALE_WORD})?\s*\)?)(?P<trailing>\s*)$",
+    re.IGNORECASE,
+)
+
+
+def _titlecase_currency_surface(surface: str) -> str:
+    parts = re.split(r"(\s+|-)", surface)
+    titled: list[str] = []
+    for part in parts:
+        if part == "" or part.isspace() or part == "-":
+            titled.append(part)
+            continue
+        if part.isupper():
+            titled.append(part)
+        elif part.lower() == "us":
+            titled.append("US")
+        else:
+            titled.append(part[:1].upper() + part[1:].lower())
+    return "".join(titled)
+
+
+def _surface_regex(surface: str) -> re.Pattern[str]:
+    escaped = re.escape(surface)
+    if any(ch.isalpha() for ch in surface):
+        return re.compile(rf"(?<!\w){escaped}(?!\w)", re.IGNORECASE)
+    return re.compile(escaped)
+
+
+_CURRENCY_SURFACES: list[dict[str, object]] = []
+for _code, _props in MAJOR_CURRENCIES.items():
+    _symbols_for_code = [sym for sym in _props.get("symbols", []) if sym]
+    _amb_symbols_for_code = [sym for sym in _props.get("amb_symbols", []) if sym]
+    _exact_symbols_for_code = [sym for sym in _props.get("exact_symbols", []) if sym]
+    _names_for_code = [name for name in _props.get("names", []) if name]
+    _adj = _props.get("adj")
+    _amb_names = [name for name in _props.get("amb_names", []) if name]
+    _position = "suffix" if _props.get("suffix") else "prefix"
+
+    for _sym in _symbols_for_code:
+        _CURRENCY_SURFACES.append(
+            {
+                "code": _code,
+                "kind": "symbol",
+                "surface": _sym,
+                "position": _position,
+            }
+        )
+
+    for _sym in _amb_symbols_for_code:
+        _CURRENCY_SURFACES.append(
+            {
+                "code": _code,
+                "kind": "amb_symbol",
+                "surface": _sym,
+                "position": _position,
+            }
+        )
+
+    for _sym in _exact_symbols_for_code:
+        _CURRENCY_SURFACES.append(
+            {
+                "code": _code,
+                "kind": "exact_symbol",
+                "surface": _sym,
+                "position": _position,
+            }
+        )
+
+    _CURRENCY_SURFACES.append(
+        {
+            "code": _code,
+            "kind": "code",
+            "surface": _code,
+        }
+    )
+
+    for _name in _names_for_code:
+        if _name in _amb_names:
+            if _adj:
+                _CURRENCY_SURFACES.append(
+                    {
+                        "code": _code,
+                        "kind": "adj_name",
+                        "surface": f"{_adj} {_name}",
+                    }
+                )
+        else:
+            _CURRENCY_SURFACES.append(
+                {
+                    "code": _code,
+                    "kind": "name",
+                    "surface": _name,
+                }
+            )
+
+_CURRENCY_SURFACES.sort(key=lambda entry: len(entry["surface"]), reverse=True)  # type: ignore
+for _entry in _CURRENCY_SURFACES:
+    _entry["pattern"] = _surface_regex(str(_entry["surface"]))  # type: ignore
+
+
+def _find_currency_surface(text: str) -> tuple[re.Match[str], dict[str, object]] | None:
+    for entry in _CURRENCY_SURFACES:
+        pattern = entry["pattern"]
+        assert isinstance(pattern, re.Pattern)
+        match = pattern.search(text)
+        if match is not None:
+            return match, entry
+    return None
+
+
+def _pick_currency_name(props: dict, value: int | float, rng: random.Random) -> str | None:
+    names = [name for name in props.get("names", []) if name]
+    if not names:
+        return None
+
+    amb_names = set(props.get("amb_names", []))
+    plural = not abs(float(value)) == 1.0
+
+    preferred: list[str] = []
+    fallback: list[str] = []
+    for name in names:
+        if name in amb_names:
+            continue
+        fallback.append(name)
+        if plural and name.endswith("s"):
+            preferred.append(name)
+        elif not plural and not name.endswith("s"):
+            preferred.append(name)
+
+    if preferred:
+        return rng.choice(preferred)
+    if fallback:
+        return rng.choice(fallback)
+    return rng.choice(names)
+
+
+def _pick_currency_adj_name(props: dict, value: int | float, rng: random.Random) -> str | None:
+    adj = props.get("adj")
+    if not adj:
+        return None
+
+    amb_names = [name for name in props.get("amb_names", []) if name]
+    if not amb_names:
+        return None
+
+    plural = not abs(float(value)) == 1.0
+    preferred: list[str] = []
+    fallback: list[str] = []
+    for name in amb_names:
+        fallback.append(name)
+        if plural and name.endswith("s"):
+            preferred.append(name)
+        elif not plural and not name.endswith("s"):
+            preferred.append(name)
+
+    name = rng.choice(preferred or fallback)
+    return f"{adj} {name}"
+
+
+def _pick_replacement_currency(
+    current_entry: dict[str, object], value: int | float, rng: random.Random
+) -> tuple[str, str] | None:
+    current_code = str(current_entry["code"])
+    current_kind = str(current_entry["kind"])
+
+    candidate_codes = [code for code in MAJOR_CURRENCIES.keys() if code != current_code]
+    if not candidate_codes:
+        return None
+
+    rng.shuffle(candidate_codes)
+
+    for code in candidate_codes:
+        props = MAJOR_CURRENCIES[code]
+        if current_kind in {"symbol", "amb_symbol", "exact_symbol"}:
+            symbols = [sym for sym in props.get("exact_symbols", []) if sym]
+            symbols += [sym for sym in props.get("symbols", []) if sym and sym not in symbols]
+            symbols += [sym for sym in props.get("amb_symbols", []) if sym and sym not in symbols]
+            if symbols:
+                return rng.choice(symbols), code
+        elif current_kind == "code":
+            return code, code
+        elif current_kind == "adj_name":
+            adj_name = _pick_currency_adj_name(props, value, rng)
+            if adj_name is not None:
+                return _titlecase_currency_surface(adj_name), code
+        elif current_kind == "name":
+            name = _pick_currency_name(props, value, rng)
+            if name is not None:
+                return _titlecase_currency_surface(name), code
+
+    for code in candidate_codes:
+        props = MAJOR_CURRENCIES[code]
+        symbols = [sym for sym in props.get("exact_symbols", []) if sym]
+        symbols += [sym for sym in props.get("symbols", []) if sym and sym not in symbols]
+        symbols += [sym for sym in props.get("amb_symbols", []) if sym and sym not in symbols]
+        if symbols:
+            return rng.choice(symbols), code
+        name = _pick_currency_name(props, value, rng)
+        if name is not None:
+            return _titlecase_currency_surface(name), code
+        adj_name = _pick_currency_adj_name(props, value, rng)
+        if adj_name is not None:
+            return _titlecase_currency_surface(adj_name), code
+        return code, code
+
+    return None
+
+
+def swap_currency_surface(
+    text: str,
+    value: int | float,
+    rng: Optional[random.Random] = None,
+) -> str:
+    """
+    Replace the first currency surface in `text`, preserving amount placement.
+
+    This is the public helper used by money mutation after the numeric core has
+    already been formatted.
+    """
+    if rng is None:
+        rng = random.Random()
+
+    found = _find_currency_surface(text)
+    if found is None:
+        return text
+
+    match, current_entry = found
+    replacement_info = _pick_replacement_currency(current_entry, value, rng)
+    if replacement_info is None:
+        return text
+
+    replacement, target_code = replacement_info
+    replacement = _format_currency_surface(replacement)
+    target_is_suffix = bool(MAJOR_CURRENCIES.get(target_code, {}).get("suffix"))
+
+    if target_is_suffix:
+        tail = text[match.end() :]
+        amount_match = _AMOUNT_AFTER_CURRENCY_RE.match(tail)
+        if amount_match is not None:
+            amount = amount_match.group("amount").strip()
+            trailing = amount_match.group("trailing") or ""
+            remainder = tail[amount_match.end() :]
+            separator = trailing if trailing else (" " if remainder else "")
+            return (
+                text[: match.start()]
+                + amount
+                + " "
+                + replacement
+                + separator
+                + remainder
+            )
+    else:
+        head = text[: match.start()]
+        amount_match = _AMOUNT_BEFORE_CURRENCY_RE.search(head)
+        if amount_match is not None:
+            amount = amount_match.group("amount").strip()
+            trailing = amount_match.group("trailing") or ""
+            return (
+                head[: amount_match.start("amount")]
+                + replacement
+                + " "
+                + amount
+                + trailing
+                + text[match.end() :]
+            )
+
+    return text[: match.start()] + replacement + text[match.end() :]
 
 
 @dataclass(frozen=True)
